@@ -8,12 +8,18 @@ const src = (path, excerpt) => ({kind: 'site', url: `${SITE}${path}`, title: `pu
 const MANUAL = {kind: 'manual', url: 'manual:analiza-2026-10-26', title: 'Propunere din analiza site-ului', certainty: 'unverified'};
 const P = 'https://www.portalia.ro';
 
+// Totul într-o singură tranzacție (§1.3), cu scrierile strict în ordine, ca ID-urile să fie deterministe.
 export function seed(store, {user = SYSTEM} = {}) {
   if (store.list('firma').length) throw new Error('Baza are deja date. Importul nu rulează peste editări (folosește o bază nouă).');
-  const c = (key, data, source, publish = true) => store.create(user, key, data, {publish, source}).id;
+  return store.tx(() => seedAll(store, user));
+}
+
+async function seedAll(store, user) {
+  const c = async (key, data, source, publish = true) => (await store.create(user, key, data, {publish, source})).id;
+  const seq = async (items, fn) => { const out = []; for (const [i, x] of items.entries()) out.push(await fn(x, i)); return out; };
   const ids = {};
 
-  c('firma', {
+  await c('firma', {
     brand: 'Purapa', legal_name: 'Instant Softnet SRL', cui: 'RO 25383246', reg_com: 'J40/4285/2009',
     street: 'Str. Răsăritului nr. 90', building: 'hala C2', city: 'Buftea', county: 'Ilfov',
     phone: '0372 887 572', email: 'contact@purapa.ro', hours: 'Luni – Vineri: 09:00 – 18:00',
@@ -21,21 +27,20 @@ export function seed(store, {user = SYSTEM} = {}) {
     tagline: 'Apă curată și sigură, direct de la robinet. Soluții moderne de filtrare pentru familia ta.'
   }, src('/termeni-si-conditii', 'Instant Softnet SRL, CUI RO 25383246, J40/4285/2009, Str. Rasaritului nr. 90, hala C2, Buftea, jud. Ilfov'));
 
-  [['Facebook', 'https://www.facebook.com/profile.php?id=61582186433649', null],
+  await seq([['Facebook', 'https://www.facebook.com/profile.php?id=61582186433649', null],
    ['YouTube', 'https://www.youtube.com/@PurapaRomania', '@PurapaRomania'],
-   ['TikTok', 'https://www.tiktok.com/@purapa.romania', '@purapa.romania']]
-    .forEach(([platform, url, handle], i) => c('retele', {platform, url, handle, position: i}, src('/', 'subsol')));
-
-  ids.portalia = c('retaileri', {name: 'Portalia', url: 'https://www.portalia.ro', search_url: `${P}/search/purapa/`}, src('/', 'Comandă Acum'));
+   ['TikTok', 'https://www.tiktok.com/@purapa.romania', '@purapa.romania']],
+    ([platform, url, handle], i) => c('retele', {platform, url, handle, position: i}, src('/', 'subsol')));
+  ids.portalia = await c('retaileri', {name: 'Portalia', url: 'https://www.portalia.ro', search_url: `${P}/search/purapa/`}, src('/', 'Comandă Acum'));
 
   for (const [slug, name, position] of [['filtrare', 'Sisteme de filtrare', 1], ['cartuse', 'Cartușe', 2], ['dedurizare', 'Dedurizare', 3],
-    ['testare', 'Testare', 4], ['dozatoare', 'Dozatoare', 5], ['accesorii', 'Accesorii', 6]]) ids[`cat_${slug}`] = c('categorii', {name, slug, position}, MANUAL);
+    ['testare', 'Testare', 4], ['dozatoare', 'Dozatoare', 5], ['accesorii', 'Accesorii', 6]]) ids[`cat_${slug}`] = await c('categorii', {name, slug, position}, MANUAL);
 
-  ids.prefiltrare = c('etape', {name: 'Prefiltrare', microns: 5, position: 1,
+  ids.prefiltrare = await c('etape', {name: 'Prefiltrare', microns: 5, position: 1,
     retains: 'sediment, rugină, nisip, particule în suspensie',
     text: '<p>Barieră mecanică de 5 microni care oprește sedimentele vizibile și protejează cartușul de microfiltrare, prelungindu-i viața.</p>'},
   src('/despre-noi/', 'Etapa 1: Prefiltrare'));
-  ids.microfiltrare = c('etape', {name: 'Microfiltrare', microns: 0.5, position: 2,
+  ids.microfiltrare = await c('etape', {name: 'Microfiltrare', microns: 0.5, position: 2,
     retains: 'clor și derivați, mirosuri, particule fine',
     text: '<p>Tehnologie Pre-Coat și cărbune activ la 0,5 microni: reduce clorul și mirosurile, îmbunătățește gustul și păstrează mineralele. Argintul din cartuș are rol bacteriostatic.</p>'},
   src('/despre-noi/', 'Etapa 2: Microfiltrare'));
@@ -69,17 +74,17 @@ export function seed(store, {user = SYSTEM} = {}) {
      summary: 'Oțel inoxidabil, izolare termică dublă, 500 ml, afișaj digital al temperaturii.',
      buy: '/termos-inteligent-albastru-cu-afisaj-digital-otel-inoxidabil-izolare-termica-dubla-500ml-purapa-p716/'}
   ];
-  products.forEach((p, i) => {
-    ids[p.key] = c('produse', {
+  for (const [i, p] of products.entries()) {
+    ids[p.key] = await c('produse', {
       name: p.name, slug: p.slug, summary: p.summary, price: p.price, buy_url: `${P}${p.buy}`, extern_id: `portalia:p${p.p}`,
       capacity_l: p.capacity_l, lifetime_months: p.lifetime_months, position: i + 1,
       category_id: ids[`cat_${p.cat}`], retailer_id: ids.portalia
     }, src('/produse/', p.name));
-  });
-  store.setLinks(user, 'produse', ids.kit, 'cartridges', [ids.ok36m, ids.pp5], {source: src('/', 'specificațiile kitului')});
-  store.setLinks(user, 'produse', ids.kit, 'stages', [ids.prefiltrare, ids.microfiltrare], {source: src('/', 'Tehnologie de purificare')});
-  store.setLinks(user, 'produse', ids.pp5, 'stages', [ids.prefiltrare], {source: src('/produse/', '5 µm')});
-  store.setLinks(user, 'produse', ids.ok36m, 'stages', [ids.microfiltrare], {source: src('/produse/', '0,5 µm Pre-Coat')});
+  }
+  await store.setLinks(user, 'produse', ids.kit, 'cartridges', [ids.ok36m, ids.pp5], {source: src('/', 'specificațiile kitului')});
+  await store.setLinks(user, 'produse', ids.kit, 'stages', [ids.prefiltrare, ids.microfiltrare], {source: src('/', 'Tehnologie de purificare')});
+  await store.setLinks(user, 'produse', ids.pp5, 'stages', [ids.prefiltrare], {source: src('/produse/', '5 µm')});
+  await store.setLinks(user, 'produse', ids.ok36m, 'stages', [ids.microfiltrare], {source: src('/produse/', '0,5 µm Pre-Coat')});
 
   const params = [
     ['Duritate totală', null, 'nivelul de calcar și riscul de depuneri'],
@@ -99,10 +104,10 @@ export function seed(store, {user = SYSTEM} = {}) {
     ['Acid cianuric', null, 'folosit pentru stabilizarea clorului'],
     ['Sulfiți', 'SO₃²⁻', 'conservanți sau antioxidanți; pot afecta mirosul și gustul']
   ];
-  ids.params = params.map(([name, symbol, indicates], i) => c('parametri', {name, symbol, indicates, position: i + 1}, src('/testare-apa/', `Știi ce ai în apă: ${name}`)));
-  store.setLinks(user, 'produse', ids.test, 'parameters', ids.params, {source: src('/testare-apa/', '16 parametri')});
+  ids.params = await seq(params, ([name, symbol, indicates], i) => c('parametri', {name, symbol, indicates, position: i + 1}, src('/testare-apa/', `Știi ce ai în apă: ${name}`)));
+  await store.setLinks(user, 'produse', ids.test, 'parameters', ids.params, {source: src('/testare-apa/', '16 parametri')});
   // Dedusă, nu confirmată: clorul se rezolvă cu microfiltrarea (din textul despre cartuș). Așteaptă verificarea unui om.
-  store.setLinks(user, 'parametri', ids.params[1], 'recommends', [{id: ids.ok36m, status: 'inferred', confidence: 0.8, note: 'cartușul „reține clorul și derivații”'}],
+  await store.setLinks(user, 'parametri', ids.params[1], 'recommends', [{id: ids.ok36m, status: 'inferred', confidence: 0.8, note: 'cartușul „reține clorul și derivații”'}],
     {source: src('/produse/', 'reține suspensiile, clorul și derivații lui')});
 
   const faqs = [
@@ -112,56 +117,56 @@ export function seed(store, {user = SYSTEM} = {}) {
     ['Elimină bacteriile?', '<p>Microfiltrarea ultrafină și argintul bacteriostatic inhibă dezvoltarea microorganismelor în cartuș.</p>', [ids.ok36m]],
     ['Pot folosi filtrul pe apă de fântână sau de izvor?', '<p>Da, dar pentru sursele netratate un <a data-ref="produse:ID_TEST">test prealabil</a> e obligatoriu.</p>', [ids.test]]
   ];
-  ids.faqs = faqs.map(([question, answer, prods], i) => c('intrebari', {question, answer: answer.replace('ID_TEST', ids.test), position: i + 1, products: prods},
+  ids.faqs = await seq(faqs, ([question, answer, prods], i) => c('intrebari', {question, answer: answer.replace('ID_TEST', ids.test), position: i + 1, products: prods},
     src('/', `Întrebări frecvente: ${question}`)));
 
   const benefit = (title, text, icon, s) => c('beneficii', {title, text, icon}, s);
-  const why = [
-    benefit('Filtrare avansată', 'Elimină sedimentele, clorul și compușii organici.', 'filter', src('/', 'De ce să alegi Purapa?')),
-    benefit('Capacitate {capacitate}', 'Un cartuș ține până la {durata} de folosire intensă.', 'drop', src('/', 'De ce să alegi Purapa?')),
-    benefit('Tehnologie Pre-Coat', 'Microfiltrare ultrafină care îmbunătățește gustul și mirosul.', 'sparkle', src('/', 'De ce să alegi Purapa?')),
-    benefit('Instalare rapidă', 'Compact, se potrivește la majoritatea chiuvetelor standard.', 'wrench', src('/', 'De ce să alegi Purapa?'))
-  ];
-  const eco = [
-    benefit('Fără plastic', 'Elimini sute de sticle PET de unică folosință în fiecare an.', 'leaf', src('/', 'Impactul tău ecologic')),
-    benefit('Mai puține livrări', 'Apa e deja la robinet: fără baxuri cărate și transportate.', 'truck', src('/', 'Impactul tău ecologic')),
-    benefit('Durabilitate', 'Un sistem gândit pentru ani de folosire.', 'clock', src('/', 'Impactul tău ecologic'))
-  ];
+  const why = await seq([
+    () => benefit('Filtrare avansată', 'Elimină sedimentele, clorul și compușii organici.', 'filter', src('/', 'De ce să alegi Purapa?')),
+    () => benefit('Capacitate {capacitate}', 'Un cartuș ține până la {durata} de folosire intensă.', 'drop', src('/', 'De ce să alegi Purapa?')),
+    () => benefit('Tehnologie Pre-Coat', 'Microfiltrare ultrafină care îmbunătățește gustul și mirosul.', 'sparkle', src('/', 'De ce să alegi Purapa?')),
+    () => benefit('Instalare rapidă', 'Compact, se potrivește la majoritatea chiuvetelor standard.', 'wrench', src('/', 'De ce să alegi Purapa?'))
+  ], f => f());
+  const eco = await seq([
+    () => benefit('Fără plastic', 'Elimini sute de sticle PET de unică folosință în fiecare an.', 'leaf', src('/', 'Impactul tău ecologic')),
+    () => benefit('Mai puține livrări', 'Apa e deja la robinet: fără baxuri cărate și transportate.', 'truck', src('/', 'Impactul tău ecologic')),
+    () => benefit('Durabilitate', 'Un sistem gândit pentru ani de folosire.', 'clock', src('/', 'Impactul tău ecologic'))
+  ], f => f());
 
   const step = (title, text, s) => c('pasi', {title, text}, s);
-  const testSteps = [
-    step('Comandă kitul', `<p>Kitul se cumpără de la <a data-ref="produse:${ids.test}">partenerul nostru</a>.</p>`, src('/testare-apa/', 'Cum funcționează testarea apei')),
-    step('Testează în sub 5 minute', '<p>Umple un pahar, scufundă banda 2–3 secunde, ține-o orizontal și așteaptă circa 30 de secunde.</p>', src('/testare-apa/', 'pasul 2')),
-    step('Fotografiază banda', '<p>Lângă scala de culori, pe o suprafață plană, în lumină bună, cu toate pătratele vizibile.</p>', src('/testare-apa/', 'pasul 3')),
-    step('Încarcă fotografia', '<p>Scanează codul QR sau deschide aplicația <a href="/test-rapid/">Test Rapid</a> și primești raportul pentru {nr_parametri} parametri.</p>', src('/testare-apa/', 'pasul 4')),
-    step('Primești recomandări', '<p>Specialiștii Purapa îți recomandă soluția de filtrare potrivită.</p>', src('/testare-apa/', 'pasul 5'))
-  ];
-  const ambSteps = [
-    step('Înscrierea', '<p>Completezi formularul și parcurgi prezentarea programului.</p>', src('/ambassadors/', 'pasul 1')),
-    step('Recomandarea naturală', '<p>Povestești experiența ta cu Purapa celor apropiați, offline sau online.</p>', src('/ambassadors/', 'pasul 2')),
-    step('Recompensa', '<p>Primești un comision pentru fiecare cumpărare făcută prin recomandarea ta, conform condițiilor programului.</p>', src('/ambassadors/', 'pasul 3'))
-  ];
+  const testSteps = await seq([
+    () => step('Comandă kitul', `<p>Kitul se cumpără de la <a data-ref="produse:${ids.test}">partenerul nostru</a>.</p>`, src('/testare-apa/', 'Cum funcționează testarea apei')),
+    () => step('Testează în sub 5 minute', '<p>Umple un pahar, scufundă banda 2–3 secunde, ține-o orizontal și așteaptă circa 30 de secunde.</p>', src('/testare-apa/', 'pasul 2')),
+    () => step('Fotografiază banda', '<p>Lângă scala de culori, pe o suprafață plană, în lumină bună, cu toate pătratele vizibile.</p>', src('/testare-apa/', 'pasul 3')),
+    () => step('Încarcă fotografia', '<p>Scanează codul QR sau deschide aplicația <a href="/test-rapid/">Test Rapid</a> și primești raportul pentru {nr_parametri} parametri.</p>', src('/testare-apa/', 'pasul 4')),
+    () => step('Primești recomandări', '<p>Specialiștii Purapa îți recomandă soluția de filtrare potrivită.</p>', src('/testare-apa/', 'pasul 5'))
+  ], f => f());
+  const ambSteps = await seq([
+    () => step('Înscrierea', '<p>Completezi formularul și parcurgi prezentarea programului.</p>', src('/ambassadors/', 'pasul 1')),
+    () => step('Recomandarea naturală', '<p>Povestești experiența ta cu Purapa celor apropiați, offline sau online.</p>', src('/ambassadors/', 'pasul 2')),
+    () => step('Recompensa', '<p>Primești un comision pentru fiecare cumpărare făcută prin recomandarea ta, conform condițiilor programului.</p>', src('/ambassadors/', 'pasul 3'))
+  ], f => f());
 
-  const page = (data, sections, s) => {
-    const secIds = sections.map(x => c('sectiuni', x, s));
+  const page = async (data, sections, s) => {
+    const secIds = await seq(sections, x => c('sectiuni', x, s));
     return c('pagini', {...data, sections: secIds}, s);
   };
   // Paginile se creează întâi fără secțiuni care trimit la alte pagini, ca linkurile să aibă ținta.
-  ids.home = c('pagini', {title: 'Acasă', slug: '', menu_label: 'Acasă', menu_order: 1, footer: 'firma',
+  ids.home = await c('pagini', {title: 'Acasă', slug: '', menu_label: 'Acasă', menu_order: 1, footer: 'firma',
     seo_title: 'Filtre de apă pentru acasă', seo_description: 'Sisteme de filtrare Purapa: apă curată și sigură direct de la robinet.'}, src('/'));
-  ids.produse = c('pagini', {title: 'Produse', slug: 'produse', menu_label: 'Produse', menu_order: 2, footer: 'firma'}, src('/produse/'));
-  ids.testare = c('pagini', {title: 'Testare apă potabilă', slug: 'testare-apa', menu_label: 'Testare apă', menu_order: 3, footer: 'firma',
+  ids.produse = await c('pagini', {title: 'Produse', slug: 'produse', menu_label: 'Produse', menu_order: 2, footer: 'firma'}, src('/produse/'));
+  ids.testare = await c('pagini', {title: 'Testare apă potabilă', slug: 'testare-apa', menu_label: 'Testare apă', menu_order: 3, footer: 'firma',
     seo_title: 'Testare apă potabilă – analiză rapidă cu Test Rapid Purapa'}, src('/testare-apa/'));
-  ids.despre = c('pagini', {title: 'Despre Purapa', slug: 'despre-noi', menu_label: 'Despre', menu_order: 4}, src('/despre-noi/'));
-  ids.ambassadors = c('pagini', {title: 'Purapa Ambassadors', slug: 'ambassadors', menu_label: 'Ambassadors', menu_order: 6, footer: 'firma'}, src('/ambassadors/'));
-  ids.contact = c('pagini', {title: 'Contact', slug: 'contact', menu_label: 'Contact', menu_order: 7, footer: 'firma'}, src('/contact/'));
+  ids.despre = await c('pagini', {title: 'Despre Purapa', slug: 'despre-noi', menu_label: 'Despre', menu_order: 4}, src('/despre-noi/'));
+  ids.ambassadors = await c('pagini', {title: 'Purapa Ambassadors', slug: 'ambassadors', menu_label: 'Ambassadors', menu_order: 6, footer: 'firma'}, src('/ambassadors/'));
+  ids.contact = await c('pagini', {title: 'Contact', slug: 'contact', menu_label: 'Contact', menu_order: 7, footer: 'firma'}, src('/contact/'));
   for (const [slug, title, label] of [['termeni-si-conditii', 'Termeni și condiții', 'Termeni'],
     ['politica-de-confidentialitate', 'Politica de confidențialitate', 'Confidențialitate'], ['politica-de-cookie', 'Politica de cookie', 'Politica cookie']]) {
-    ids[slug] = page({title, slug, menu_label: label, footer: 'legal'},
+    ids[slug] = await page({title, slug, menu_label: label, footer: 'legal'},
       [{kind: 'text', title, text: '<p>[[de-validat:textul integral se importă din pagina actuală]] Operator: {firma}, {adresa_completa}.</p>'}], src(`/${slug}`));
   }
 
-  const sec = (pageId, sections, s) => store.setLinks(user, 'pagini', pageId, 'sections', sections.map(x => c('sectiuni', x, s)));
+  const sec = async (pageId, sections, s) => store.setLinks(user, 'pagini', pageId, 'sections', await seq(sections, x => c('sectiuni', x, s)));
   // Homepage: hero → de ce → vitrina kitului → testul apei → tehnologia → impactul → întrebări → îndemnul final.
   const home = {};
   for (const [key, data] of Object.entries({
@@ -191,14 +196,14 @@ export function seed(store, {user = SYSTEM} = {}) {
     cta: {kind: 'cta', kicker: 'Apa pură începe cu tine', title: 'Fă primul pas spre *apă curată*.',
       text: '<p>Alege kitul complet sau testează mai întâi apa de acasă. Te ajutăm la fiecare pas.</p>',
       cta2_label: 'Cere asistență', cta2_link: `ref:pagini:${ids.contact}`}
-  })) home[key] = c('sectiuni', data, src('/'));
+  })) home[key] = await c('sectiuni', data, src('/'));
   // Butoanele care duc la vitrina kitului de pe aceeași pagină.
-  store.update(user, 'sectiuni', home.hero, {cta_label: 'Vezi kit-ul de filtrare', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
-  store.update(user, 'sectiuni', home.cta, {cta_label: 'Vezi kit-ul complet', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
-  store.update(user, 'sectiuni', home.calc, {cta_label: 'Vezi kit-ul complet', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
-  store.setLinks(user, 'pagini', ids.home, 'sections', Object.values(home));
-  sec(ids.produse, [{kind: 'produse', title: 'Produse Purapa'}], src('/produse/'));
-  sec(ids.testare, [
+  await store.update(user, 'sectiuni', home.hero, {cta_label: 'Vezi kit-ul de filtrare', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
+  await store.update(user, 'sectiuni', home.cta, {cta_label: 'Vezi kit-ul complet', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
+  await store.update(user, 'sectiuni', home.calc, {cta_label: 'Vezi kit-ul complet', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
+  await store.setLinks(user, 'pagini', ids.home, 'sections', Object.values(home));
+  await sec(ids.produse, [{kind: 'produse', title: 'Produse Purapa'}], src('/produse/'));
+  await sec(ids.testare, [
     {kind: 'hero', title: 'Apa e limpede – dar e și curată?',
      text: '<p>Un test rapid, acasă, care detectează contaminanții și îți dă recomandări personalizate pentru o apă mai sigură și mai gustoasă.</p>',
      cta_label: 'Comandă kitul de testare a apei', cta_link: `ref:produse:${ids.test}`, products: [ids.test]},
@@ -207,20 +212,20 @@ export function seed(store, {user = SYSTEM} = {}) {
     {kind: 'pasi', title: 'Cum funcționează testarea apei', steps: testSteps},
     {kind: 'test', title: 'Știi ce ai în apă', text: '<p>Testul măsoară {nr_parametri} parametri:</p>', parameters: ids.params}
   ], src('/testare-apa/'));
-  sec(ids.despre, [
+  await sec(ids.despre, [
     {kind: 'hero', title: 'Tehnologie avansată pentru apă pură',
      text: '<p>Purapa e un brand dedicat calității apei și siguranței consumatorului: microfiltrare modernă, materiale de calitate, procese testate. Sistemele sunt proiectate în Europa.</p>'},
     {kind: 'tehnologie', title: 'Cum funcționează filtrarea', stages: [ids.prefiltrare, ids.microfiltrare]},
     {kind: 'text', title: 'Instalare fără bătăi de cap', text: '<p>Sistemul compact încape sub chiuveta din bucătărie.</p>'},
     {kind: 'cta', title: 'Ești gata pentru schimbare?', cta_label: 'Testează apa acum', cta_link: `ref:pagini:${ids.testare}`}
   ], src('/despre-noi/'));
-  sec(ids.ambassadors, [
+  await sec(ids.ambassadors, [
     {kind: 'hero', title: 'Purapa Ambassadors',
      text: '<p>Pentru cei care cred că apa curată schimbă viața de zi cu zi: studenți, creatori, oameni activi în comunitatea lor. Fără ținte, fără presiune, fără obligații.</p>',
      cta_label: 'Contactează-ne', cta_link: `ref:pagini:${ids.contact}`},
     {kind: 'pasi', title: 'Cum funcționează', steps: ambSteps, cta_label: 'Contactează-ne', cta_link: `ref:pagini:${ids.contact}`}
   ], src('/ambassadors/'));
-  sec(ids.contact, [{kind: 'contact', title: 'Contact'}], src('/contact/'));
+  await sec(ids.contact, [{kind: 'contact', title: 'Contact'}], src('/contact/'));
 
   return ids;
 }

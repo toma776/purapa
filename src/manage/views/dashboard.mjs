@@ -3,15 +3,17 @@ import {page, esc, badge, impact, fmtDate, empty} from './ui.mjs';
 import {can} from '../../core/store.mjs';
 import {byKey, ENTITIES, titleOf} from '../../registry/entities.mjs';
 
-export function dashboard(ctx) {
+export async function dashboard(ctx) {
   const {db, store, sync, todos, user} = ctx;
-  const st = sync.status();
-  const list = todos.list();
+  const st = await sync.status();
+  const list = await todos.list();
   const approvals = ENTITIES.filter(d => d.approval).flatMap(d => store.list(d.key)
     .filter(r => r.status === 'draft' || r.draft).map(r => ({d, r})));
-  const events = db.prepare('SELECT * FROM change_events ORDER BY id DESC LIMIT 15').all();
-  const logOf = id => db.prepare('SELECT path, action, detail FROM sync_log WHERE event_id = ? ORDER BY id').all(id);
-  const failed = db.prepare("SELECT * FROM change_events WHERE status = 'failed' ORDER BY id").all();
+  const events = await db.all('SELECT * FROM change_events ORDER BY id DESC LIMIT 15');
+  const logs = events.length ? await db.all(`SELECT event_id, path, action, detail FROM sync_log WHERE event_id IN (${events.map(() => '?').join(', ')}) ORDER BY id`,
+    events.map(e => e.id)) : [];
+  const logOf = id => logs.filter(l => l.event_id === id);
+  const failed = await db.all("SELECT * FROM change_events WHERE status = 'failed' ORDER BY id");
 
   const stat = (label, value, cls = '') => `<div class="stat ${cls}"><span>${esc(label)}</span><strong>${value}</strong></div>`;
 

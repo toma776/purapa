@@ -1,6 +1,6 @@
 // Graful hărții (§2.4): muchiile se calculează din relațiile salvate, din imagini și din texte (data-ref, ref:).
 // Datele purapa sunt mici, deci graful se calculează la cerere; nimic nu e întreținut de mână.
-import {ENTITIES, byKey, relTable, titleOf, RELATION_TYPES} from '../registry/entities.mjs';
+import {ENTITIES, byKey, titleOf, RELATION_TYPES} from '../registry/entities.mjs';
 
 const LINK_RE = /data-ref="([a-z-]+):(\d+)"|\bref:([a-z-]+):(\d+)/g;
 const MEDIA_RE = /data-media="(\d+)"/g;
@@ -16,21 +16,22 @@ export function createGraph(db, store) {
     const out = [];
     for (const d of types()) {
       for (const f of d.fields) {
+        const filled = () => store.list(d.key).filter(r => r[f.key] != null).map(r => ({id: r.id, v: r[f.key]}));
         if (f.type === 'ref' && layers.includes('relatii')) {
-          for (const r of db.prepare(`SELECT id, "${f.key}" v FROM "${d.table}" WHERE "${f.key}" IS NOT NULL`).all())
+          for (const r of filled())
             out.push({rel: `${d.key}.${f.key}`, from: [d.key, r.id], to: [f.target, r.v], status: 'confirmed', layer: 'relatii'});
         }
         if (f.type === 'image' && layers.includes('imagini')) {
-          for (const r of db.prepare(`SELECT id, "${f.key}" v FROM "${d.table}" WHERE "${f.key}" IS NOT NULL`).all())
+          for (const r of filled())
             out.push({rel: `${d.key}.${f.key}`, from: [d.key, r.id], to: ['media', r.v], status: 'confirmed', layer: 'imagini'});
         }
         if (f.type === 'refs' && layers.includes('relatii')) {
-          for (const r of db.prepare(`SELECT * FROM "${relTable(d, f)}"`).all())
-            out.push({rel: `${d.key}.${f.key}`, from: [d.key, r.src_id], to: [f.target, r.dst_id], status: r.status, confidence: r.confidence,
+          for (const r of store.relRows(d, f))
+            out.push({rel: `${d.key}.${f.key}`, from: [d.key, r.src_id], to: [f.target, r.id], status: r.status, confidence: r.confidence,
               note: r.note, created_by: r.created_by, created_at: r.created_at, sensitive: !!f.sensitive, layer: 'relatii'});
         }
         if ((f.type === 'richtext' || f.key === 'cta_link') && layers.includes('texte')) {
-          for (const r of db.prepare(`SELECT id, "${f.key}" v FROM "${d.table}" WHERE "${f.key}" IS NOT NULL`).all()) {
+          for (const r of filled()) {
             for (const m of String(r.v).matchAll(LINK_RE)) {
               const key = m[1] ?? m[3], id = Number(m[2] ?? m[4]);
               if (!byKey[key]) continue;
@@ -45,7 +46,7 @@ export function createGraph(db, store) {
     return out;
   }
 
-  const counts = () => Object.fromEntries(types().map(d => [d.key, db.prepare(`SELECT COUNT(*) n FROM "${d.table}"`).get().n]));
+  const counts = () => Object.fromEntries(types().map(d => [d.key, store.list(d.key).length]));
 
   // Nivelul 1: tipurile, pe categorii, și legăturile dintre ele (grosime ∝ √n în interfață).
   function overview({layers = LAYERS} = {}) {
@@ -93,7 +94,7 @@ export function createGraph(db, store) {
   }
 
   // Nivelul 3: o entitate, cu intrările (stânga), ieșirile (dreapta) și paginile care o afișează.
-  function neighbors(key, id, {layers = LAYERS} = {}) {
+  async function neighbors(key, id, {layers = LAYERS} = {}) {
     const d = store.def(key), rec = store.get(key, id);
     if (!rec) return null;
     const item = (k, i, e, dir) => {
@@ -110,18 +111,18 @@ export function createGraph(db, store) {
     const group = list => Object.values(list.reduce((acc, x) => ((acc[x.key] ??= {key: x.key, label: byKey[x.key].label, color: byKey[x.key].color, items: []}).items.push(x), acc), {}));
     return {
       node: {key, id, title: titleOf(d, rec), type: d.one, color: d.color, status: d.noStatus ? 'published' : rec.status},
-      incoming: group(incoming), outgoing: group(outgoing), pages: pagesOf(key, id)
+      incoming: group(incoming), outgoing: group(outgoing), pages: await pagesOf(key, id)
     };
   }
 
   // Paginile care afișează o înregistrare, grupate pe componentă (din dependențele măsurate).
-  function pagesOf(key, id) {
-    const rows = db.prepare("SELECT path, kind, component, reason FROM page_deps WHERE entity = ? AND entity_id = ? AND kind != 'pending'").all(key, id);
+  async function pagesOf(key, id) {
+    const rows = await db.all("SELECT path, kind, component, reason FROM page_deps WHERE entity = ? AND entity_id = ? AND kind <> 'pending'", [key, id]);
     const out = [];
     for (const r of rows) {
       if (!r.path.startsWith('#layout:')) { out.push(r); continue; }
       const name = r.path.slice(8);
-      for (const p of db.prepare("SELECT DISTINCT path FROM page_deps WHERE kind = 'layout' AND component = ?").all(name))
+      for (const p of await db.all("SELECT DISTINCT path FROM page_deps WHERE kind = 'layout' AND component = ?", [name]))
         out.push({...r, path: p.path, via: name});
     }
     const byPath = new Map();
@@ -170,11 +171,11 @@ export function createGraph(db, store) {
   }
 
   function search(q, limit = 20) {
-    const needle = `%${String(q ?? '').toLowerCase()}%`;
-    if (needle === '%%') return [];
+    const needle = String(q ?? '').toLowerCase().trim();
+    if (!needle) return [];
     const out = [];
     for (const d of types()) {
-      for (const r of db.prepare(`SELECT id FROM "${d.table}" WHERE search LIKE ? LIMIT ?`).all(needle, limit))
+      for (const r of store.list(d.key).filter(r => String(r.search ?? '').includes(needle)).slice(0, limit))
         out.push({key: d.key, id: r.id, title: titleFor(d.key, r.id), type: d.one, color: d.color});
     }
     return out.slice(0, limit);
@@ -186,7 +187,7 @@ export function createGraph(db, store) {
     if (!r) return null;
     const d = byKey[r.source], f = d.fields.find(x => x.key === r.field);
     const es = edges().filter(e => e.rel === relId);
-    const requiredEmpty = f.required && f.type !== 'refs' ? db.prepare(`SELECT COUNT(*) n FROM "${d.table}" WHERE "${f.key}" IS NULL`).get().n : 0;
+    const requiredEmpty = f.required && f.type !== 'refs' ? store.list(d.key).filter(x => x[f.key] == null).length : 0;
     return {
       ...r, sourceLabel: d.label, targetLabel: byKey[r.target].label,
       links: es.length, sources: new Set(es.map(e => e.from[1])).size, targets: new Set(es.map(e => e.to[1])).size,
@@ -228,8 +229,7 @@ export function createGraph(db, store) {
     const requiredEmpty = [];
     for (const d of types()) for (const f of d.fields) {
       if (!f.required || f.type === 'refs') continue;
-      const rows = db.prepare(`SELECT id FROM "${d.table}" WHERE "${f.key}" IS NULL OR "${f.key}" = ''`).all();
-      for (const r of rows) requiredEmpty.push({key: d.key, id: r.id, field: f.key, title: titleFor(d.key, r.id), label: f.label});
+      for (const r of store.list(d.key).filter(x => x[f.key] == null || x[f.key] === '')) requiredEmpty.push({key: d.key, id: r.id, field: f.key, title: titleFor(d.key, r.id), label: f.label});
     }
     const orphans = [];
     for (const d of types()) {
@@ -246,10 +246,10 @@ export function createGraph(db, store) {
 
   // Numele entităților găsite în texte fără legătură salvată (nivelul 4 din „Unde apare”, §1.6 b).
   // Doar la tipurile cu `mentions`, doar nume lungi (≥ 8 caractere sau ≥ 2 cuvinte), cu granițe de cuvânt.
-  function mentionsOf(key, id) {
+  async function mentionsOf(key, id) {
     const d = store.def(key), rec = store.get(key, id);
     if (!d.mentions || !rec) return [];
-    const names = [titleOf(d, rec), ...db.prepare('SELECT alias FROM aliases WHERE entity = ? AND entity_id = ?').all(key, id).map(a => a.alias)]
+    const names = [titleOf(d, rec), ...(await db.all('SELECT alias FROM aliases WHERE entity = ? AND entity_id = ?', [key, id])).map(a => a.alias)]
       .filter(n => n.length >= 8 || n.trim().split(/\s+/).length >= 2);
     if (!names.length) return [];
     const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

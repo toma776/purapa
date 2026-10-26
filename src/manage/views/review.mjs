@@ -3,9 +3,9 @@ import {page, esc, badge, empty} from './ui.mjs';
 import {can} from '../../core/store.mjs';
 import {inferredGroups} from '../../core/inferred.mjs';
 
-export function inferred(ctx) {
-  const {db, store, user} = ctx;
-  const groups = inferredGroups(db, store);
+export async function inferred(ctx) {
+  const {store, user} = ctx;
+  const groups = await inferredGroups(store);
   const total = groups.reduce((n, g) => n + g.items.length, 0);
   const body = `<h1>Legături de verificat <span class="muted">${total}</span></h1>
 <p class="muted">Legăturile deduse sau neverificate nu apar pe site până nu le confirmă un om. Ce scoți se ține minte și nu mai e propus din aceeași dovadă.</p>
@@ -29,9 +29,9 @@ ${groups.length ? '' : empty('Nicio legătură de verificat.')}`;
   return page(user, {title: 'Legături de verificat', active: 'legaturi', crumbs: [['Surse', '/manage/surse/'], ['Legături de verificat']], body, counts: ctx.counts});
 }
 
-export function sources(ctx) {
+export async function sources(ctx) {
   const {api, user} = ctx;
-  const rows = api('GET', '/sources', user);
+  const rows = await api('GET', '/sources', user);
   const body = `<h1>Surse <span class="muted">${rows.length}</span></h1>
 <p class="muted">De unde vine fiecare informație. Certitudinea se confirmă din tab-ul Surse al fiecărei entități.</p>
 <section class="panel"><input class="filter" type="search" placeholder="Caută…" data-filter="#src">

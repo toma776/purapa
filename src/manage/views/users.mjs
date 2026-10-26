@@ -25,9 +25,9 @@ const ROLE_LABEL = {admin: 'Administrator: tot', editor: 'Editor: conținut și 
 const roleSelect = (name, value) => `<select name="${name}">${Object.entries(ROLE_LABEL).map(([k, l]) =>
   `<option value="${k}"${k === value ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
 
-export function users(ctx) {
+export async function users(ctx) {
   const {auth, user} = ctx;
-  const list = auth.listUsers();
+  const list = await auth.listUsers();
   const body = `<h1>Utilizatori</h1>
 <section class="panel">
 <table class="table"><thead><tr><th>Nume</th><th>Email</th><th>Rol</th><th>Ultima intrare</th><th></th></tr></thead><tbody>

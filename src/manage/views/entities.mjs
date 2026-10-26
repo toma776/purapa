@@ -10,12 +10,12 @@ const base = (key, id) => `/manage/entitati/${key}/${id}/`;
 const publishPerm = d => d.approval ? 'content.approve' : 'content.publish';
 
 export function entitiesIndex(ctx) {
-  const {db, user} = ctx;
+  const {user} = ctx;
   const cats = [...new Set(ENTITIES.map(d => d.category))];
   const body = `<h1>Entități</h1>${cats.map(c => {
     const ds = ENTITIES.filter(d => d.category === c);
     return `<section class="panel"><h2>${esc(CATEGORY[c] ?? c)}</h2><div class="cards">${ds.map(d => {
-      const n = db.prepare(`SELECT COUNT(*) n FROM "${d.table}"`).get().n;
+      const n = ctx.store.list(d.key).length;
       return `<a class="card-link" href="/manage/entitati/${d.key}/" style="--c:${d.color}"><strong>${esc(d.label)}</strong><span>${n}</span>
         ${d.hub === false ? '<small>se editează din entitatea-mamă</small>' : d.approval ? '<small>publicarea cere aprobare</small>' : d.operational ? '<small>date de lucru</small>' : ''}</a>`;
     }).join('')}</div></section>`;
@@ -23,11 +23,12 @@ export function entitiesIndex(ctx) {
   return page(user, {title: 'Entități', active: 'entitati', crumbs: [['Entități']], body, counts: ctx.counts});
 }
 
-export function entityList(ctx, key) {
+export async function entityList(ctx, key) {
   const {store, api, user} = ctx;
   const d = store.def(key);
   const cols = d.fields.filter(f => f.list && f.key !== d.title);
   const rows = store.list(key);
+  const appears = await api.appearsInAll(key);
   const fmt = (f, v) => v == null ? '' : f.type === 'money' ? `${new Intl.NumberFormat('ro-RO').format(v)} lei` : esc(String(v));
   const body = `<div class="head"><h1>${esc(d.label)} <span class="muted">${rows.length}</span></h1>
   ${d.creatable !== false && can(user, 'content.write') ? `<a class="btn" href="/manage/entitati/${key}/nou/">Adaugă ${esc(d.one.toLowerCase())}</a>` : ''}</div>
@@ -37,7 +38,7 @@ export function entityList(ctx, key) {
 ${d.noStatus ? '' : '<th>Stare</th>'}<th title="Pagini publice care o afișează">Apare în</th><th>Actualizat</th></tr></thead><tbody>
 ${rows.map(r => `<tr><td><a href="${base(key, r.id)}">${esc(titleOf(d, r))}</a>${r.draft ? ' <span class="badge warn" title="Are modificări nepublicate">ciornă</span>' : ''}</td>
   ${cols.map(f => `<td>${fmt(f, r[f.key])}</td>`).join('')}${d.noStatus ? '' : `<td>${badge(r.status)}</td>`}
-  <td>${api.appearsIn(key, r.id) || '<span class="muted">—</span>'}</td><td class="nowrap">${fmtDate(r.updated_at)}</td></tr>`).join('')}
+  <td>${appears(r.id) || '<span class="muted">—</span>'}</td><td class="nowrap">${fmtDate(r.updated_at)}</td></tr>`).join('')}
 </tbody></table>${rows.length ? '' : empty(`Nu există încă ${d.label.toLowerCase()}.`)}</section>`;
   return page(user, {title: d.label, active: 'entitati', crumbs: [['Entități', '/manage/entitati/'], [d.label]], body, counts: ctx.counts});
 }
@@ -112,12 +113,12 @@ function miniMap(n) {
     <circle cx="${cx}" cy="${cy}" r="10" fill="${n.node.color}"/><text x="${cx}" y="${cy - 16}" text-anchor="middle" class="center">${esc(n.node.title.slice(0, 40))}</text></svg>`;
 }
 
-function tabPrezentare(ctx, d, rec, id) {
+async function tabPrezentare(ctx, d, rec, id) {
   const {graph, todos, api} = ctx;
   const obs = todos.forEntity(d.key, id);
-  const w = api.whereUsed(d.key, id);
+  const w = await api.whereUsed(d.key, id);
   const changed = rec.draft ? Object.keys(rec.draft).filter(k => JSON.stringify(rec.draft[k]) !== JSON.stringify(rec[k])) : [];
-  const n = graph.neighbors(d.key, id);
+  const n = await graph.neighbors(d.key, id);
   return `${rec.draft && changed.length ? `<div class="flash warn">Modificări nepublicate în ${changed.length} câmpuri: ${changed.map(k => esc(d.fields.find(f => f.key === k)?.label ?? k)).join(', ')}.
     Site-ul arată încă versiunea publicată.</div>` : ''}
 <div class="cols">
@@ -187,9 +188,9 @@ function tabRelatii(ctx, d, rec, id) {
   ${out.join('') || ''}${incoming.join('')}${!out.length && !incoming.join('') ? empty('Tipul nu are relații.') : ''}`;
 }
 
-function tabSurse(ctx, d, rec, id) {
+async function tabSurse(ctx, d, rec, id) {
   const {api, user} = ctx;
-  const rows = api.provenanceOf(d.key, id);
+  const rows = await api.provenanceOf(d.key, id);
   const canConfirm = can(user, 'content.write') && (!d.approval || can(user, 'content.approve'));
   const label = k => d.fields.find(f => f.key === k)?.label ?? (k || 'întreaga înregistrare');
   return `<section class="panel"><table class="table"><thead><tr><th>Câmp</th><th>Sursa</th><th>Certitudine</th><th>Fragment / metodă</th><th>Verificat</th><th></th></tr></thead><tbody>
@@ -202,9 +203,9 @@ function tabSurse(ctx, d, rec, id) {
   </tbody></table>${rows.length ? '' : empty('Nicio sursă înregistrată.')}</section>`;
 }
 
-function tabUndeApare(ctx, d, rec, id) {
-  const {api, store} = ctx;
-  const w = api.whereUsed(d.key, id);
+async function tabUndeApare(ctx, d, rec, id) {
+  const {api} = ctx;
+  const w = await api.whereUsed(d.key, id);
   const rel = (list, dir) => list.map(l => {
     const k = dir === 'out' ? l.target : l.entity, other = byKey[k];
     return `<li>${dir === 'out' ? `<span class="muted">${esc(l.rel ?? '')}</span> ` : `<span class="muted">${esc(l.rel ?? '')}:</span> `}
@@ -233,8 +234,8 @@ function tabUndeApare(ctx, d, rec, id) {
 </section>`;
 }
 
-function tabIstoric(ctx, d, rec, id) {
-  const rows = ctx.api.historyOf(d.key, id);
+async function tabIstoric(ctx, d, rec, id) {
+  const rows = await ctx.api.historyOf(d.key, id);
   const ACTIONS = {create: 'a creat', update: 'a modificat', draft: 'a salvat ciorna', publish: 'a publicat', links: 'a schimbat legăturile', 'link-status': 'a schimbat starea unei legături',
     'links-confirm': 'a confirmat legături', 'links-remove': 'a scos legături', archived: 'a arhivat', draft_status: 'a retras', 'source-confirm': 'a confirmat o sursă', delete: 'a șters'};
   const label = k => d.fields.find(f => f.key === k)?.label ?? k;
@@ -251,7 +252,7 @@ function tabIstoric(ctx, d, rec, id) {
 
 const TAB_FN = {prezentare: tabPrezentare, detalii: tabDetalii, relatii: tabRelatii, surse: tabSurse, 'unde-apare': tabUndeApare, istoric: tabIstoric};
 
-export function entityView(ctx, key, id, tab) {
+export async function entityView(ctx, key, id, tab) {
   const {store, user} = ctx;
   const d = store.def(key);
   const rec = store.get(key, id);
@@ -281,6 +282,6 @@ export function entityView(ctx, key, id, tab) {
   <p class="muted small">Actualizat ${fmtDate(rec.updated_at)} de ${esc(rec.updated_by ?? '—')}${links ? ` · ${links}` : ''}</p></div>
   <div class="actions">${actions.join('')}</div></div>
 <nav class="tabs">${TABS.map(([k, l]) => `<a href="${base(key, id)}${k === 'prezentare' ? '' : k + '/'}"${k === tab ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
-${fn(ctx, d, rec, id)}`;
+${await fn(ctx, d, rec, id)}`;
   return page(user, {title: `${title} · ${d.one}`, active: 'entitati', crumbs: [['Entități', '/manage/entitati/'], [d.label, `/manage/entitati/${key}/`], [title]], body, counts: ctx.counts});
 }
