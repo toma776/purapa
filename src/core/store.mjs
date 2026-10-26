@@ -149,6 +149,12 @@ export function createStore(db) {
         case 'boolean': v = v === true || v === 1 || v === '1' || v === 'true' ? 1 : 0; break;
         case 'email': v = String(v).trim(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) errors[f.key] = 'email invalid'; break;
         case 'url': v = String(v).trim(); if (!/^(https?:\/\/|\/|ref:|mailto:|tel:)/.test(v)) errors[f.key] = 'adresă invalidă'; break;
+        // Orice formă de adresă YouTube (watch, youtu.be, embed, shorts) sau doar codul; se păstrează codul.
+        case 'youtube': {
+          const m = /^(?:https?:\/\/(?:www\.|m\.)?(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/))?([\w-]{11})(?:[?&#/].*)?$/.exec(String(v).trim());
+          if (m) v = m[1]; else errors[f.key] = 'adresă YouTube invalidă';
+          break;
+        }
         case 'select': v = String(v); if (f.options && !f.options.includes(v)) errors[f.key] = `una din: ${f.options.join(', ')}`; break;
         case 'slug': v = uniqueSlug(d, slugify(v), cur?.id, f.allowEmpty); break;
         case 'richtext': v = sanitizeContent(String(v)); break;

@@ -211,7 +211,7 @@ export function seed(store, {user = SYSTEM} = {}) {
     {kind: 'hero', title: 'Tehnologie avansată pentru apă pură',
      text: '<p>Purapa e un brand dedicat calității apei și siguranței consumatorului: microfiltrare modernă, materiale de calitate, procese testate. Sistemele sunt proiectate în Europa.</p>'},
     {kind: 'tehnologie', title: 'Cum funcționează filtrarea', stages: [ids.prefiltrare, ids.microfiltrare]},
-    {kind: 'text', title: 'Instalare fără bătăi de cap', text: '<p>Sistemul compact încape sub chiuveta din bucătărie.</p>'},
+    {kind: 'text', title: 'Instalare fără bătăi de cap', text: '<p>Sistemul compact se integrează perfect sub chiuvetă. Vezi procesul de montaj pas cu pas.</p>', video: 'NPfIE4AtHnc'},
     {kind: 'cta', title: 'Ești gata pentru schimbare?', cta_label: 'Testează apa acum', cta_link: `ref:pagini:${ids.testare}`}
   ], src('/despre-noi/'));
   sec(ids.ambassadors, [

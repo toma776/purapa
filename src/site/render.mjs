@@ -80,6 +80,10 @@ function head(ctx, s, {center = false, h1 = false} = {}) {
 const wrap = (s, inner, extra = '') =>
   `<section class="section ${s.theme ?? 'alb'}${extra}"${s.title ? ` aria-labelledby="s-${s.id}"` : ''}><div class="container">${inner}</div></section>`;
 
+// Varianta youtube-nocookie: fără cookie-uri de urmărire până la pornirea videoului; se încarcă doar când ajunge în ecran.
+const video = s => s.video ? `<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/${esc(s.video)}?rel=0" title="${esc(plainTitle(s.title) || 'Video Purapa')}" loading="lazy"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>` : '';
+
 // Cifrele-cheie ale unui produs, din câmpurile și relațiile lui (nimic scris de mână).
 function productFacts(ctx, p) {
   const stages = ctx.within(ctx.component, 'Etapele produsului', () => ctx.related('produse', p.id, 'stages'));
@@ -239,7 +243,8 @@ const SECTIONS = {
         <div class="answer">${ctx.rich(q.answer)}</div></details>`).join('')}</div></div>`);
   },
 
-  text: (ctx, s) => wrap(s, `<div class="prose">${s.kicker ? `<p class="eyebrow">${ctx.text(s.kicker)}</p>` : ''}
+  // Cu video, secțiunea e o prezentare centrată (antet + video), ca pe site-ul vechi; fără, e text de citit.
+  text: (ctx, s) => s.video ? wrap(s, `${head(ctx, s, {center: true})}${buttons(ctx, s)}${video(s)}`) : wrap(s, `<div class="prose">${s.kicker ? `<p class="eyebrow">${ctx.text(s.kicker)}</p>` : ''}
     ${s.title ? `<h2 id="s-${s.id}">${title(ctx, s.title)}</h2>` : ''}${s.text ? ctx.rich(s.text) : ''}${buttons(ctx, s)}</div>`),
 
   cta: (ctx, s) => `<section class="section" aria-labelledby="s-${s.id}"><div class="container"><div class="cta-panel on-dark">

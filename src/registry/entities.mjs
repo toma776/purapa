@@ -163,6 +163,7 @@ export const ENTITIES = [
       {key: 'cta2_label', label: 'Buton secundar', type: 'text'},
       {key: 'cta2_link', label: 'Destinație buton secundar', type: 'text'},
       {key: 'image_id', label: 'Imagine', type: 'image'},
+      {key: 'video', label: 'Video YouTube', type: 'youtube', kinds: ['text']},
       {key: 'params', label: 'Ipotezele calculatorului', type: 'json', kinds: ['calculator']},
       {key: 'category_id', label: 'Categorie afișată', type: 'ref', target: 'categorii', rel: 'afișează categoria', inverseLabel: 'Secțiuni', kinds: ['produse']},
       {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero', 'calculator']},

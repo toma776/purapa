@@ -58,6 +58,8 @@ function input(f, value, {store, disabled}) {
     case 'boolean': return `<input ${common} type="checkbox"${value ? ' checked' : ''}>`;
     case 'email': return `<input ${common} type="email" value="${esc(v)}">`;
     case 'url': return `<input ${common} type="text" inputmode="url" value="${esc(v)}">`;
+    case 'youtube': return `<input ${common} type="text" inputmode="url" value="${esc(v)}" placeholder="https://www.youtube.com/watch?v=…">
+      <small class="hint">Lipește adresa videoului de pe YouTube.</small>`;
     case 'phone': return `<input ${common} type="tel" value="${esc(v)}">`;
     case 'select': return `<select ${common}><option value="">—</option>${(f.options ?? []).map(o => `<option${o === value ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
     case 'ref': case 'image': {
