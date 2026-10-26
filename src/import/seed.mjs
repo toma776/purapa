@@ -149,13 +149,7 @@ export function seed(store, {user = SYSTEM} = {}) {
     ['Cât durează testul?', '<p>Sub 5 minute. Banda stă în apă 2–3 secunde, reacționează circa 30 de secunde, apoi fotografiezi rezultatul lângă scala de culori.</p>'],
     ['Cum primesc rezultatul?', '<p>Încarci fotografia benzii în aplicația Purapa, prin codul QR sau linkul primit, și primești un raport digital pentru toți cei {nr_parametri} parametri, cu recomandări de filtrare.</p>']
   ].map(([question, answer], i) => c('intrebari', {question, answer, position: 10 + i, products: [ids.test]}, src('/testare-apa/', question)));
-  const ambSteps = [
-    step('Înscrierea', '<p>Completezi formularul și parcurgi prezentarea programului.</p>', src('/ambassadors/', 'pasul 1')),
-    step('Recomandarea naturală', '<p>Povestești experiența ta cu Purapa celor apropiați, offline sau online.</p>', src('/ambassadors/', 'pasul 2')),
-    step('Recompensa', '<p>Primești un comision pentru fiecare cumpărare făcută prin recomandarea ta, conform condițiilor programului.</p>', src('/ambassadors/', 'pasul 3'))
-  ];
-
-  const page = (data, sections, s) => {
+  const page =(data, sections, s) => {
     const secIds = sections.map(x => c('sectiuni', x, s));
     return c('pagini', {...data, sections: secIds}, s);
   };
@@ -164,10 +158,19 @@ export function seed(store, {user = SYSTEM} = {}) {
     seo_title: 'Filtre de apă pentru acasă', seo_description: 'Sisteme de filtrare Purapa: apă curată și sigură direct de la robinet.'}, src('/'));
   ids.produse = c('pagini', {title: 'Produse', slug: 'produse', menu_label: 'Produse', menu_order: 2, footer: 'firma'}, src('/produse/'));
   ids.testare = c('pagini', {title: 'Testare apă potabilă', slug: 'testare-apa', menu_label: 'Testare apă', menu_order: 3, footer: 'firma',
-    seo_title: 'Testare apă potabilă – analiză rapidă cu Test Rapid Purapa'}, src('/testare-apa/'));
+    seo_title: 'Testare apă potabilă – analiză rapidă cu Test Rapid Purapa',
+    seo_description: 'Testează apa acasă, în sub 5 minute: 16 parametri esențiali, raport digital și recomandări personalizate de filtrare.'}, src('/testare-apa/'));
   ids.despre = c('pagini', {title: 'Despre Purapa', slug: 'despre-noi', menu_label: 'Despre', menu_order: 4}, src('/despre-noi/'));
-  ids.ambassadors = c('pagini', {title: 'Purapa Ambassadors', slug: 'ambassadors', menu_label: 'Ambassadors', menu_order: 6, footer: 'firma'}, src('/ambassadors/'));
+  ids.ambassadors = c('pagini', {title: 'Purapa Ambassadors', slug: 'ambassadors', menu_label: 'Ambassadors', menu_order: 6, footer: 'firma',
+    seo_title: 'Purapa Ambassadors – recomandă apă curată și primești comision',
+    seo_description: 'Programul Purapa Ambassadors: recomanzi cu naturalețe apa filtrată celor apropiați și primești comision pentru fiecare achiziție. Fără ținte, fără obligații.'}, src('/ambassadors/'));
   ids.contact = c('pagini', {title: 'Contact', slug: 'contact', menu_label: 'Contact', menu_order: 7, footer: 'firma'}, src('/contact/'));
+  // Pașii programului de ambasadori trimit la pagina de contact, deci vin după ea.
+  const ambSteps = [
+    step('Înscriere', `<p>Completezi <a data-ref="pagini:${ids.contact}">formularul</a> și parcurgi introducerea în program.</p>`, src('/ambassadors/', 'pasul 1')),
+    step('Recomandare naturală', '<p>Împarți cu cei apropiați experiența ta cu Purapa, offline sau online.</p>', src('/ambassadors/', 'pasul 2')),
+    step('Recompensă', '<p>Primești un comision, conform condițiilor programului, pentru fiecare achiziție făcută prin recomandarea ta.</p>', src('/ambassadors/', 'pasul 3'))
+  ];
   for (const [slug, title, label] of [['termeni-si-conditii', 'Termeni și condiții', 'Termeni'],
     ['politica-de-confidentialitate', 'Politica de confidențialitate', 'Confidențialitate'], ['politica-de-cookie', 'Politica de cookie', 'Politica cookie']]) {
     ids[slug] = page({title, slug, menu_label: label, footer: 'legal'},
@@ -237,7 +240,6 @@ export function seed(store, {user = SYSTEM} = {}) {
   })) test[key] = c('sectiuni', data, src('/testare-apa/'));
   store.update(user, 'sectiuni', test.hero, {cta2_label: 'Vezi cum funcționează', cta2_link: `ref:sectiuni:${test.steps}`}, {source: src('/testare-apa/')});
   store.setLinks(user, 'pagini', ids.testare, 'sections', Object.values(test));
-  store.update(user, 'pagini', ids.testare, {seo_description: 'Testează apa acasă, în sub 5 minute: 16 parametri esențiali, raport digital și recomandări personalizate de filtrare.'}, {source: src('/testare-apa/')});
   sec(ids.despre, [
     {kind: 'hero', title: 'Tehnologie avansată pentru apă pură',
      text: '<p>Purapa e un brand dedicat calității apei și siguranței consumatorului: microfiltrare modernă, materiale de calitate, procese testate. Sistemele sunt proiectate în Europa.</p>'},
@@ -245,12 +247,31 @@ export function seed(store, {user = SYSTEM} = {}) {
     {kind: 'text', title: 'Instalare fără bătăi de cap', text: '<p>Sistemul compact se integrează perfect sub chiuvetă. Vezi procesul de montaj pas cu pas.</p>', video: 'NPfIE4AtHnc'},
     {kind: 'cta', title: 'Ești gata pentru schimbare?', cta_label: 'Testează apa acum', cta_link: `ref:pagini:${ids.testare}`}
   ], src('/despre-noi/'));
-  sec(ids.ambassadors, [
-    {kind: 'hero', title: 'Purapa Ambassadors',
-     text: '<p>Pentru cei care cred că apa curată schimbă viața de zi cu zi: studenți, creatori, oameni activi în comunitatea lor. Fără ținte, fără presiune, fără obligații.</p>',
-     cta_label: 'Contactează-ne', cta_link: `ref:pagini:${ids.contact}`},
-    {kind: 'pasi', title: 'Cum funcționează', steps: ambSteps, cta_label: 'Contactează-ne', cta_link: `ref:pagini:${ids.contact}`}
-  ], src('/ambassadors/'));
+  const perks = [
+    benefit('Construiești schimbare în comunitate', 'Ajuți familiile din jurul tău să descopere o soluție sigură și sustenabilă pentru apa de zi cu zi.', 'users', src('/ambassadors/', 'Un program creat pentru oameni care inspiră încredere')),
+    benefit('Primești recompense pentru recomandări autentice', 'Pentru fiecare achiziție făcută prin codul tău primești un comision, conform condițiilor programului.', 'gift', src('/ambassadors/', 'Un program creat pentru oameni care inspiră încredere')),
+    benefit('Nu există obiective sau presiuni', 'Recomanzi doar când și cui vrei: fără ținte de vânzări și fără obligații.', 'shield', src('/ambassadors/', 'Un program creat pentru oameni care inspiră încredere')),
+    benefit('Faci parte dintr-o mișcare pentru apă mai bună', 'Alături de oameni care cred în impactul apei curate asupra vieții de zi cu zi.', 'drop', src('/ambassadors/', 'Un program creat pentru oameni care inspiră încredere'))
+  ];
+  const amb = {};
+  for (const [key, data] of Object.entries({
+    hero: {kind: 'hero', kicker: 'Purapa Ambassadors', title: 'Alătură-te *comunității*',
+      text: '<p>Un program dedicat celor care cred în impactul apei curate asupra vieții de zi cu zi și vor să ducă această schimbare mai departe.</p>',
+      cta_label: 'Devino ambasador', cta_link: `ref:pagini:${ids.contact}`,
+      facts: '3 pași | ca să începi\ncomision | la fiecare achiziție\nzero | obiective impuse'},
+    about: {kind: 'text', kicker: 'Despre program', title: 'Un mod simplu și natural de a contribui la *binele celor din jur*',
+      text: '<p>Programul Purapa Ambassadors reunește studenți, creatori și oameni activi în comunitățile lor, care aleg să împărtășească beneficiile apei filtrate celor dragi.</p><p>Prin recomandările tale, autentice și bazate pe experiență, familiile pot descoperi o soluție sigură și sustenabilă pentru apa de zi cu zi. Pentru fiecare achiziție făcută prin codul tău primești un comision, conform condițiilor programului.</p>',
+      note: 'Fără presiune, fără obiective impuse, fără obligații.'},
+    steps: {kind: 'pasi', theme: 'deschis', kicker: 'Cum funcționează', title: 'Trei pași, de la înscriere la *recompensă*', steps: ambSteps},
+    // Ilustrația comunității vine din import, pe secțiunea cu acest titlu (ca pe site-ul vechi).
+    why: {kind: 'beneficii', theme: 'inchis', kicker: 'De ce să te alături', title: 'Un program creat pentru oameni care *inspiră încredere*',
+      text: '<p>Potrivit pentru oricine își dorește să recomande cu naturalețe un produs valoros:</p><ul><li>studenți</li><li>tineri profesioniști</li><li>creatori de conținut</li><li>oameni activi în comunitatea lor</li></ul>',
+      benefits: perks},
+    cta: {kind: 'cta', kicker: 'Purapa Ambassadors', title: 'Te invităm să te alături *comunității*',
+      text: '<p>Trimite-ne un mesaj și îți spunem care sunt următorii pași.</p>', cta_label: 'Contactează-ne', cta_link: `ref:pagini:${ids.contact}`}
+  })) amb[key] = c('sectiuni', data, src('/ambassadors/'));
+  store.update(user, 'sectiuni', amb.hero, {cta2_label: 'Cum funcționează', cta2_link: `ref:sectiuni:${amb.steps}`}, {source: src('/ambassadors/')});
+  store.setLinks(user, 'pagini', ids.ambassadors, 'sections', Object.values(amb));
   sec(ids.contact, [{kind: 'contact', title: 'Contact'}], src('/contact/'));
 
   return ids;

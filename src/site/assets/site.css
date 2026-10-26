@@ -160,6 +160,12 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
 .price-card del { color: var(--muted); font-weight: 500; font-size: .9375rem; }
 .price-card .stock { display: inline-flex; align-items: center; gap: .4rem; font-size: .8125rem; font-weight: 600; color: var(--ok); }
 .price-card .stock::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+/* Hero fără imagine: o singură coloană, centrată. */
+.hero.solo .grid { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+.hero.solo .copy { max-width: 52rem; }
+.hero.solo .copy .lead { margin-inline: auto; max-width: 40rem; }
+.hero.solo .eyebrow, .hero.solo .actions, .hero.solo .facts { justify-content: center; }
+.hero.solo .facts li { text-align: left; }
 @media (max-width: 880px) {
   .hero .grid { grid-template-columns: 1fr; }
   .hero .visual { width: min(100%, 420px); }
@@ -379,11 +385,13 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
 .note-card p { margin: 0; color: var(--ink); font-size: 1rem; }
 @media (max-width: 880px) { .intro-split { grid-template-columns: 1fr; } }
 
-/* În antetul centrat al unei liste de carduri, o listă din text devine un șir de etichete. */
-.head.center .lead ul { list-style: none; padding: 0; margin: 1.25rem 0; display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
-.head.center .lead li { margin: 0; padding: .45rem 1rem; border-radius: 999px; background: var(--white); border: 1px solid var(--line);
+/* În antetul unei secțiuni, o listă din text devine un șir de etichete. */
+.head .lead ul { list-style: none; padding: 0; margin: 1.25rem 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.head.center .lead ul { justify-content: center; }
+.head .lead li { margin: 0; padding: .45rem 1rem; border-radius: 999px; background: var(--white); border: 1px solid var(--line);
   font-size: .9375rem; font-weight: 600; color: var(--navy); }
-.section.deschis .head.center .lead li { border-color: #d3dcec; }
+.section.deschis .head .lead li { border-color: #d3dcec; }
+.on-dark .head .lead li { background: rgb(255 255 255 / .08); border-color: rgb(255 255 255 / .22); color: var(--white); }
 .prose { max-width: 46rem; }
 .prose h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; }
 .prose h3 { margin: 2rem 0 .75rem; }

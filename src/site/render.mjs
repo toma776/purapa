@@ -109,7 +109,8 @@ const SECTIONS = {
     const facts = s.facts ? String(s.facts).split('\n').map(l => l.split('|').map(x => x.trim())).filter(([v]) => v).map(([v, l = '']) => ({value: ctx.text(v), label: ctx.text(l)}))
       : product ? productFacts(ctx, product).map(f => ({value: esc(f.value), label: esc(f.label)})) : [];
     const visual = image(ctx, s.image_id ?? product?.image_id, {eager: true, sizes: '(max-width: 880px) 92vw, 480px'});
-    return `<section class="hero" aria-labelledby="s-${s.id}"><div class="container grid">
+    // Fără imagine, hero-ul e centrat, ca să nu rămână o jumătate goală.
+    return `<section class="hero${visual ? '' : ' solo'}" aria-labelledby="s-${s.id}"><div class="container grid">
       <div class="copy">${s.kicker ? `<p class="eyebrow">${ctx.text(s.kicker)}</p>` : ''}
         <${i === 0 ? 'h1' : 'h2'} id="s-${s.id}">${title(ctx, s.title)}</${i === 0 ? 'h1' : 'h2'}>
         ${s.text ? `<div class="lead">${ctx.rich(s.text)}</div>` : ''}${buttons(ctx, s)}
