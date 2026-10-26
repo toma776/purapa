@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-26T15:39:59.360Z",
+  "at": "2026-10-26T09:53:40.143Z",
   "created": [],
   "updated": [
     "produse:1",
@@ -24,7 +24,6 @@
     "sectiuni:4",
     "sectiuni:8",
     "sectiuni:10",
-    "sectiuni:28",
     "pagini:1",
     "pagini:5",
     "pagini:6",
@@ -39,7 +38,7 @@
     "sectiuni:1"
   ],
   "unchanged": 7,
-  "media": 14,
+  "media": 13,
   "tokens": 41,
   "roundtrip": [
     {
