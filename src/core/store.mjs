@@ -1,8 +1,5 @@
 // Store: orice modificare trece pe aici și scrie, în aceeași tranzacție, modificarea, istoricul și evenimentul (§3.3).
-// Citirile sunt sincrone, dintr-un model în memorie (datele unui site au câteva sute de rânduri);
-// modelul se reîncarcă singur când altă instanță a scris (marcajul `data_version`, ca PRAGMA data_version în §3.12).
-import {randomUUID} from 'node:crypto';
-import {nowIso} from './db.mjs';
+import {tx, afterCommit, nowIso} from './db.mjs';
 import {ENTITIES, byKey, relFields, relTable, titleOf, publicPath, JSON_TYPES, RESERVED_SLUGS} from '../registry/entities.mjs';
 import {sanitizeContent} from './content.mjs';
 
@@ -32,10 +29,8 @@ export function slugify(s) {
 
 export function createStore(db) {
   const listeners = new Set();
-  const state = {rows: new Map(ENTITIES.map(d => [d.key, new Map()])), rels: new Map(), version: null};
   const def = key => byKey[key] ?? (() => { throw new HttpError(404, `Tip necunoscut: ${key}`); })();
   const fieldOf = (d, key) => d.fields.find(f => f.key === key) ?? (() => { throw new HttpError(404, `Câmp necunoscut: ${d.key}.${key}`); })();
-  const user$ = user => user?.name ?? 'Sistem';
 
   function decode(d, row) {
     if (!row) return null;
@@ -47,69 +42,16 @@ export function createStore(db) {
     if (r.draft != null) r.draft = JSON.parse(r.draft);
     return r;
   }
-  const decodeLink = r => ({id: r.dst_id, position: r.position, status: r.status, confidence: r.confidence, source_id: r.source_id,
-    note: r.note, attrs: r.attrs ? JSON.parse(r.attrs) : null, created_at: r.created_at, created_by: r.created_by, src_id: r.src_id});
-  const linkSort = (a, b) => a.position - b.position || a.id - b.id;
 
-  // --- Modelul în memorie
-
-  const readVersion = async () => (await db.get("SELECT value FROM meta WHERE key = 'data_version'"))?.value ?? '0';
-
-  async function load() {
-    const version = await readVersion();
-    for (const d of ENTITIES) {
-      const map = new Map();
-      for (const row of await db.all(`SELECT * FROM "${d.table}" ORDER BY id`)) map.set(row.id, decode(d, row));
-      state.rows.set(d.key, map);
-      for (const f of relFields(d)) state.rels.set(relTable(d, f), (await db.all(`SELECT * FROM "${relTable(d, f)}"`)).map(decodeLink));
-    }
-    state.version = version;
-  }
-
-  // La începutul fiecărei cereri: reîncarcă doar dacă altcineva a scris între timp.
-  async function fresh() {
-    if (state.version === null || await readVersion() !== state.version) await load();
-  }
-
-  async function refreshRow(key, id) {
-    const d = def(key);
-    const row = await db.get(`SELECT * FROM "${d.table}" WHERE id = ?`, [id]);
-    if (row) state.rows.get(key).set(id, decode(d, row)); else state.rows.get(key).delete(id);
-    return row ? state.rows.get(key).get(id) : null;
-  }
-
-  async function refreshLinks(d, f, srcId) {
-    const t = relTable(d, f);
-    const rows = (await db.all(`SELECT * FROM "${t}" WHERE src_id = ?`, [srcId])).map(decodeLink);
-    state.rels.set(t, [...state.rels.get(t).filter(l => l.src_id !== srcId), ...rows]);
-  }
-
-  // Fiecare scriere: o tranzacție, cu marcajul de versiune schimbat. O tranzacție anulată reîncarcă modelul.
-  async function write(fn) {
-    try {
-      return await db.tx(async () => {
-        const result = await fn();
-        const v = randomUUID();
-        await db.run("INSERT INTO meta (key, value) VALUES ('data_version', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value", [v]);
-        db.afterCommit(() => { state.version = v; });
-        return result;
-      });
-    } catch (e) {
-      if (!db.inTx()) { state.version = null; await load().catch(() => {}); }
-      throw e;
-    }
-  }
-
-  // --- Citiri (sincrone)
-
-  const get = (key, id) => state.rows.get(def(key).key).get(Number(id)) ?? null;
-  const list = key => [...state.rows.get(def(key).key).values()];
-  const bySlug = (key, slug) => list(key).find(r => r.slug === slug) ?? null;
-  const relRows = (d, f) => state.rels.get(relTable(d, f)) ?? [];
+  const get = (key, id) => { const d = def(key); return decode(d, db.prepare(`SELECT * FROM "${d.table}" WHERE id = ?`).get(id)); };
+  const list = key => { const d = def(key); return db.prepare(`SELECT * FROM "${d.table}" ORDER BY id`).all().map(r => decode(d, r)); };
+  const bySlug = (key, slug) => { const d = def(key); return decode(d, db.prepare(`SELECT * FROM "${d.table}" WHERE slug = ?`).get(slug)); };
 
   function links(key, id, fieldKey) {
     const d = def(key), f = fieldOf(d, fieldKey);
-    return relRows(d, f).filter(l => l.src_id === Number(id)).sort(linkSort).map(({src_id, ...l}) => l);
+    return db.prepare(`SELECT * FROM "${relTable(d, f)}" WHERE src_id = ? ORDER BY position, dst_id`).all(id)
+      .map(r => ({id: r.dst_id, position: r.position, status: r.status, confidence: r.confidence, source_id: r.source_id,
+        note: r.note, attrs: r.attrs ? JSON.parse(r.attrs) : null, created_at: r.created_at, created_by: r.created_by}));
   }
 
   // Scope-urile unei înregistrări: vecinătățile relațiilor ei (cheile străine și legăturile confirmate).
@@ -132,61 +74,44 @@ export function createStore(db) {
     return {status: d.noStatus ? 'published' : rec.status, paths: path ? [path] : [], scopes: scopesOf(d, rec), title: titleOf(d, rec), vals};
   }
 
-  // Cine trimite spre o înregistrare (nivelul 1 din „Unde apare” și protecția la ștergere).
-  function inbound(key, id) {
-    const out = [];
-    id = Number(id);
-    for (const d of ENTITIES) for (const f of d.fields) {
-      const target = f.type === 'image' ? 'media' : f.target;
-      if (target !== key) continue;
-      if (f.type === 'ref' || f.type === 'image') {
-        for (const r of list(d.key)) if (r[f.key] === id) out.push({entity: d.key, id: r.id, field: f.key, rel: f.inverseLabel ?? f.label, owned: false, required: !!f.required});
-      } else if (f.type === 'refs') {
-        for (const l of relRows(d, f)) if (l.id === id) out.push({entity: d.key, id: l.src_id, field: f.key, rel: f.inverseLabel, status: l.status, owned: !!f.owned, required: false});
-      }
-    }
-    return out;
+  function emit(user, action, key, id, before, after, extra = {}) {
+    db.prepare('INSERT INTO change_events (at, user_name, action, entity, entity_id, label, payload) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(nowIso(), user?.name ?? 'Sistem', action, key, id, (after ?? before)?.title ?? null, JSON.stringify({before, after, ...extra}));
+    afterCommit(db, () => { for (const l of listeners) l({key, id, action}); });
   }
 
-  // --- Scrieri: istoric, eveniment, proveniență
-
-  async function emit(user, action, key, id, before, after, extra = {}) {
-    await db.run('INSERT INTO change_events (at, user_name, action, entity, entity_id, label, payload) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [nowIso(), user$(user), action, key, id, (after ?? before)?.title ?? extra.label ?? null, JSON.stringify({before, after, ...extra})]);
-    db.afterCommit(() => { for (const l of listeners) l({key, id, action}); });
+  function audit(user, action, key, id, label, changes) {
+    db.prepare('INSERT INTO audit_log (at, user_name, action, entity, entity_id, label, changes) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(nowIso(), user?.name ?? 'Sistem', action, key, id, label, JSON.stringify(changes));
   }
-
-  const audit = (user, action, key, id, label, changes) =>
-    db.run('INSERT INTO audit_log (at, user_name, action, entity, entity_id, label, changes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [nowIso(), user$(user), action, key, id, label, JSON.stringify(changes)]);
 
   // O sursă apare o singură dată; un reimport îi actualizează data descărcării și fișierul din snapshot.
-  async function sourceId(src) {
-    const found = await db.get('SELECT id FROM sources WHERE url = ?', [src.url]);
+  function sourceId(src) {
+    const found = db.prepare('SELECT id FROM sources WHERE url = ?').get(src.url);
     if (found) {
-      if (src.fetched_at || src.snapshot_file) await db.run('UPDATE sources SET fetched_at = COALESCE(?, fetched_at), snapshot_file = COALESCE(?, snapshot_file), status = COALESCE(?, status) WHERE id = ?',
-        [src.fetched_at ?? null, src.snapshot_file ?? null, src.status ?? null, found.id]);
+      if (src.fetched_at || src.snapshot_file) db.prepare('UPDATE sources SET fetched_at = COALESCE(?, fetched_at), snapshot_file = COALESCE(?, snapshot_file), status = COALESCE(?, status) WHERE id = ?')
+        .run(src.fetched_at ?? null, src.snapshot_file ?? null, src.status ?? null, found.id);
       return found.id;
     }
-    return db.insert('INSERT INTO sources (kind, url, title, fetched_at, method, snapshot_file, status, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [src.kind, src.url, src.title ?? null, src.fetched_at ?? null, src.method ?? null, src.snapshot_file ?? null, src.status ?? null, src.note ?? null, nowIso()]);
+    return Number(db.prepare('INSERT INTO sources (kind, url, title, fetched_at, method, snapshot_file, status, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(src.kind, src.url, src.title ?? null, src.fetched_at ?? null, src.method ?? null, src.snapshot_file ?? null, src.status ?? null, src.note ?? null, nowIso()).lastInsertRowid);
   }
 
   // Fiecare câmp scris își scrie sursa: importul pe a lui, o editare manuală pe „manual:<autor>” (§1.4).
-  async function provenance(user, key, id, fields, src) {
+  function provenance(user, key, id, fields, src) {
     if (!fields.length) return;
-    const s = src ?? {kind: 'manual', url: `manual:${user$(user)}`, title: `Introdus manual de ${user$(user)}`};
-    const sid = await sourceId(s);
+    const s = src ?? {kind: 'manual', url: `manual:${user?.name ?? 'Sistem'}`, title: `Introdus manual de ${user?.name ?? 'Sistem'}`};
+    const sid = sourceId(s);
     const certainty = s.certainty ?? 'confirmed';
     const at = nowIso();
-    const manual = s.kind === 'manual' && certainty === 'confirmed';
+    const stmt = db.prepare(`INSERT INTO provenance (entity, entity_id, field, source_id, excerpt, method, certainty, confidence, verified_at, verified_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (entity, entity_id, field, source_id) DO UPDATE SET excerpt = excluded.excerpt, method = excluded.method,
+        certainty = excluded.certainty, verified_at = excluded.verified_at, verified_by = excluded.verified_by, created_at = excluded.created_at`);
     for (const field of fields) {
-      await db.run(`INSERT INTO provenance (entity, entity_id, field, source_id, excerpt, method, certainty, confidence, verified_at, verified_by, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT (entity, entity_id, field, source_id) DO UPDATE SET excerpt = excluded.excerpt, method = excluded.method,
-          certainty = excluded.certainty, verified_at = excluded.verified_at, verified_by = excluded.verified_by, created_at = excluded.created_at`,
-        [key, id, field, sid, s.excerpt ?? null, s.method ?? (src ? 'import' : 'editare manuală'), certainty,
-          s.confidence ?? null, manual ? at : null, manual ? user$(user) : null, at]);
+      const manual = s.kind === 'manual' && certainty === 'confirmed';
+      stmt.run(key, id, field, sid, s.excerpt ?? null, s.method ?? (src ? 'import' : 'editare manuală'), certainty,
+        s.confidence ?? null, manual ? at : null, manual ? user?.name ?? 'Sistem' : null, at);
     }
   }
 
@@ -194,7 +119,7 @@ export function createStore(db) {
     let slug = base;
     if (!slug && !allowEmpty) slug = d.key;
     if (RESERVED_SLUGS.has(slug)) slug = `${slug}-2`;
-    const taken = s => list(d.key).some(r => r.slug === s && r.id !== id);
+    const taken = s => db.prepare(`SELECT id FROM "${d.table}" WHERE slug = ? AND id IS NOT ?`).get(s, id ?? null);
     for (let n = 2; taken(slug); n++) slug = `${base || d.key}-${n}`;
     return slug;
   }
@@ -253,60 +178,51 @@ export function createStore(db) {
     return !same(old, vals[k]);
   });
 
-  // Scrie coloanele și crește versiunea; cu `expect`, doar dacă versiunea din bază e cea citită (blocare optimistă).
-  async function writeColumns(d, id, vals, user, extra = {}, expect = null) {
-    const all = {...vals, ...extra, updated_at: nowIso(), updated_by: user$(user)};
-    const merged = {...get(d.key, id), ...vals};
-    all.search = titleOf(d, merged).toLowerCase();
+  function writeColumns(d, id, vals, user, extra = {}) {
+    const all = {...vals, ...extra, updated_at: nowIso(), updated_by: user?.name ?? 'Sistem'};
     const keys = Object.keys(all);
-    const r = await db.run(`UPDATE "${d.table}" SET ${keys.map(k => `"${k}" = ?`).join(', ')}, version = version + 1 WHERE id = ?${expect != null ? ' AND version = ?' : ''}`,
-      [...keys.map(k => all[k]), id, ...(expect != null ? [expect] : [])]);
-    if (expect != null && r.changes === 0) {
-      const current = await refreshRow(d.key, id);
-      throw new HttpError(409, 'Înregistrarea a fost modificată între timp', {current});
-    }
-    return refreshRow(d.key, id);
+    db.prepare(`UPDATE "${d.table}" SET ${keys.map(k => `"${k}" = ?`).join(', ')}, version = version + 1 WHERE id = ?`)
+      .run(...keys.map(k => all[k]), id);
+    const rec = get(d.key, id);
+    db.prepare(`UPDATE "${d.table}" SET search = ? WHERE id = ?`).run(titleOf(d, rec).toLowerCase(), id);
   }
 
   // 301 automat la schimbarea adresei: fără lanțuri și fără bucle (§3.8).
-  async function autoRedirect(from, to) {
+  function autoRedirect(from, to) {
     if (!from || !to || from === to) return;
-    await db.run('DELETE FROM redirects WHERE from_path = ?', [to]);
-    await db.run('UPDATE redirects SET to_path = ? WHERE to_path = ?', [to, from]);
-    await db.run('INSERT INTO redirects (from_path, to_path, auto, created_at) VALUES (?, ?, 1, ?) ON CONFLICT (from_path) DO UPDATE SET to_path = excluded.to_path',
-      [from, to, nowIso()]);
+    const at = nowIso();
+    db.prepare('DELETE FROM redirects WHERE from_path = ?').run(to);
+    db.prepare('UPDATE redirects SET to_path = ? WHERE to_path = ?').run(to, from);
+    db.prepare('INSERT INTO redirects (from_path, to_path, auto, created_at) VALUES (?, ?, 1, ?) ON CONFLICT (from_path) DO UPDATE SET to_path = excluded.to_path')
+      .run(from, to, at);
   }
 
-  const normalizeItems = items => (items ?? []).map(x => typeof x === 'object' ? {...x, id: Number(x.id)} : {id: Number(x)});
+  function normalizeItems(items) {
+    return (items ?? []).map(x => typeof x === 'object' ? {...x, id: Number(x.id)} : {id: Number(x)});
+  }
 
-  async function writeLinks(user, d, id, f, items, src) {
+  function writeLinks(user, d, id, f, items, src) {
     const t = relTable(d, f), target = byKey[f.target];
     const old = new Map(links(d.key, id, f.key).map(l => [l.id, l]));
     const rec = get(d.key, id);
     if (f.max && items.length > f.max) throw new HttpError(400, `Cel mult ${f.max} legături`);
-    for (const it of items) {
+    const sid = src ? sourceId(src) : null;
+    db.prepare(`DELETE FROM "${t}" WHERE src_id = ?`).run(id);
+    const ins = db.prepare(`INSERT INTO "${t}" (src_id, dst_id, position, status, confidence, source_id, note, attrs, created_at, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    items.forEach((it, i) => {
       const dst = get(target.key, it.id);
       if (!dst) throw new HttpError(400, `${target.one} #${it.id} nu există`);
-      if (target.key === d.key && it.id === id) throw new HttpError(400, 'O înregistrare nu se poate lega de ea însăși');
       if (f.only && !f.only(rec, dst, api)) throw new HttpError(400, `${titleOf(target, dst)} nu e permis la „${f.label}”`);
-    }
-    const sid = src ? await sourceId(src) : null;
-    await db.run(`DELETE FROM "${t}" WHERE src_id = ?`, [id]);
-    let i = 0;
-    for (const it of items) {
       const prev = old.get(it.id);
-      await db.run(`INSERT INTO "${t}" (src_id, dst_id, position, status, confidence, source_id, note, attrs, created_at, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, it.id, f.ordered ? i++ : 0, it.status ?? prev?.status ?? 'confirmed', it.confidence ?? prev?.confidence ?? null,
-          sid ?? prev?.source_id ?? null, it.note ?? prev?.note ?? null,
-          it.attrs ? JSON.stringify(it.attrs) : prev?.attrs ? JSON.stringify(prev.attrs) : null,
-          prev?.created_at ?? nowIso(), prev?.created_by ?? user$(user)]);
-    }
-    await refreshLinks(d, f, id);
+      ins.run(id, it.id, f.ordered ? i : 0, it.status ?? prev?.status ?? 'confirmed', it.confidence ?? prev?.confidence ?? null,
+        sid ?? prev?.source_id ?? null, it.note ?? prev?.note ?? null,
+        it.attrs ? JSON.stringify(it.attrs) : prev?.attrs ? JSON.stringify(prev.attrs) : null,
+        prev?.created_at ?? nowIso(), prev?.created_by ?? user?.name ?? 'Sistem');
+    });
     const now = links(d.key, id, f.key);
-    const key = l => l && [l.status, l.position];
     const touched = [...new Set([...old.keys(), ...now.map(l => l.id)])]
-      .filter(dst => !same(key(old.get(dst)), key(now.find(l => l.id === dst))))
+      .filter(dst => !same(old.get(dst) && [old.get(dst).status, old.get(dst).position], now.find(l => l.id === dst) && [now.find(l => l.id === dst).status, now.find(l => l.id === dst).position]))
       .map(dst => `${f.target}:${dst}`);
     return {old: [...old.values()], now, touched};
   }
@@ -315,23 +231,24 @@ export function createStore(db) {
     const d = def(key);
     need(user, 'content.write');
     if (publish && !d.noStatus) need(user, publishPerm(d));
-    return write(async () => {
-      if (d.singleton && list(key).length) throw new HttpError(409, `${d.label} există deja`);
+    return tx(db, () => {
+      if (d.singleton && db.prepare(`SELECT 1 FROM "${d.table}" LIMIT 1`).get()) throw new HttpError(409, `${d.label} există deja`);
       const vals = coerce(d, data, null);
       const at = nowIso();
-      const base = {created_at: at, updated_at: at, created_by: user$(user), updated_by: user$(user), search: titleOf(d, vals).toLowerCase()};
+      const base = {created_at: at, updated_at: at, created_by: user?.name ?? 'Sistem', updated_by: user?.name ?? 'Sistem'};
       if (!d.noStatus) Object.assign(base, {status: publish ? 'published' : 'draft', published_at: publish ? at : null});
       const row = {...vals, ...base};
       const cols = Object.keys(row);
-      const id = await db.insert(`INSERT INTO "${d.table}" (${cols.map(c => `"${c}"`).join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`, cols.map(c => row[c]));
-      await refreshRow(key, id);
+      const id = Number(db.prepare(`INSERT INTO "${d.table}" (${cols.map(c => `"${c}"`).join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`)
+        .run(...cols.map(c => row[c])).lastInsertRowid);
       const touched = [];
-      for (const f of relFields(d)) if (data[f.key]) touched.push(...(await writeLinks(user, d, id, f, normalizeItems(data[f.key]), source)).touched);
+      for (const f of relFields(d)) if (data[f.key]) touched.push(...writeLinks(user, d, id, f, normalizeItems(data[f.key]), source).touched);
       const rec = get(key, id);
-      await provenance(user, key, id, Object.keys(vals).filter(k => vals[k] != null), source);
-      await audit(user, 'create', key, id, titleOf(d, rec), {after: rec});
-      if (isVisible(d, rec)) await emit(user, 'create', key, id, null, snap(d, rec), {touched});
-      return rec;
+      db.prepare(`UPDATE "${d.table}" SET search = ? WHERE id = ?`).run(titleOf(d, rec).toLowerCase(), id);
+      provenance(user, key, id, Object.keys(vals).filter(k => vals[k] != null), source);
+      audit(user, 'create', key, id, titleOf(d, rec), {after: rec});
+      if (isVisible(d, rec)) emit(user, 'create', key, id, null, snap(d, rec), {touched});
+      return get(key, id);
     });
   }
 
@@ -340,22 +257,19 @@ export function createStore(db) {
     const d = def(key);
     need(user, 'content.write');
     if (publish && !d.noStatus) need(user, publishPerm(d));
-    id = Number(id);
-    return write(async () => {
+    return tx(db, () => {
       const cur = get(key, id);
       if (!cur) throw new HttpError(404, `${d.one} #${id} nu există`);
       if (version != null && Number(version) !== cur.version) throw new HttpError(409, 'Înregistrarea a fost modificată între timp', {current: cur});
-      const expect = version != null ? Number(version) : null;
       const clean = Object.fromEntries(Object.entries(data).filter(([k]) => d.fields.some(f => f.key === k && f.type !== 'refs')));
 
       if (!d.noStatus && cur.status === 'published' && !publish) {
         const draft = {...(cur.draft ?? {}), ...clean};
         coerce(d, draft, cur);
-        const r = await db.run(`UPDATE "${d.table}" SET draft = ?, version = version + 1, updated_at = ?, updated_by = ? WHERE id = ?${expect != null ? ' AND version = ?' : ''}`,
-          [JSON.stringify(draft), nowIso(), user$(user), id, ...(expect != null ? [expect] : [])]);
-        if (expect != null && r.changes === 0) throw new HttpError(409, 'Înregistrarea a fost modificată între timp', {current: await refreshRow(key, id)});
-        await audit(user, 'draft', key, id, titleOf(d, cur), {draft: clean});
-        return refreshRow(key, id);
+        db.prepare(`UPDATE "${d.table}" SET draft = ?, version = version + 1, updated_at = ?, updated_by = ? WHERE id = ?`)
+          .run(JSON.stringify(draft), nowIso(), user?.name ?? 'Sistem', id);
+        audit(user, 'draft', key, id, titleOf(d, cur), {draft: clean});
+        return get(key, id);
       }
 
       const merged = publish ? {...(cur.draft ?? {}), ...clean} : clean;
@@ -367,16 +281,17 @@ export function createStore(db) {
       // Nimic de schimbat (de exemplu un reimport identic): niciun eveniment; importul își reîmprospătează doar sursele.
       const nothing = !changed.length && (d.noStatus || !publish || (cur.status === 'published' && !cur.draft));
       if (nothing) {
-        if (source) await provenance(user, key, id, Object.keys(vals), source);
+        if (source) provenance(user, key, id, Object.keys(vals), source);
         return cur;
       }
-      const rec = await writeColumns(d, id, Object.fromEntries(changed.map(k => [k, vals[k]])), user, extra, expect);
+      writeColumns(d, id, Object.fromEntries(changed.map(k => [k, vals[k]])), user, extra);
+      const rec = get(key, id);
       const after = snap(d, rec);
-      if (before.paths[0] && after.paths[0]) await autoRedirect(before.paths[0], after.paths[0]);
-      await provenance(user, key, id, source ? Object.keys(vals) : changed, source);
-      await audit(user, publish ? 'publish' : 'update', key, id, titleOf(d, rec),
+      if (before.paths[0] && after.paths[0]) autoRedirect(before.paths[0], after.paths[0]);
+      provenance(user, key, id, source ? Object.keys(vals) : changed, source);
+      audit(user, publish ? 'publish' : 'update', key, id, titleOf(d, rec),
         {fields: Object.fromEntries(changed.map(k => [k, [cur[k] ?? null, rec[k] ?? null]])), before: cur});
-      if (isVisible(d, cur) || isVisible(d, rec)) await emit(user, publish && cur.status !== 'published' ? 'publish' : 'update', key, id, before, after);
+      if (isVisible(d, cur) || isVisible(d, rec)) emit(user, publish && cur.status !== 'published' ? 'publish' : 'update', key, id, before, after);
       return rec;
     });
   }
@@ -391,15 +306,15 @@ export function createStore(db) {
     need(user, 'content.write');
     // NOU (§1.9): retragerea sau arhivarea unui tip cu aprobare cere și ea aprobare.
     need(user, publishPerm(d));
-    id = Number(id);
-    return write(async () => {
+    return tx(db, () => {
       const cur = get(key, id);
       if (!cur) throw new HttpError(404, `${d.one} #${id} nu există`);
       if (cur.status === status) return cur;
       const before = snap(d, cur);
-      const rec = await writeColumns(d, id, {}, user, {status});
-      await audit(user, status, key, id, titleOf(d, rec), {status: [cur.status, status]});
-      if (isVisible(d, cur)) await emit(user, status === 'archived' ? 'archive' : 'unpublish', key, id, before, snap(d, rec));
+      writeColumns(d, id, {}, user, {status});
+      const rec = get(key, id);
+      audit(user, status, key, id, titleOf(d, rec), {status: [cur.status, status]});
+      if (isVisible(d, cur)) emit(user, status === 'archived' ? 'archive' : 'unpublish', key, id, before, snap(d, rec));
       return rec;
     });
   }
@@ -410,16 +325,16 @@ export function createStore(db) {
     if (f.type !== 'refs') throw new HttpError(400, `${fieldKey} nu e o relație multiplă`);
     need(user, 'content.write');
     if (f.sensitive) need(user, 'content.approve');
-    id = Number(id);
-    return write(async () => {
+    return tx(db, () => {
       const cur = get(key, id);
       if (!cur) throw new HttpError(404, `${d.one} #${id} nu există`);
       const before = snap(d, cur);
-      const {old, now, touched} = await writeLinks(user, d, id, f, normalizeItems(items), source);
+      const {old, now, touched} = writeLinks(user, d, id, f, normalizeItems(items), source);
       if (!touched.length) return {links: now, live: isVisible(d, cur)};
-      const rec = await writeColumns(d, id, {}, user);
-      await audit(user, 'links', key, id, titleOf(d, rec), {field: fieldKey, before: old, after: now});
-      if (isVisible(d, rec)) await emit(user, 'links', key, id, before, snap(d, rec), {touched, field: fieldKey});
+      writeColumns(d, id, {}, user);
+      const rec = get(key, id);
+      audit(user, 'links', key, id, titleOf(d, rec), {field: fieldKey, before: old, after: now});
+      if (isVisible(d, rec)) emit(user, 'links', key, id, before, snap(d, rec), {touched, field: fieldKey});
       return {links: now, live: isVisible(d, rec)};
     });
   }
@@ -429,16 +344,15 @@ export function createStore(db) {
     const sd = def(srcKey), f = fieldOf(sd, fieldKey);
     if (f.target !== key) throw new HttpError(400, `${srcKey}.${fieldKey} nu trimite la ${key}`);
     const want = new Set(srcIds.map(Number));
-    id = Number(id);
-    return write(async () => {
-      const current = relRows(sd, f).filter(l => l.id === id).map(l => l.src_id);
+    return tx(db, () => {
+      const current = db.prepare(`SELECT src_id FROM "${relTable(sd, f)}" WHERE dst_id = ?`).all(id).map(r => r.src_id);
       for (const s of new Set([...current, ...want])) {
         const items = links(srcKey, s, fieldKey);
         const has = items.some(l => l.id === id);
-        if (want.has(s) && !has) await setLinks(user, srcKey, s, fieldKey, [...items, {id}]);
-        if (!want.has(s) && has) await setLinks(user, srcKey, s, fieldKey, items.filter(l => l.id !== id));
+        if (want.has(s) && !has) setLinks(user, srcKey, s, fieldKey, [...items, {id}]);
+        if (!want.has(s) && has) setLinks(user, srcKey, s, fieldKey, items.filter(l => l.id !== id));
       }
-      return relRows(sd, f).filter(l => l.id === id).map(l => l.src_id);
+      return db.prepare(`SELECT src_id FROM "${relTable(sd, f)}" WHERE dst_id = ?`).all(id).map(r => r.src_id);
     });
   }
 
@@ -448,16 +362,15 @@ export function createStore(db) {
     if (!['confirmed', 'inferred', 'unverified'].includes(status)) throw new HttpError(400, 'Stare invalidă');
     need(user, 'content.write');
     if (f.sensitive || d.approval || byKey[f.target].approval) need(user, 'content.approve');
-    id = Number(id); dst = Number(dst);
-    return write(async () => {
+    return tx(db, () => {
       const cur = get(key, id);
       const before = snap(d, cur);
-      const r = await db.run(`UPDATE "${relTable(d, f)}" SET status = ? WHERE src_id = ? AND dst_id = ? AND status <> ?`, [status, id, dst, status]);
+      const r = db.prepare(`UPDATE "${relTable(d, f)}" SET status = ? WHERE src_id = ? AND dst_id = ? AND status != ?`).run(status, id, dst, status);
       if (!r.changes) return links(key, id, fieldKey);
-      await refreshLinks(d, f, id);
-      const rec = await writeColumns(d, id, {}, user);
-      await audit(user, 'link-status', key, id, titleOf(d, rec), {field: fieldKey, dst, status});
-      if (isVisible(d, rec)) await emit(user, 'link-status', key, id, before, snap(d, rec), {touched: [`${f.target}:${dst}`], field: fieldKey});
+      writeColumns(d, id, {}, user);
+      const rec = get(key, id);
+      audit(user, 'link-status', key, id, titleOf(d, rec), {field: fieldKey, dst, status});
+      if (isVisible(d, rec)) emit(user, 'link-status', key, id, before, snap(d, rec), {touched: [`${f.target}:${dst}`], field: fieldKey});
       return links(key, id, fieldKey);
     });
   }
@@ -471,7 +384,7 @@ export function createStore(db) {
     need(user, 'content.write');
     if (f.sensitive || d.approval || byKey[f.target].approval) need(user, 'content.approve');
     const t = relTable(d, f);
-    return write(async () => {
+    return tx(db, () => {
       const bySrc = new Map();
       for (const [src, dst] of pairs) bySrc.set(Number(src), [...(bySrc.get(Number(src)) ?? []), Number(dst)]);
       const records = [], touched = [];
@@ -482,30 +395,31 @@ export function createStore(db) {
         const before = snap(d, cur);
         const done = [];
         for (const dst of dsts) {
-          const row = relRows(d, f).find(l => l.src_id === src && l.id === dst);
+          const row = db.prepare(`SELECT * FROM "${t}" WHERE src_id = ? AND dst_id = ?`).get(src, dst);
           if (!row || row.status === 'confirmed') continue;
-          if (action === 'confirm') await db.run(`UPDATE "${t}" SET status = 'confirmed' WHERE src_id = ? AND dst_id = ?`, [src, dst]);
+          if (action === 'confirm') db.prepare(`UPDATE "${t}" SET status = 'confirmed' WHERE src_id = ? AND dst_id = ?`).run(src, dst);
           else {
-            await db.run(`DELETE FROM "${t}" WHERE src_id = ? AND dst_id = ?`, [src, dst]);
-            const ev = row.source_id ? (await db.get('SELECT url FROM sources WHERE id = ?', [row.source_id]))?.url : null;
-            await db.run(`INSERT INTO link_dismissals (relation, src_id, dst_id, evidence, at, by) VALUES (?, ?, ?, ?, ?, ?)
-              ON CONFLICT (relation, src_id, dst_id) DO UPDATE SET evidence = excluded.evidence, at = excluded.at, by = excluded.by`,
-              [`${key}.${fieldKey}`, src, dst, ev ?? row.note ?? null, nowIso(), user$(user)]);
+            db.prepare(`DELETE FROM "${t}" WHERE src_id = ? AND dst_id = ?`).run(src, dst);
+            const ev = row.source_id ? db.prepare('SELECT url FROM sources WHERE id = ?').get(row.source_id)?.url : null;
+            db.prepare(`INSERT INTO link_dismissals (relation, src_id, dst_id, evidence, at, by) VALUES (?, ?, ?, ?, ?, ?)
+              ON CONFLICT (relation, src_id, dst_id) DO UPDATE SET evidence = excluded.evidence, at = excluded.at, by = excluded.by`)
+              .run(`${key}.${fieldKey}`, src, dst, ev ?? row.note ?? null, nowIso(), user?.name ?? 'Sistem');
           }
           done.push(dst);
           touched.push(`${f.target}:${dst}`);
         }
         if (!done.length) continue;
         changed += done.length;
-        await refreshLinks(d, f, src);
-        const rec = await writeColumns(d, src, {}, user);
-        await audit(user, action === 'confirm' ? 'links-confirm' : 'links-remove', key, src, titleOf(d, rec), {field: fieldKey, dst: done});
+        writeColumns(d, src, {}, user);
+        const rec = get(key, src);
+        audit(user, action === 'confirm' ? 'links-confirm' : 'links-remove', key, src, titleOf(d, rec), {field: fieldKey, dst: done});
         if (isVisible(d, rec)) records.push({key, id: src, before, after: snap(d, rec)});
       }
       if (records.length) {
-        await db.run('INSERT INTO change_events (at, user_name, action, entity, entity_id, label, payload) VALUES (?, ?, ?, ?, NULL, ?, ?)',
-          [nowIso(), user$(user), `bulk-${action}`, key, `${changed} legături ${action === 'confirm' ? 'confirmate' : 'scoase'}`, JSON.stringify({records, touched, field: fieldKey})]);
-        db.afterCommit(() => { for (const l of listeners) l({key, id: null, action: `bulk-${action}`}); });
+        db.prepare('INSERT INTO change_events (at, user_name, action, entity, entity_id, label, payload) VALUES (?, ?, ?, ?, NULL, ?, ?)')
+          .run(nowIso(), user?.name ?? 'Sistem', `bulk-${action}`, key, `${changed} legături ${action === 'confirm' ? 'confirmate' : 'scoase'}`,
+            JSON.stringify({records, touched, field: fieldKey}));
+        afterCommit(db, () => { for (const l of listeners) l({key, id: null, action: `bulk-${action}`}); });
       }
       return {changed, records: bySrc.size};
     });
@@ -513,45 +427,58 @@ export function createStore(db) {
 
   // Confirmarea unei informații dintr-o sursă: certitudinea devine „confirmată”, cu cine și când (§1.4).
   // NOU (§1.9): pe tipurile cu aprobare cere `content.approve`.
-  async function confirmProvenance(user, provId) {
+  function confirmProvenance(user, provId) {
     need(user, 'content.write');
-    const p = await db.get('SELECT * FROM provenance WHERE id = ?', [provId]);
+    const p = db.prepare('SELECT * FROM provenance WHERE id = ?').get(provId);
     if (!p) throw new HttpError(404, 'Sursa nu există');
     if (byKey[p.entity]?.approval) need(user, 'content.approve');
-    return write(async () => {
-      await db.run("UPDATE provenance SET certainty = 'confirmed', verified_at = ?, verified_by = ? WHERE id = ?", [nowIso(), user$(user), provId]);
-      await audit(user, 'source-confirm', p.entity, p.entity_id, null, {field: p.field, provenance: provId, was: p.certainty});
-      return db.get('SELECT * FROM provenance WHERE id = ?', [provId]);
+    return tx(db, () => {
+      db.prepare("UPDATE provenance SET certainty = 'confirmed', verified_at = ?, verified_by = ? WHERE id = ?").run(nowIso(), user?.name ?? 'Sistem', provId);
+      audit(user, 'source-confirm', p.entity, p.entity_id, null, {field: p.field, provenance: provId, was: p.certainty});
+      return db.prepare('SELECT * FROM provenance WHERE id = ?').get(provId);
     });
+  }
+
+  // Cine trimite spre o înregistrare (nivelul 1 din „Unde apare” și protecția la ștergere).
+  function inbound(key, id) {
+    const out = [];
+    for (const d of ENTITIES) for (const f of d.fields) {
+      const target = f.type === 'image' ? 'media' : f.target;
+      if (target !== key) continue;
+      if (f.type === 'ref' || f.type === 'image') {
+        for (const r of db.prepare(`SELECT id FROM "${d.table}" WHERE "${f.key}" = ?`).all(id))
+          out.push({entity: d.key, id: r.id, field: f.key, rel: f.inverseLabel ?? f.label, owned: false, required: !!f.required});
+      } else if (f.type === 'refs') {
+        for (const r of db.prepare(`SELECT src_id, status FROM "${relTable(d, f)}" WHERE dst_id = ?`).all(id))
+          out.push({entity: d.key, id: r.src_id, field: f.key, rel: f.inverseLabel, status: r.status, owned: !!f.owned, required: false});
+      }
+    }
+    return out;
   }
 
   function remove(user, key, id) {
     const d = def(key);
     need(user, 'content.delete');
-    id = Number(id);
-    return write(async () => {
+    return tx(db, () => {
       const cur = get(key, id);
       if (!cur) throw new HttpError(404, `${d.one} #${id} nu există`);
       const used = inbound(key, id).filter(u => !u.owned);
       if (used.length) throw new HttpError(409, `${titleOf(d, cur)} e folosit(ă) în ${used.length} locuri`, {usedBy: used});
       const before = snap(d, cur);
       const outLinks = Object.fromEntries(relFields(d).map(f => [f.key, links(key, id, f.key)]));
-      await db.run(`DELETE FROM "${d.table}" WHERE id = ?`, [id]);
-      await db.run('DELETE FROM provenance WHERE entity = ? AND entity_id = ?', [key, id]);
-      await audit(user, 'delete', key, id, titleOf(d, cur), {before: cur, links: outLinks});
-      if (isVisible(d, cur)) await emit(user, 'delete', key, id, before, null);
-      await load(); // ștergerea în cascadă atinge legăturile și cheile străine ale altora
+      db.prepare(`DELETE FROM "${d.table}" WHERE id = ?`).run(id);
+      db.prepare('DELETE FROM provenance WHERE entity = ? AND entity_id = ?').run(key, id);
+      audit(user, 'delete', key, id, titleOf(d, cur), {before: cur, links: outLinks});
+      if (isVisible(d, cur)) emit(user, 'delete', key, id, before, null);
       return {deleted: true};
     });
   }
 
   // O modificare fără entitate (de exemplu restaurarea unei copii): reface toate paginile.
-  const global = (user, label) => write(() => emit(user, 'global', null, null, null, null, {label}));
+  const global = (user, label) => tx(db, () => emit(user, 'global', null, null, null, null, {label}));
 
   const api = {
-    db, def, get, list, bySlug, links, inbound, relRows, snap: (key, rec) => snap(def(key), rec), scopesOf,
-    load, fresh, tx: write,
-    get version() { return state.version; },
+    db, def, get, list, bySlug, links, inbound, snap: (key, rec) => snap(def(key), rec), scopesOf,
     create, update, publish, setStatus, setLinks, setInverse, setLinkStatus, bulkLinks, confirmProvenance, remove, global, sourceId,
     isVisible: (key, rec) => isVisible(def(key), rec),
     onChange: fn => { listeners.add(fn); return () => listeners.delete(fn); }

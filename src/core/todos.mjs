@@ -25,21 +25,21 @@ export function createTodos(db, store, graph) {
     return out;
   }
 
-  async function list() {
+  function list() {
     const out = [];
     for (const d of ENTITIES.filter(x => !x.operational)) for (const r of store.list(d.key)) out.push(...forRecord(d, r));
     for (const b of graph.health().broken)
       out.push({impact: 'mare', kind: 'rupt', key: b.from.key, id: b.from.id, title: b.from.title, text: `trimitere ruptă spre ${b.to}`, href: edit(b.from.key, b.from.id)});
-    const failed = (await db.get("SELECT COUNT(*) AS n FROM change_events WHERE status = 'failed'")).n;
+    const failed = db.prepare("SELECT COUNT(*) n FROM change_events WHERE status = 'failed'").get().n;
     if (failed) out.push({impact: 'mare', kind: 'propagare', text: `${failed} propagări eșuate`, href: '/manage/#propagare'});
     // Constatările ultimului import (contradicții între surse, sitemap, prețuri): de lămurit de un om.
-    const imported = JSON.parse((await db.get("SELECT value FROM meta WHERE key = 'import_findings'"))?.value ?? 'null');
+    const imported = JSON.parse(db.prepare("SELECT value FROM meta WHERE key = 'import_findings'").get()?.value ?? 'null');
     for (const f of imported?.findings ?? []) {
-      const product = f.extern_id ? store.list('produse').find(p => p.extern_id === f.extern_id) : null;
+      const product = f.extern_id ? db.prepare('SELECT id FROM products WHERE extern_id = ?').get(f.extern_id) : null;
       out.push({impact: f.impact, kind: `import:${f.kind}`, text: f.text,
         href: product ? edit('produse', product.id, 'price') : '/manage/surse/'});
     }
-    const inferred = inferredCount(store);
+    const inferred = inferredCount(db);
     if (inferred) out.push({impact: 'mediu', kind: 'legaturi', text: `${inferred} legături de verificat`, href: '/manage/surse/legaturi/'});
     return out.sort((a, b) => RANK[a.impact] - RANK[b.impact]);
   }

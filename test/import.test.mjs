@@ -5,8 +5,8 @@ import {mkdtemp, mkdir, writeFile, readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join, dirname} from 'node:path';
 import {createHash} from 'node:crypto';
-import {userFor} from '../src/core/store.mjs';
-import {testStore} from './helpers.mjs';
+import {openDb, migrate} from '../src/core/db.mjs';
+import {createStore, userFor} from '../src/core/store.mjs';
 import {createSync} from '../src/core/sync.mjs';
 import {seed} from '../src/import/seed.mjs';
 import {analyzeSnapshot, blocks} from '../src/import/analyze.mjs';
@@ -23,7 +23,7 @@ const TERMS = `<section><div><h1>Termeni și condiții</h1></div></section><sect
 <p>Site-ul e administrat de:<br/><strong>Instant Softnet SRL</strong>, cu sediul în Str. Rasaritului nr. 90, hala C2, Buftea, jud. Ilfov, înregistrată la Oficiul Registrului Comerțului sub nr. J40/4285/2009, CUI: RO 25383246.</p>
 <p>E-mail: <a href="mailto:contact@purapa.ro">contact@purapa.ro</a><br/>Telefon: <a href="tel:0372887572">0372 887 572</a></p><hr/><h3>2. Scopul</h3><ul><li>informare</li></ul></div></section>`;
 
-async function fixture(t, {terms = TERMS} = {}) {
+async function fixture({terms = TERMS} = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'purapa-snap-'));
   const files = {
     'https://purapa.ro/sitemap.xml': ['sitemap', '<urlset><url><loc>https://www.purapa.ro</loc></url><url><loc>https://www.purapa.ro/produse</loc></url></urlset>'],
@@ -45,14 +45,16 @@ async function fixture(t, {terms = TERMS} = {}) {
   }
   const manifest = {site: 'https://purapa.ro', fetched_at: '2026-10-26T09:00:00.000Z', entries};
   const analysis = analyzeSnapshot(manifest, f => files[entries.find(e => e.file === f).url][1]);
-  const {db, store} = await testStore(t);
-  await seed(store);
+  const db = openDb();
+  migrate(db);
+  const store = createStore(db);
+  seed(store);
   const opts = {snapshotDir: dir, mediaDir: join(dir, 'media-out')};
   return {dir, analysis, db, store, opts, run: (o = {}) => applyImport(store, analysis, {...opts, ...o})};
 }
 
-test('analyze: prețul tăiat afișat ca preț, adresele în mai multe forme, sitemap, sameAs, galeria', async t => {
-  const {analysis} = await fixture(t);
+test('analyze: prețul tăiat afișat ca preț, adresele în mai multe forme, sitemap, sameAs, galeria', async () => {
+  const {analysis} = await fixture();
   const kinds = analysis.findings.map(f => f.kind);
   for (const k of ['pret', 'adresa', 'sitemap', 'retele']) assert.ok(kinds.includes(k), k);
   assert.match(analysis.findings.find(f => f.kind === 'pret').text, /1800 e prețul tăiat/);
@@ -61,8 +63,8 @@ test('analyze: prețul tăiat afișat ca preț, adresele în mai multe forme, si
   assert.deepEqual(retailerImages(`a ${IMG.replace('/1000/', '/200/')} b ${IMG.replace('/1000/', '/70/')}`, '651'), [IMG]);
 });
 
-test('import: prețul de la retailer, prețul tăiat, imaginea, adresa cu diacritice, textul legal cu jetoane', async t => {
-  const {store, run} = await fixture(t);
+test('import: prețul de la retailer, prețul tăiat, imaginea, adresa cu diacritice, textul legal cu jetoane', async () => {
+  const {store, run} = await fixture();
   const report = await run();
   const kit = store.bySlug('produse', 'kit-filtrare-11000l');
   assert.deepEqual([kit.price, kit.list_price, kit.availability], [1199, 1800, 'în stoc']);
@@ -78,34 +80,34 @@ test('import: prețul de la retailer, prețul tăiat, imaginea, adresa cu diacri
   assert.ok(report.findings.length >= 4);
 });
 
-test('§5.17 importul e determinist: rulat de două ori, aceleași ID-uri și nicio modificare', async t => {
-  const {db, store, run} = await fixture(t);
+test('§5.17 importul e determinist: rulat de două ori, aceleași ID-uri și nicio modificare', async () => {
+  const {db, store, run} = await fixture();
   await run();
   const ids = JSON.stringify(store.list('produse').map(p => [p.extern_id, p.id, p.image_id]));
-  const events = (await db.get('SELECT COUNT(*) AS n FROM change_events')).n;
+  const events = db.prepare('SELECT COUNT(*) n FROM change_events').get().n;
   const second = await run();
   assert.equal(JSON.stringify(store.list('produse').map(p => [p.extern_id, p.id, p.image_id])), ids);
   assert.deepEqual([second.created.length, second.updated.length, second.media], [0, 0, 0]);
-  assert.equal((await db.get('SELECT COUNT(*) AS n FROM change_events')).n, events);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM change_events').get().n, events);
 });
 
-test('§5.16 importul refuză să suprascrie editările oamenilor fără --overwrite-edits', async t => {
-  const {store, run, db} = await fixture(t);
+test('§5.16 importul refuză să suprascrie editările oamenilor fără --overwrite-edits', async () => {
+  const {store, run, db} = await fixture();
   await run();
   const kit = store.bySlug('produse', 'kit-filtrare-11000l');
-  await store.update(userFor('Ana', 'editor'), 'produse', kit.id, {price: 1099}, {publish: true});
-  const events = (await db.get('SELECT COUNT(*) AS n FROM change_events')).n;
+  store.update(userFor('Ana', 'editor'), 'produse', kit.id, {price: 1099}, {publish: true});
+  const events = db.prepare('SELECT COUNT(*) n FROM change_events').get().n;
   await assert.rejects(run(), e => e.status === 409 && e.conflicts.some(c => c.field === 'price' && c.current === 1099));
   assert.equal(store.get('produse', kit.id).price, 1099, 'nimic scris');
-  assert.equal((await db.get('SELECT COUNT(*) AS n FROM change_events')).n, events);
-  await store.update(userFor('Ana', 'editor'), 'produse', kit.id, {name: 'Kit redenumit'});
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM change_events').get().n, events);
+  store.update(userFor('Ana', 'editor'), 'produse', kit.id, {name: 'Kit redenumit'});
   await assert.rejects(run(), e => e.conflicts.some(c => c.why === 'ciornă nepublicată'));
   await run({overwriteEdits: true});
   assert.equal(store.get('produse', kit.id).price, 1199);
 });
 
-test('§5.18 verificarea dus-întors numește pagina când textul convertit nu dă aceleași blocuri', async t => {
-  const {run} = await fixture(t, {terms: TERMS.replace('<li>informare</li>', '<li>informare <iframe>publicitate</iframe></li>')});
+test('§5.18 verificarea dus-întors numește pagina când textul convertit nu dă aceleași blocuri', async () => {
+  const {run} = await fixture({terms: TERMS.replace('<li>informare</li>', '<li>informare <iframe>publicitate</iframe></li>')});
   const report = await run();
   const r = report.roundtrip[0];
   assert.equal(r.exact, false);
@@ -121,15 +123,15 @@ test('values:link: valorile firmei devin jetoane; o valoare care contrazice surs
   assert.deepEqual(blocks('<h3>1. A</h3><p>b <br/>c</p><ul><li>d</li></ul>'), [['h3', '1. A'], ['p', 'b c'], ['li', 'd']]);
 });
 
-test('după import, site-ul arată prețul tăiat și imaginea locală, cu ?v=', async t => {
-  const {db, store, run} = await fixture(t);
+test('după import, site-ul arată prețul tăiat și imaginea locală, cu ?v=', async () => {
+  const {db, store, run} = await fixture();
   await run();
   const sync = createSync(db, store);
-  await sync.scan();
-  const html = (await sync.get('/produse/')).html;
+  sync.scan();
+  const html = sync.get('/produse/').html;
   assert.match(html, /1\.199 lei<\/span> <del><span class="sr-only">Preț vechi: <\/span>1\.800 lei<\/del>/);
   assert.match(html, /src="\/media\/[0-9a-f]{40}\.webp\?v=/);
-  assert.match((await sync.get('/termeni-si-conditii/')).html, /Str\. Răsăritului nr\. 90, hala C2, Buftea, jud\. Ilfov/);
+  assert.match(sync.get('/termeni-si-conditii/').html, /Str\. Răsăritului nr\. 90, hala C2, Buftea, jud\. Ilfov/);
 });
 
 test('crawl: căile din snapshot folosesc „/” pe orice sistem', () => {
@@ -139,8 +141,8 @@ test('crawl: căile din snapshot folosesc „/” pe orice sistem', () => {
   assert.equal(snapshotPath('https://purapa.ro/sitemap.xml'), 'purapa.ro/sitemap.xml');
 });
 
-test('fișierele media se copiază o singură dată, după amprentă', async t => {
-  const {opts, run} = await fixture(t);
+test('fișierele media se copiază o singură dată, după amprentă', async () => {
+  const {opts, run} = await fixture();
   await run();
   await run();
   assert.equal((await readdir(opts.mediaDir)).length, 1);

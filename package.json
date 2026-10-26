@@ -4,25 +4,12 @@
   "version": "0.1.0",
   "description": "Brain /manage pentru purapa.ro — nucleul Node după standardul Brain /manage v1",
   "type": "module",
-  "engines": {
-    "node": ">=24"
-  },
+  "engines": {"node": ">=24"},
   "scripts": {
     "start": "node src/server.mjs",
     "seed": "node scripts/seed.mjs",
     "import": "node scripts/import.mjs",
     "scan": "node scripts/scan.mjs",
-    "test": "node --test --test-reporter=spec \"test/**/*.test.mjs\"",
-    "user": "node scripts/user.mjs",
-    "test:pg": "node scripts/test-pg.mjs",
-    "migrate": "node scripts/migrate.mjs"
-  },
-  "dependencies": {
-    "@vercel/functions": "^3.10.3",
-    "pg": "^8.23.1"
-  },
-  "devDependencies": {
-    "@electric-sql/pglite": "^0.5.11",
-    "@electric-sql/pglite-socket": "^0.2.14"
+    "test": "node --test --test-reporter=spec \"test/**/*.test.mjs\""
   }
 }

@@ -6,7 +6,7 @@
 import {copyFile, mkdir, access, readFile} from 'node:fs/promises';
 import {imageSize} from '../core/media.mjs';
 import {join, extname} from 'node:path';
-import {nowIso} from '../core/db.mjs';
+import {tx, nowIso} from '../core/db.mjs';
 import {HttpError} from '../core/store.mjs';
 import {sanitizeContent, esc, phoneKey} from '../core/content.mjs';
 import {createContext} from '../site/context.mjs';
@@ -58,15 +58,15 @@ function parseAddress(address, knownForms) {
   return {street, building, city, county};
 }
 
-export async function applyImport(store, analysis, {overwriteEdits = false, mediaDir = 'data/media', snapshotDir = 'reference/snapshot', user = IMPORT_USER, storage = null} = {}) {
+export async function applyImport(store, analysis, {overwriteEdits = false, mediaDir = 'data/media', snapshotDir = 'reference/snapshot', user = IMPORT_USER} = {}) {
   const db = store.db;
   const report = {at: nowIso(), created: [], updated: [], unchanged: 0, media: 0, tokens: 0, roundtrip: [], conflicts: [], findings: [...analysis.findings]};
   const ops = [];
   const src = (kind, url, file, fetched_at, excerpt, title) => ({kind, url, title: title ?? url, fetched_at, snapshot_file: file, method: 'import din snapshot', excerpt});
 
   // Câmpurile scrise de oameni: proveniență manuală confirmată, cu autor.
-  const humanFields = async (key, id) => new Set((await db.all(`SELECT p.field FROM provenance p JOIN sources s ON s.id = p.source_id
-    WHERE p.entity = ? AND p.entity_id = ? AND s.kind = 'manual' AND p.certainty = 'confirmed' AND p.verified_by IS NOT NULL AND p.verified_by NOT IN ('Import', 'Sistem')`, [key, id])).map(r => r.field));
+  const humanFields = (key, id) => new Set(db.prepare(`SELECT p.field FROM provenance p JOIN sources s ON s.id = p.source_id
+    WHERE p.entity = ? AND p.entity_id = ? AND s.kind = 'manual' AND p.certainty = 'confirmed' AND p.verified_by IS NOT NULL AND p.verified_by NOT IN ('Import', 'Sistem')`).all(key, id).map(r => r.field));
 
   // --- Planul: ce se schimbă, fără să scrie nimic.
   const firma = store.list('firma')[0];
@@ -84,7 +84,7 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
   const listing = analysis.pages.find(p => p.path === '/produse/');
   for (const p of analysis.products) {
     if (!p.extern_id) continue;
-    const cur = store.list('produse').find(r => r.extern_id === p.extern_id) ?? null;
+    const cur = db.prepare('SELECT id FROM products WHERE extern_id = ?').get(p.extern_id);
     const image = p.images[0] ?? null;
     if (p.retailer) {
       ops.push({key: 'produse', id: cur?.id ?? null, match: {extern_id: p.extern_id}, create: {name: p.name, extern_id: p.extern_id, position: p.position},
@@ -134,7 +134,7 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
   for (const op of ops) {
     if (!op.id) continue;
     const cur = store.get(op.key, op.id);
-    const human = await humanFields(op.key, op.id);
+    const human = humanFields(op.key, op.id);
     for (const [k, v] of Object.entries(op.data)) {
       if (human.has(k) && !sameValue(cur[k], v)) report.conflicts.push({key: op.key, id: op.id, field: k, current: cur[k], incoming: v, why: 'modificat de un om'});
     }
@@ -148,7 +148,7 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
   const legalTargets = analysis.legal.map(l => ({l, page: store.bySlug('pagini', l.slug)})).filter(x => x.page);
   for (const {page} of legalTargets) {
     const section = store.links('pagini', page.id, 'sections').map(s => store.get('sectiuni', s.id)).find(s => s.kind === 'text');
-    if (section && (await humanFields('sectiuni', section.id)).has('text')) report.conflicts.push({key: 'sectiuni', id: section.id, field: 'text', why: 'modificat de un om'});
+    if (section && humanFields('sectiuni', section.id).has('text')) report.conflicts.push({key: 'sectiuni', id: section.id, field: 'text', why: 'modificat de un om'});
   }
   if (report.conflicts.length && !overwriteEdits) {
     throw new HttpError(409, `Importul ar suprascrie ${report.conflicts.length} modificări făcute de oameni. Rulează cu --overwrite-edits ca să le suprascrii.`, {conflicts: report.conflicts});
@@ -159,14 +159,12 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
   for (const op of ops.filter(o => o.image)) {
     const name = `${op.image.sha1}${extname(op.image.file)}`;
     if (!await exists(join(mediaDir, name))) await copyFile(join(snapshotDir, op.image.file), join(mediaDir, name));
-    const buf = await readFile(join(mediaDir, name));
-    Object.assign(op.image, imageSize(buf) ?? {});
-    // Cu Supabase Storage, fișierul se urcă acolo și media trimite la adresa lui publică.
-    op.image.name = storage ? await storage.upload(name, buf) : name;
+    op.image.name = name;
+    Object.assign(op.image, imageSize(await readFile(join(mediaDir, name))) ?? {});
   }
 
   // --- Scrierea: totul sau nimic.
-  await store.tx(async () => {
+  tx(db, () => {
     const track = (key, before, after) => {
       if (!before) report.created.push(`${key}:${after.id}`);
       else if (after.version !== before.version) report.updated.push(`${key}:${after.id}`);
@@ -179,9 +177,9 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
       const before = id ? store.get(op.key, id) : null;
       const data = {...op.data};
       if (op.image) {
-        let media = store.list('media').find(m => m.sha1 === op.image.sha1) ?? null;
+        let media = db.prepare('SELECT id FROM media WHERE sha1 = ?').get(op.image.sha1);
         if (!media) {
-          media = await store.create(user, 'media', {src: op.image.name, alt: op.image.alt, sha1: op.image.sha1, width: op.image.width, height: op.image.height},
+          media = store.create(user, 'media', {src: op.image.name, alt: op.image.alt, sha1: op.image.sha1, width: op.image.width, height: op.image.height},
             {source: {...op.source, excerpt: op.image.url}});
           report.media++;
         }
@@ -189,8 +187,8 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
       }
       const d = store.def(op.key);
       const rec = before
-        ? await store.update(user, op.key, id, data, {publish: !d.noStatus, source: op.source})
-        : await store.create(user, op.key, {...op.create, ...data}, {publish: true, source: op.source});
+        ? store.update(user, op.key, id, data, {publish: !d.noStatus, source: op.source})
+        : store.create(user, op.key, {...op.create, ...data}, {publish: true, source: op.source});
       if (matchKey) ids[matchKey] = rec.id;
       track(op.key, before, rec);
     }
@@ -215,17 +213,17 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
       if (!exact || !sameMeaning) report.findings.push({impact: 'mare', kind: 'dus-intors', text: `${l.title}: textul importat nu dă aceleași blocuri la recitire.`, path: l.path});
       const before = section ? store.get('sectiuni', section.id) : null;
       const rec = section
-        ? await store.update(user, 'sectiuni', section.id, {title: l.title, text: html}, {source})
-        : await store.create(user, 'sectiuni', {kind: 'text', title: l.title, text: html}, {source});
-      if (!section) await store.setLinks(user, 'pagini', page.id, 'sections', [...store.links('pagini', page.id, 'sections'), {id: rec.id}]);
+        ? store.update(user, 'sectiuni', section.id, {title: l.title, text: html}, {source})
+        : store.create(user, 'sectiuni', {kind: 'text', title: l.title, text: html}, {source});
+      if (!section) store.setLinks(user, 'pagini', page.id, 'sections', [...store.links('pagini', page.id, 'sections'), {id: rec.id}]);
       track('sectiuni', before, rec);
       const pageBefore = store.get('pagini', page.id);
-      track('pagini', pageBefore, await store.update(user, 'pagini', page.id, {title: l.title}, {publish: true, source}));
+      track('pagini', pageBefore, store.update(user, 'pagini', page.id, {title: l.title}, {publish: true, source}));
     }
 
-    await db.run("INSERT INTO meta (key, value) VALUES ('import_findings', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
-      [JSON.stringify({at: report.at, findings: report.findings})]);
-    await db.run("INSERT INTO meta (key, value) VALUES ('last_import', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value", [report.at]);
+    db.prepare("INSERT INTO meta (key, value) VALUES ('import_findings', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value")
+      .run(JSON.stringify({at: report.at, findings: report.findings}));
+    db.prepare("INSERT INTO meta (key, value) VALUES ('last_import', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value").run(report.at);
   });
   return report;
 }

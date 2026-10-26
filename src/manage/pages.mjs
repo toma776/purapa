@@ -7,19 +7,19 @@ import {inferred, sources, map} from './views/review.mjs';
 import {users} from './views/users.mjs';
 import {byKey} from '../registry/entities.mjs';
 
-export async function renderManage(env, path, user) {
-  if (!can(user, 'content.read')) throw new HttpError(403, 'Lipsește dreptul content.read');
+export function renderManage(env, path, user) {
   const ctx = {...env, user, counts: {
-    failed: (await env.db.get("SELECT COUNT(*) AS n FROM change_events WHERE status = 'failed'")).n,
-    inferred: inferredCount(env.store)
+    failed: env.db.prepare("SELECT COUNT(*) n FROM change_events WHERE status = 'failed'").get().n,
+    inferred: inferredCount(env.db)
   }};
+  if (!can(user, 'content.read')) throw new HttpError(403, 'Lipsește dreptul content.read');
   let m;
   if (path === '/manage/') return dashboard(ctx);
   if (path === '/manage/entitati/') return entitiesIndex(ctx);
   if ((m = /^\/manage\/entitati\/([a-z-]+)\/$/.exec(path)) && byKey[m[1]]) return entityList(ctx, m[1]);
   if ((m = /^\/manage\/entitati\/([a-z-]+)\/nou\/$/.exec(path)) && byKey[m[1]]) return entityNew(ctx, m[1]);
   if ((m = /^\/manage\/entitati\/([a-z-]+)\/(\d+)\/(?:([a-z-]+)\/)?$/.exec(path)) && byKey[m[1]]) {
-    const html = await entityView(ctx, m[1], Number(m[2]), m[3] ?? 'prezentare');
+    const html = entityView(ctx, m[1], Number(m[2]), m[3] ?? 'prezentare');
     if (html) return html;
   }
   if (path === '/manage/harta/') return map(ctx);

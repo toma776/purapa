@@ -10,7 +10,6 @@ import {seed} from '../src/import/seed.mjs';
 import {crawl} from '../src/import/crawl.mjs';
 import {analyze} from '../src/import/analyze.mjs';
 import {applyImport, IMPORT_USER} from '../src/import/apply.mjs';
-import {supabaseStorage} from '../src/import/storage.mjs';
 
 const args = new Set(process.argv.slice(2));
 const SNAPSHOT = 'reference/snapshot', ANALYSIS = 'reference/analysis';
@@ -20,20 +19,17 @@ console.log('Analiză…');
 const analysis = await analyze({dir: SNAPSHOT, out: ANALYSIS});
 console.log(`  ${analysis.pages.length} pagini, ${analysis.products.length} produse, ${analysis.legal.length} texte legale, ${analysis.findings.length} constatări`);
 
-const db = await openDb();
-await migrate(db);
+const db = openDb(process.env.DB ?? 'data/purapa.db');
+migrate(db);
 const store = createStore(db);
-await store.load();
 if (!store.list('firma').length) {
   console.log('Baza e goală: creez structura editorială (pagini, secțiuni, parametri, întrebări).');
-  await seed(store, {user: IMPORT_USER});
+  seed(store, {user: IMPORT_USER});
 }
 
 try {
-  const storage = supabaseStorage();
-  if (storage) console.log('Imaginile se urcă în Supabase Storage.');
-  const report = await applyImport(store, analysis, {overwriteEdits: args.has('--overwrite-edits'), snapshotDir: SNAPSHOT, storage});
-  const scan = await createSync(db, store).scan();
+  const report = await applyImport(store, analysis, {overwriteEdits: args.has('--overwrite-edits'), snapshotDir: SNAPSHOT});
+  const scan = createSync(db, store).scan();
   await mkdir(ANALYSIS, {recursive: true});
   await writeFile(`${ANALYSIS}/import-report.json`, JSON.stringify(report, null, 2));
   console.log(`Import gata: ${report.created.length} create, ${report.updated.length} actualizate, ${report.unchanged} neschimbate, ${report.media} fișiere media, ${report.tokens} valori legate.`);
@@ -48,6 +44,4 @@ try {
     process.exit(2);
   }
   throw e;
-} finally {
-  await db.close();
 }
