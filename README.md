@@ -8,27 +8,27 @@ npm run import             # crawl purapa.ro + Portalia → analyze → import �
 npm run import -- --offline   # din snapshot-ul existent, fără rețea
 npm start                  # site: http://localhost:3000/ · panou: http://localhost:3000/manage/
 npm test                   # 36 de teste: propagare (§5), /manage, import
-npm run export             # site-ul static în dist/ (noindex); --indexabil când devine site-ul oficial
-npm run deploy             # export + publicare pe Vercel (proiectul purapa, echipa DWF)
+npm run deploy             # publică site-ul + /manage pe Vercel (proiectul purapa, echipa DWF)
+npm run blob:download      # aduce local baza online (s-a editat în panoul online); oprește întâi npm start
+npm run blob:upload        # urcă baza locală; refuză dacă online s-a schimbat (-- --force ca s-o suprascrii)
+npm run export             # varianta statică în dist/ (fără panou); npm run deploy:static o publică
 ```
 
 La prima pornire nu există conturi: panoul e deschis fără parolă **doar de pe localhost**, până creezi primul administrator (din /manage/login/ sau din Utilizatori). După aceea, autentificarea e obligatorie peste tot.
 
 ## Online (Vercel)
 
-Site-ul public e pe **https://purapa-six.vercel.app**: pagini statice exportate din Brain. Panoul `/manage` rămâne local; Vercel nu are disc permanent pentru baza SQLite.
+Site-ul și panoul sunt pe **https://purapa-six.vercel.app**, cu panoul la [`/manage/`](https://purapa-six.vercel.app/manage/). Rulează același cod ca local (`api/index.mjs`), după modelul Nixodor.
 
-**Fluxul de lucru:** modifici în panoul local, apoi rulezi `npm run deploy`, care exportă tot site-ul și îl publică.
+- **Baza** (`purapa.db`) stă într-un **Blob privat** (`purapa-brain`, Frankfurt). Fiecare instanță o ține în `/tmp` și o reîncarcă doar când i se schimbă ETag-ul.
+- **După o salvare din panou** rulează propagarea, iar baza se urcă înapoi condiționat. Dacă între timp a salvat altcineva, panoul primește „Reîncarcă și salvează din nou”, deci nu se pierde nimic.
+- **Imaginile** de la import sunt statice, în `public/media` (`npm run build:public`).
 
-Ce conține exportul (`scripts/export.mjs`):
-- **Paginile** randate din Brain.
-- **Resursele:** fonturi, CSS, JS și doar imaginile folosite.
-- **Redirecționările 301** din Brain, ca reguli Vercel.
-- **`robots.txt` și `sitemap.xml`.**
-- **Antetele de securitate.**
-- **Formularul de contact** devine un buton „Trimite un email”, pentru că pe site-ul static nu există `/api`.
+**Panoul e deschis oricui, fără parolă:** variabila de mediu `MANAGE_OPEN=1` din Vercel, cerută explicit. Oricine are adresa poate modifica sau șterge conținut, iar schimbarea apare imediat pe site. Ca să-l închizi, șterge `MANAGE_OPEN` din Vercel (Settings → Environment Variables) și redeployează. Atunci panoul cere login, iar contul de administrator se creează local și se urcă cu baza (`npm run blob:upload`).
 
-Cât timp purapa.ro e încă site-ul vechi, exportul e marcat `noindex` (`X-Robots-Tag` și `robots.txt`), ca să nu concureze cu el în Google.
+**Lucrul local și online:** cheia Blob vine local cu `npx vercel env pull .env.local` (fișierul nu intră în git). Înainte să lucrezi local pe date, rulează `npm run blob:download`; după aceea, `npm run blob:upload`.
+
+Cât timp purapa.ro e încă site-ul vechi, toate paginile au `x-robots-tag: noindex`, ca să nu concureze cu el în Google.
 
 **Adresele:** `purapa.vercel.app` e un proiect al altcuiva. Adresa noastră publică e `purapa-six.vercel.app`, iar `purapa-dwf3.vercel.app` cere login Vercel.
 

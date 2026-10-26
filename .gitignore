@@ -10,3 +10,9 @@ node_modules/
 *.db-shm
 # Exportul static pentru Vercel (se generează cu npm run export).
 /dist/
+# Legătura locală cu proiectul Vercel și cheile aduse cu `vercel env pull`.
+.vercel/
+.env*
+
+.vercel
+.env*

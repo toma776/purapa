@@ -114,6 +114,7 @@ export function createApp({file = 'data/purapa.db', mediaDir = 'data/media', cro
         const headers = {'cache-control': 'no-store', 'x-frame-options': 'DENY', 'referrer-policy': 'same-origin'};
         if (path === '/manage') return send(res, 301, '', 'text/plain', {location: '/manage/'});
         if (!path.endsWith('/')) return send(res, 301, '', 'text/plain', {location: `${path}/${url.search}`});
+        if (path === '/manage/login/' && process.env.MANAGE_OPEN === '1') return send(res, 302, '', 'text/plain', {location: '/manage/'});
         if (path === '/manage/login/') {
           return send(res, 200, loginPage({setup: !auth.hasUsers() && isLocal(req), next: url.searchParams.get('next')}), 'text/html; charset=utf-8', headers);
         }

@@ -40,9 +40,9 @@ export function page(user, {title, active, crumbs = [], body, counts = {}, scrip
 <link rel="stylesheet" href="/manage/assets/manage.css"></head>
 <body><div class="app">
 <aside class="side"><a class="logo" href="/manage/">Brain <strong>Purapa</strong></a><nav class="menu">${nav}</nav>
-<div class="who">${user.setup ? '<span class="badge warn">Mod local, fără cont</span>' : `<span>${esc(user.name)}</span><span class="role">${esc(user.role)}</span>
+<div class="who">${user.open ? '<span class="badge bad">Panou deschis public</span>' : user.setup ? '<span class="badge warn">Mod local, fără cont</span>' : `<span>${esc(user.name)}</span><span class="role">${esc(user.role)}</span>
 <button class="link" data-action="POST /api/manage/auth/logout" data-next="/manage/login/">Ieși</button>`}</div></aside>
-<main class="content">${trail}${user.setup ? `<div class="flash warn">Nu există încă niciun cont. Panoul e deschis fără parolă doar pe acest calculator. <a href="/manage/utilizatori/">Creează primul cont de administrator</a>.</div>` : ''}
+<main class="content">${trail}${user.open ? `<div class="flash bad">Panoul e deschis oricui, fără parolă: orice modificare de aici apare imediat pe site.</div>` : ''}${user.setup ? `<div class="flash warn">Nu există încă niciun cont. Panoul e deschis fără parolă doar pe acest calculator. <a href="/manage/utilizatori/">Creează primul cont de administrator</a>.</div>` : ''}
 <div class="flash" id="flash" role="status" hidden></div>
 ${body}</main></div>
 <script src="/manage/assets/manage.js" defer></script>${scripts.map(s => `<script src="${s}" defer></script>`).join('')}

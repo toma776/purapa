@@ -100,6 +100,8 @@ export function createAuth(db) {
         WHERE s.token = ? AND s.expires_at > ? AND u.active = 1`).get(sha256(token), nowIso());
       if (u) return {...userFor(u.name, u.role), id: u.id, email: u.email};
     }
+    // Panou deschis tuturor, la cerere explicită (MANAGE_OPEN=1 în mediu): oricine e administrator, fără login.
+    if (process.env.MANAGE_OPEN === '1') return {...userFor('Vizitator', 'admin'), id: null, open: true};
     if (!hasUsers() && isLocal(req)) return {...userFor('Local', 'admin'), id: null, setup: true};
     return null;
   }
