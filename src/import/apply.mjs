@@ -58,7 +58,7 @@ function parseAddress(address, knownForms) {
   return {street, building, city, county};
 }
 
-export async function applyImport(store, analysis, {overwriteEdits = false, mediaDir = 'data/media', snapshotDir = 'reference/snapshot', user = IMPORT_USER} = {}) {
+export async function applyImport(store, analysis, {overwriteEdits = false, mediaDir = 'data/media', snapshotDir = 'reference/snapshot', user = IMPORT_USER, storage = null} = {}) {
   const db = store.db;
   const report = {at: nowIso(), created: [], updated: [], unchanged: 0, media: 0, tokens: 0, roundtrip: [], conflicts: [], findings: [...analysis.findings]};
   const ops = [];
@@ -159,8 +159,10 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
   for (const op of ops.filter(o => o.image)) {
     const name = `${op.image.sha1}${extname(op.image.file)}`;
     if (!await exists(join(mediaDir, name))) await copyFile(join(snapshotDir, op.image.file), join(mediaDir, name));
-    op.image.name = name;
-    Object.assign(op.image, imageSize(await readFile(join(mediaDir, name))) ?? {});
+    const buf = await readFile(join(mediaDir, name));
+    Object.assign(op.image, imageSize(buf) ?? {});
+    // Cu Supabase Storage, fișierul se urcă acolo și media trimite la adresa lui publică.
+    op.image.name = storage ? await storage.upload(name, buf) : name;
   }
 
   // --- Scrierea: totul sau nimic.

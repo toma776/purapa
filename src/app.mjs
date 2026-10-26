@@ -22,9 +22,10 @@ const SITE_ASSETS = join(ROOT, 'site', 'assets');
 const MIME = {'.woff2': 'font/woff2', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml',
   '.pdf': 'application/pdf', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8'};
 
-// Cache-ul CDN (Vercel): paginile publice stau în cache până le golește propagarea, adresă cu adresă.
+// Cache-ul CDN (Vercel): paginile publice stau în cache până le golește propagarea, adresă cu adresă
+// (Vercel-Cache-Tag + dangerouslyDeleteByTag); browserul verifică mereu.
 const PUBLIC_CACHE = 'public, max-age=0, must-revalidate';
-const CDN_CACHE = 'max-age=31536000, stale-while-revalidate=60';
+const CDN_CACHE = 'public, max-age=31536000';
 
 export async function createApp({database = process.env.DATABASE_URL ?? 'data/purapa.db', mediaDir = 'data/media', cronKey = process.env.CRON_SECRET ?? process.env.CRON_KEY,
   onInvalidate, migrateOnStart = true} = {}) {
@@ -168,7 +169,7 @@ export async function createApp({database = process.env.DATABASE_URL ?? 'data/pu
 
       const out = await sync.get(path);
       return send(res, out.status, out.html, 'text/html; charset=utf-8', out.status === 200
-        ? {'cache-control': PUBLIC_CACHE, 'cdn-cache-control': CDN_CACHE, 'vercel-cache-tag': cacheTag(path)}
+        ? {'cache-control': PUBLIC_CACHE, 'vercel-cdn-cache-control': CDN_CACHE, 'vercel-cache-tag': cacheTag(path)}
         : {'cache-control': 'public, max-age=0, s-maxage=60'});
     } catch (e) {
       const status = e.status ?? 500;

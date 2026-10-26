@@ -1,16 +1,33 @@
 # purapa — Brain /manage
 
-Brain-ul pentru purapa.ro, construit după **standardul Brain /manage v1**: Node 24, `node:sqlite`, fără dependențe.
+Brain-ul pentru purapa.ro, construit după **standardul Brain /manage v1**: Node 24, SQLite local (`node:sqlite`) sau Postgres în producție (Supabase).
 Analiza site-ului și registrul propus sunt în [docs/analiza-entitati.md](docs/analiza-entitati.md).
 
 ```bash
 npm run import             # crawl purapa.ro + Portalia → analyze → import → scan (data/purapa.db)
 npm run import -- --offline   # din snapshot-ul existent, fără rețea
 npm start                  # site: http://localhost:3000/ · panou: http://localhost:3000/manage/
-npm test                   # 34 de teste: propagare (§5), /manage, import
+npm test                   # 37 de teste pe SQLite: propagare (§5), /manage, import
+npm run test:pg            # aceleași teste pe un Postgres real (PGlite, fără instalare)
 ```
 
-La prima pornire nu există conturi: panoul e deschis fără parolă **doar de pe localhost**, până creezi primul administrator (din /manage/login/ sau din Utilizatori). După aceea, autentificarea e obligatorie peste tot.
+La prima pornire locală nu există conturi: panoul e deschis fără parolă **doar de pe localhost**, până creezi primul administrator (din /manage/login/ sau din Utilizatori). După aceea, autentificarea e obligatorie peste tot.
+
+## Producție: Supabase + Vercel
+
+Baza e aleasă după `DATABASE_URL`: `postgres://…` înseamnă Postgres, altfel un fișier SQLite.
+
+- **Scrierile** sunt asincrone, în tranzacții. **Citirile** sunt dintr-un model în memorie, reîncărcat când altă instanță a scris (marcajul `data_version`).
+- **Pe Vercel**, `api/index.mjs` primește toate adresele (vezi `vercel.json`). Paginile publice stau în CDN cu eticheta `p:<adresă>`, iar după o modificare propagarea golește exact paginile refăcute (`dangerouslyDeleteByTag`).
+- **Imaginile** stau în Supabase Storage (bucket public `media`); importul le urcă acolo când are cheia de serviciu.
+- **Cron-ul** Vercel apelează orar `/api/manage/cron/tick`, cu `CRON_SECRET`.
+
+Pași, o singură dată:
+
+1. **Variabilele de mediu în Vercel:** `DATABASE_URL` (Supabase, pooler-ul în mod tranzacție, portul 6543), `CRON_SECRET`, `COOKIE_SECURE=1`, `SITE_URL`.
+2. **Importul, rulat local, în Supabase:** `DATABASE_URL=… SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npm run import -- --offline`. Cheia de serviciu rămâne pe calculatorul tău.
+3. **Primul administrator:** `DATABASE_URL=… npm run user -- adresa@exemplu.ro "Nume" admin`. Pe Vercel nu există modul local fără parolă.
+4. **Deploy-ul:** din GitHub (`main`). La fiecare build rulează `npm run migrate`, care doar adaugă tabele sau coloane.
 
 ## Importul (§1.3)
 

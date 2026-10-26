@@ -10,6 +10,7 @@ import {seed} from '../src/import/seed.mjs';
 import {crawl} from '../src/import/crawl.mjs';
 import {analyze} from '../src/import/analyze.mjs';
 import {applyImport, IMPORT_USER} from '../src/import/apply.mjs';
+import {supabaseStorage} from '../src/import/storage.mjs';
 
 const args = new Set(process.argv.slice(2));
 const SNAPSHOT = 'reference/snapshot', ANALYSIS = 'reference/analysis';
@@ -29,7 +30,9 @@ if (!store.list('firma').length) {
 }
 
 try {
-  const report = await applyImport(store, analysis, {overwriteEdits: args.has('--overwrite-edits'), snapshotDir: SNAPSHOT});
+  const storage = supabaseStorage();
+  if (storage) console.log('Imaginile se urcă în Supabase Storage.');
+  const report = await applyImport(store, analysis, {overwriteEdits: args.has('--overwrite-edits'), snapshotDir: SNAPSHOT, storage});
   const scan = await createSync(db, store).scan();
   await mkdir(ANALYSIS, {recursive: true});
   await writeFile(`${ANALYSIS}/import-report.json`, JSON.stringify(report, null, 2));
