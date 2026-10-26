@@ -6,7 +6,7 @@ Analiza site-ului și registrul propus sunt în [docs/analiza-entitati.md](docs/
 ```bash
 npm run import             # crawl purapa.ro + Portalia → analyze → import → scan (data/purapa.db)
 npm run import -- --offline   # din snapshot-ul existent, fără rețea
-npm start                  # site: http://localhost:3000/ · panou: http://localhost:3000/manage/ · baza se sincronizează singură cu cea online
+npm start                  # site: http://localhost:3100/ · panou: http://localhost:3100/manage/ · baza se sincronizează singură cu cea online
 npm test                   # 36 de teste: propagare (§5), /manage, import
 npm run blob:sync          # o sincronizare a bazei acum, cu serverul oprit (de obicei nu e nevoie)
 npm run blob:upload -- --force    # doar în situații speciale: baza locală peste cea online

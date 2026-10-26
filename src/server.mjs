@@ -1,4 +1,4 @@
-// Serverul local: site-ul și /manage pe http://localhost:3000.
+// Serverul local: site-ul și /manage pe http://localhost:3100.
 // Cu cheia Blob în .env.local (npx vercel env pull .env.local), baza se sincronizează singură cu cea online:
 // ce modifici local ajunge online în câteva secunde, iar ce s-a modificat online (formularul de contact,
 // panoul online) se aduce local. Nimic nu se urcă sau se descarcă de mână.
@@ -7,7 +7,7 @@ import {existsSync, writeFileSync, rmSync, mkdirSync, readdirSync, copyFileSync}
 import {createApp} from './app.mjs';
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
-const port = Number(process.env.PORT ?? 3000);
+const port = Number(process.env.PORT ?? 3100);
 const file = process.env.DB ?? 'data/purapa.db';
 
 let app, stop, blob = null;

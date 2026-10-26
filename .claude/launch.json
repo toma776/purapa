@@ -1,6 +1,6 @@
 {
   "version": "0.0.1",
   "configurations": [
-    {"name": "purapa", "runtimeExecutable": "node", "runtimeArgs": ["src/server.mjs"], "port": 3000}
+    {"name": "purapa", "runtimeExecutable": "node", "runtimeArgs": ["src/server.mjs"], "port": 3100, "autoPort": false}
   ]
 }
