@@ -1,0 +1,78 @@
+{
+  "phones": {
+    "0372887572": {
+      "value": "0372 887 572",
+      "forms": [
+        "0372 887 572"
+      ],
+      "pages": [
+        "/",
+        "/ambassadors/",
+        "/contact/",
+        "/despre-noi/",
+        "/politica-de-confidentialitate/",
+        "/politica-de-cookie/",
+        "/produse/",
+        "/termeni-si-conditii/",
+        "/testare-apa/"
+      ]
+    }
+  },
+  "emails": {
+    "contact@purapa.ro": {
+      "value": "contact@purapa.ro",
+      "forms": [
+        "contact@purapa.ro"
+      ],
+      "pages": [
+        "/",
+        "/ambassadors/",
+        "/contact/",
+        "/despre-noi/",
+        "/politica-de-confidentialitate/",
+        "/politica-de-cookie/",
+        "/produse/",
+        "/termeni-si-conditii/",
+        "/testare-apa/"
+      ]
+    }
+  },
+  "addresses": {
+    "str. rasaritului nr. 90, buftea": {
+      "value": "Str. Răsăritului nr. 90, Buftea",
+      "forms": [
+        "Str. Răsăritului nr. 90, Buftea"
+      ],
+      "pages": [
+        "/",
+        "/ambassadors/",
+        "/contact/",
+        "/despre-noi/",
+        "/politica-de-confidentialitate/",
+        "/politica-de-cookie/",
+        "/produse/",
+        "/termeni-si-conditii/",
+        "/testare-apa/"
+      ]
+    },
+    "str. rasaritului nr. 90, buftea, ilfov": {
+      "value": "Str. Răsăritului nr. 90, Buftea, Ilfov",
+      "forms": [
+        "Str. Răsăritului nr. 90, Buftea, Ilfov"
+      ],
+      "pages": [
+        "/contact/"
+      ]
+    },
+    "str. rasaritului nr. 90, hala c2, buftea, jud. ilfov": {
+      "value": "Str. Rasaritului nr. 90, hala C2, Buftea, jud. Ilfov",
+      "forms": [
+        "Str. Rasaritului nr. 90, hala C2, Buftea, jud. Ilfov"
+      ],
+      "pages": [
+        "/politica-de-confidentialitate/",
+        "/termeni-si-conditii/"
+      ]
+    }
+  }
+}

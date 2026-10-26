@@ -1,0 +1,112 @@
+{
+  "at": "2026-10-26T09:41:03.749Z",
+  "created": [],
+  "updated": [
+    "produse:1",
+    "produse:1",
+    "produse:2",
+    "produse:2",
+    "produse:3",
+    "produse:3",
+    "produse:4",
+    "produse:4",
+    "produse:5",
+    "produse:5",
+    "produse:6",
+    "produse:6",
+    "produse:7",
+    "produse:7",
+    "produse:8",
+    "produse:8",
+    "produse:9",
+    "produse:9",
+    "firma:1",
+    "sectiuni:4",
+    "sectiuni:7",
+    "sectiuni:9",
+    "pagini:1",
+    "pagini:5",
+    "pagini:6",
+    "pagini:4",
+    "pagini:8",
+    "pagini:9",
+    "pagini:2",
+    "pagini:7",
+    "pagini:3",
+    "sectiuni:2",
+    "sectiuni:3",
+    "sectiuni:1"
+  ],
+  "unchanged": 7,
+  "media": 13,
+  "tokens": 41,
+  "roundtrip": [
+    {
+      "path": "/politica-de-confidentialitate/",
+      "blocks": 83,
+      "exact": true,
+      "tokens": 17,
+      "sameMeaning": true
+    },
+    {
+      "path": "/politica-de-cookie/",
+      "blocks": 40,
+      "exact": true,
+      "tokens": 6,
+      "sameMeaning": true
+    },
+    {
+      "path": "/termeni-si-conditii/",
+      "blocks": 56,
+      "exact": true,
+      "tokens": 18,
+      "sameMeaning": true
+    }
+  ],
+  "conflicts": [],
+  "findings": [
+    {
+      "impact": "mare",
+      "kind": "sitemap",
+      "text": "Sitemap-ul trimite la www.purapa.ro, dar site-ul răspunde pe purapa.ro. Trebuie aleasă o formă canonică; cealaltă primește 301."
+    },
+    {
+      "impact": "mediu",
+      "kind": "sitemap",
+      "text": "Pagini publice care lipsesc din sitemap: /ambassadors/, /test-rapid/."
+    },
+    {
+      "impact": "mediu",
+      "kind": "canonical",
+      "text": "Nicio pagină nu are <link rel=\"canonical\">."
+    },
+    {
+      "impact": "mare",
+      "kind": "pret",
+      "text": "Kit complet de filtrare apă pentru chiuveta de bucătărie 11.000 L, Purapa: purapa.ro afișează 1800 lei, retailerul vinde la 1199 lei (1800 e prețul tăiat).",
+      "extern_id": "portalia:p651"
+    },
+    {
+      "impact": "mare",
+      "kind": "pret",
+      "text": "Dedurizator apă automat compact 9L rezină, 1 mc/h, Purapa: purapa.ro afișează 1699 lei, retailerul vinde la 2000 lei.",
+      "extern_id": "portalia:p762"
+    },
+    {
+      "impact": "mare",
+      "kind": "adresa",
+      "text": "Adresa sediului apare în 3 forme: „Str. Răsăritului nr. 90, Buftea”, „Str. Răsăritului nr. 90, Buftea, Ilfov”, „Str. Rasaritului nr. 90, hala C2, Buftea, jud. Ilfov”."
+    },
+    {
+      "impact": "mediu",
+      "kind": "retele",
+      "text": "Datele structurate (sameAs) trimit la https://www.facebook.com/purapa.ro, https://www.instagram.com/purapa.ro, care nu apar în subsol."
+    },
+    {
+      "impact": "mic",
+      "kind": "legal",
+      "text": "Termeni și condiții: secțiunile sunt numerotate 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 10.",
+      "path": "/termeni-si-conditii/"
+    }
+  ]
+}
