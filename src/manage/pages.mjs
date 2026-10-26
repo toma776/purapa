@@ -10,7 +10,8 @@ import {byKey} from '../registry/entities.mjs';
 export function renderManage(env, path, user) {
   const ctx = {...env, user, counts: {
     failed: env.db.prepare("SELECT COUNT(*) n FROM change_events WHERE status = 'failed'").get().n,
-    inferred: inferredCount(env.db)
+    inferred: inferredCount(env.db),
+    syncConflict: env.syncStatus?.() ?? null
   }};
   if (!can(user, 'content.read')) throw new HttpError(403, 'Lipsește dreptul content.read');
   let m;

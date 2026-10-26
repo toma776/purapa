@@ -6,11 +6,12 @@ Analiza site-ului și registrul propus sunt în [docs/analiza-entitati.md](docs/
 ```bash
 npm run import             # crawl purapa.ro + Portalia → analyze → import → scan (data/purapa.db)
 npm run import -- --offline   # din snapshot-ul existent, fără rețea
-npm start                  # site: http://localhost:3000/ · panou: http://localhost:3000/manage/
+npm start                  # site: http://localhost:3000/ · panou: http://localhost:3000/manage/ · baza se sincronizează singură cu cea online
 npm test                   # 36 de teste: propagare (§5), /manage, import
-npm run deploy             # publică site-ul + /manage pe Vercel (proiectul purapa, echipa DWF)
-npm run blob:download      # aduce local baza online (s-a editat în panoul online); oprește întâi npm start
-npm run blob:upload        # urcă baza locală; refuză dacă online s-a schimbat (-- --force ca s-o suprascrii)
+npm run blob:sync          # o sincronizare a bazei acum, cu serverul oprit (de obicei nu e nevoie)
+npm run blob:upload -- --force    # doar în situații speciale: baza locală peste cea online
+npm run blob:download -- --force  # doar în situații speciale: baza online peste cea locală (cea locală rămâne în data/backup/)
+npm run deploy             # publicare manuală pe Vercel (de obicei nu e nevoie: fiecare push pe main publică singur)
 npm run export             # varianta statică în dist/ (fără panou); npm run deploy:static o publică
 ```
 
@@ -26,7 +27,19 @@ Site-ul și panoul sunt pe **https://purapa-six.vercel.app**, cu panoul la [`/ma
 
 **Panoul e deschis oricui, fără parolă:** variabila de mediu `MANAGE_OPEN=1` din Vercel, cerută explicit. Oricine are adresa poate modifica sau șterge conținut, iar schimbarea apare imediat pe site. Ca să-l închizi, șterge `MANAGE_OPEN` din Vercel (Settings → Environment Variables) și redeployează. Atunci panoul cere login, iar contul de administrator se creează local și se urcă cu baza (`npm run blob:upload`).
 
-**Lucrul local și online:** cheia Blob vine local cu `npx vercel env pull .env.local` (fișierul nu intră în git). Înainte să lucrezi local pe date, rulează `npm run blob:download`; după aceea, `npm run blob:upload`.
+## Fluxul de lucru: totul automat
+
+Lucrezi local (conținut, cod, design), iar restul se face singur:
+
+- **Codul și designul** se comit și se urcă pe GitHub (`toma776/purapa`) după fiecare modificare. Vercel e legat de repo și publică automat fiecare push pe `main`.
+- **Conținutul** (baza) se sincronizează cât rulează `npm start`, la fiecare 5 secunde (`SYNC_SECONDS`):
+  - ce modifici local ajunge online;
+  - ce s-a schimbat online (formularul de contact, panoul online) vine local, iar serverul redeschide baza fără repornire.
+
+  Dacă baza s-a modificat în ambele locuri în același timp, rămâne varianta locală. Cea online e salvată în `data/backup/`, iar panoul afișează o bandă de avertizare.
+- **Imaginile noi** din `data/media` se copiază în `public/media` și pleacă pe Vercel odată cu codul.
+
+Cheia Blob vine local cu `npx vercel env pull .env.local` (fișierul nu intră în git). Fără ea, baza rămâne doar locală. Ultima stare sincronizată stă în `data/.blob-sync.json`.
 
 Cât timp purapa.ro e încă site-ul vechi, toate paginile au `x-robots-tag: noindex`, ca să nu concureze cu el în Google.
 

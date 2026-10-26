@@ -20,7 +20,8 @@ const SITE_ASSETS = join(dirname(fileURLToPath(import.meta.url)), 'site', 'asset
 const MIME = {'.woff2': 'font/woff2','.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.pdf': 'application/pdf',
   '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8'};
 
-export function createApp({file = 'data/purapa.db', mediaDir = 'data/media', cronKey = process.env.CRON_KEY} = {}) {
+// `syncStatus()`: starea sincronizării cu baza online (serverul local), afișată în panou la un conflict.
+export function createApp({file = 'data/purapa.db', mediaDir = 'data/media', cronKey = process.env.CRON_KEY, syncStatus = () => null} = {}) {
   const db = openDb(file);
   migrate(db);
   const store = createStore(db);
@@ -29,7 +30,7 @@ export function createApp({file = 'data/purapa.db', mediaDir = 'data/media', cro
   const todos = createTodos(db, store, graph);
   const auth = createAuth(db);
   const api = createApi({db, store, sync, graph, todos, auth});
-  const env = {db, store, sync, graph, todos, auth, api};
+  const env = {db, store, sync, graph, todos, auth, api, syncStatus};
 
   const send = (res, status, body, type = 'application/json; charset=utf-8', headers = {}) => {
     res.writeHead(status, {'content-type': type, ...headers});
