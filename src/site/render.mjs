@@ -15,6 +15,20 @@ const lei = n => n == null ? '' : `${num(n)} lei`;
 const microns = n => `${String(n).replace('.', ',')} µm`;
 const plainTitle = t => String(t ?? '').replace(/\*/g, '');
 
+// Aceeași formulă ca în site.js (calculatorul din browser): economia = apa îmbuteliată − cartușele.
+export function calc({liters, cost, yearly, kit, bottle}) {
+  const monthly = liters * cost - yearly / 12;
+  const loss = monthly <= 0;
+  const months = !loss && kit ? Math.ceil(kit / monthly) : null;
+  return {
+    loss,
+    monthly: loss ? '—' : lei(Math.round(monthly)),
+    annual: loss ? '—' : lei(Math.round(monthly * 12)),
+    bottles: num(Math.round(liters * 12 / bottle)),
+    payback: months == null ? '—' : months > 60 ? 'peste 5 ani' : `${months} ${months === 1 ? 'lună' : 'luni'}`
+  };
+}
+
 export function publicPaths(store) {
   return store.list('pagini').filter(p => p.status === 'published').map(p => publicPath(byKey.pagini, p)).filter(Boolean);
 }
@@ -143,6 +157,45 @@ const SECTIONS = {
       <div class="body"><h3 id="p-${p.id}">${esc(p.name)}</h3>${p.summary ? `<p>${ctx.text(p.summary)}</p>` : ''}${priceBlock(p)}
         ${p.buy_url ? `<a class="btn small" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Cumpără${icon('external')}<span class="sr-only"> ${esc(p.name)} (se deschide într-o fereastră nouă)</span></a>` : ''}</div>
       </article>`).join('')}</div>${buttons(ctx, s)}`);
+  },
+
+  // Calculatorul de economii: costul anual al cartușelor vine din prețul și durata lor (nu e scris de mână);
+  // serverul randează rezultatul pentru valorile implicite, browserul îl recalculează pe loc.
+  calculator: (ctx, s) => {
+    const p = {persoane: 3, litri_persoana_zi: 1.5, cost_litru: 3.5, sticla_l: 2, ...(s.params ?? {})};
+    const kit = ctx.within(ctx.component, 'Kitul din calculator', () => ctx.related('sectiuni', s.id, 'products'))[0];
+    const cartridges = kit ? ctx.within(ctx.component, 'Cartușele kitului', () => ctx.related('produse', kit.id, 'cartridges')) : [];
+    const parts = cartridges.filter(c => c.price != null && c.lifetime_months).map(c => ({name: c.name.replace(/,? Purapa.*$/, ''), price: c.price, months: c.lifetime_months,
+      yearly: c.price * 12 / c.lifetime_months}));
+    const yearly = Math.round(parts.reduce((sum, c) => sum + c.yearly, 0) * 100) / 100;
+    const liters = Math.round(p.persoane * p.litri_persoana_zi * 30);
+    const r = calc({liters, cost: p.cost_litru, yearly, kit: kit?.price ?? null, bottle: p.sticla_l});
+    const data = {yearly, kit: kit?.price ?? null, perPersonMonth: p.litri_persoana_zi * 30, bottle: p.sticla_l};
+    const field = (id, label, input, hint = '') => `<div class="calc-field"><label for="${id}">${label}</label>${input}${hint ? `<small id="${id}-h">${hint}</small>` : ''}</div>`;
+    return wrap(s, `<div class="calc-grid"><div>${head(ctx, s).replace('class="head"', 'class="head" style="margin-bottom:0"')}
+      <details class="assumptions"><summary>Cum calculăm</summary><ul>
+        <li>Consum: ${num(p.litri_persoana_zi)} L de apă de băut pe persoană pe zi, adică ${num(p.litri_persoana_zi * 30)} L pe lună.</li>
+        ${parts.length ? `<li>Cartușele kitului: ${parts.map(c => `${esc(c.name)}, ${lei(c.price)} la ${c.months} ${c.months === 1 ? 'lună' : 'luni'}`).join('; ')}. În total ${lei(Math.round(yearly))} pe an, la prețurile actuale.</li>` : ''}
+        ${kit?.price != null ? `<li>Kitul costă ${lei(kit.price)}, plătit o singură dată; din el se calculează amortizarea.</li>` : ''}
+        <li>Sticlele PET sunt socotite de ${num(p.sticla_l)} L.</li></ul></details></div>
+      <form class="calc" data-calc='${esc(JSON.stringify(data))}' aria-labelledby="calc-${s.id}" onsubmit="return false">
+        <div class="calc-head"><span class="icon">${icon('drop')}</span><h3 id="calc-${s.id}">Calculează-ți economiile</h3></div>
+        ${field(`c${s.id}-p`, 'Persoane în casă', `<div class="stepper"><button type="button" data-step="-1" aria-label="O persoană mai puțin">−</button>
+          <input id="c${s.id}-p" name="persoane" type="number" inputmode="numeric" min="1" max="15" value="${p.persoane}">
+          <button type="button" data-step="1" aria-label="O persoană în plus">+</button></div>`)}
+        ${field(`c${s.id}-l`, 'Apă îmbuteliată pe lună (litri)', `<input id="c${s.id}-l" name="litri" type="number" inputmode="numeric" min="1" step="1" value="${liters}" aria-describedby="c${s.id}-l-h">`,
+          'Se completează după numărul de persoane; îl poți schimba.')}
+        ${field(`c${s.id}-c`, 'Cost apă îmbuteliată (lei/litru)', `<input id="c${s.id}-c" name="cost" type="number" inputmode="decimal" min="0.1" step="0.1" value="${p.cost_litru}">`)}
+        <dl class="results">
+          <div class="r main"><dt>Economisești pe an</dt><dd data-r="annual">${r.annual}</dd></div>
+          <div class="r"><dt>Pe lună</dt><dd data-r="monthly">${r.monthly}</dd></div>
+          <div class="r"><dt>Sticle PET evitate / an</dt><dd data-r="bottles">${r.bottles}</dd></div>
+          ${kit?.price != null ? `<div class="r"><dt>Kitul se amortizează în</dt><dd data-r="payback">${r.payback}</dd></div>` : ''}
+        </dl>
+        <p class="calc-warn"${r.loss ? '' : ' hidden'}>La acest consum, cartușele costă mai mult decât apa îmbuteliată.</p>
+        <p class="sr-only" aria-live="polite" data-r="summary"></p>
+        ${s.cta_label ? `<div class="actions">${button(ctx, s.cta_label, s.cta_link)}</div>` : ''}
+      </form></div>`);
   },
 
   test: (ctx, s) => {

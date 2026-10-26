@@ -153,7 +153,7 @@ export const ENTITIES = [
     anchor: r => `#s-${r.id}`,
     fields: [
       {key: 'kind', label: 'Tip', type: 'select', required: true,
-       options: ['hero', 'beneficii', 'produse', 'test', 'tehnologie', 'pasi', 'intrebari', 'text', 'contact', 'cta']},
+       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'text', 'contact', 'cta']},
       {key: 'theme', label: 'Fundal', type: 'select', options: ['alb', 'deschis', 'inchis']},
       {key: 'kicker', label: 'Supratitlu', type: 'text', max: 60},
       {key: 'title', label: 'Titlu (*cuvinte* = evidențiate)', type: 'text'},
@@ -163,8 +163,9 @@ export const ENTITIES = [
       {key: 'cta2_label', label: 'Buton secundar', type: 'text'},
       {key: 'cta2_link', label: 'Destinație buton secundar', type: 'text'},
       {key: 'image_id', label: 'Imagine', type: 'image'},
+      {key: 'params', label: 'Ipotezele calculatorului', type: 'json', kinds: ['calculator']},
       {key: 'category_id', label: 'Categorie afișată', type: 'ref', target: 'categorii', rel: 'afișează categoria', inverseLabel: 'Secțiuni', kinds: ['produse']},
-      {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero']},
+      {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero', 'calculator']},
       {key: 'benefits', label: 'Beneficii', type: 'refs', target: 'beneficii', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['beneficii']},
       {key: 'steps', label: 'Pași', type: 'refs', target: 'pasi', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['pasi']},
       {key: 'faqs', label: 'Întrebări', type: 'refs', target: 'intrebari', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['intrebari']},
@@ -216,7 +217,7 @@ export const ENTITIES = [
 
 export const byKey = Object.fromEntries(ENTITIES.map(d => [d.key, d]));
 
-export const JSON_TYPES = new Set(['table', 'list', 'links', 'multiselect', 'texts']);
+export const JSON_TYPES = new Set(['table', 'list', 'links', 'multiselect', 'texts', 'json']);
 export const RESERVED_SLUGS = new Set(['manage', 'api', 'media', 'admin', 'wp-admin', 'wp-json', 'feed', 'sitemap.xml', 'robots.txt']);
 
 export const relFields = d => d.fields.filter(f => f.type === 'refs');

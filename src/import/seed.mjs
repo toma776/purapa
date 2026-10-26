@@ -174,10 +174,15 @@ export function seed(store, {user = SYSTEM} = {}) {
     kit: {kind: 'produse', kicker: 'Soluții premium pentru apă', title: 'Kitul complet de *filtrare*',
       text: '<p>Tot ce îți trebuie pentru apă filtrată la robinetul din bucătărie: sistemul, cartușele și instrucțiunile de montaj.</p>',
       products: [ids.kit], cta_label: 'Vezi toate produsele', cta_link: `ref:pagini:${ids.produse}`},
-    test: {kind: 'test', theme: 'deschis', kicker: 'Test rapid acasă', title: 'Apa ta este într-adevăr *sigură*?',
+    calc: {kind: 'calculator', theme: 'deschis', kicker: 'Calculator economii', title: 'Cât economisești cu *Purapa*?',
+      text: '<p>Investiția într-un sistem de filtrare se amortizează în primele luni. Vezi cât economisești eliminând apa îmbuteliată.</p>',
+      // Ipotezele: consumul de apă de băut pe persoană și sticla tipică; costul cartușelor vine din produse.
+      params: {persoane: 3, litri_persoana_zi: 1.5, cost_litru: 3.5, sticla_l: 2},
+      products: [ids.kit]},
+    test: {kind: 'test', kicker: 'Test rapid acasă', title: 'Apa ta este într-adevăr *sigură*?',
       text: '<p>Testul rapid verifică {nr_parametri} parametri esențiali în câteva minute. Primești un raport interpretat de specialiști și recomandări personalizate.</p>',
       parameters: ids.params, cta_label: 'Analizează apa acum', cta_link: `ref:pagini:${ids.testare}`, cta2_label: 'Comandă testul', cta2_link: `ref:produse:${ids.test}`},
-    tech: {kind: 'tehnologie', kicker: 'Cum funcționează', title: 'Două etape, *apă curată*',
+    tech: {kind: 'tehnologie', theme: 'deschis', kicker: 'Cum funcționează', title: 'Două etape, *apă curată*',
       text: '<p>Rezultatul: apă bună de băut, de gătit și pentru hidratarea de zi cu zi.</p>', stages: [ids.prefiltrare, ids.microfiltrare]},
     eco: {kind: 'beneficii', theme: 'inchis', kicker: 'Impact', title: 'Impactul tău *ecologic*',
       text: '<p>Fiecare pahar de apă filtrată acasă înseamnă mai puțin plastic, mai puține transporturi și mai puțină risipă.</p>', benefits: eco},
@@ -190,6 +195,7 @@ export function seed(store, {user = SYSTEM} = {}) {
   // Butoanele care duc la vitrina kitului de pe aceeași pagină.
   store.update(user, 'sectiuni', home.hero, {cta_label: 'Vezi kit-ul de filtrare', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
   store.update(user, 'sectiuni', home.cta, {cta_label: 'Vezi kit-ul complet', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
+  store.update(user, 'sectiuni', home.calc, {cta_label: 'Vezi kit-ul complet', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
   store.setLinks(user, 'pagini', ids.home, 'sections', Object.values(home));
   sec(ids.produse, [{kind: 'produse', title: 'Produse Purapa'}], src('/produse/'));
   sec(ids.testare, [

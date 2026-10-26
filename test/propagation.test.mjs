@@ -5,7 +5,7 @@ import {openDb, migrate} from '../src/core/db.mjs';
 import {createStore, SYSTEM, userFor} from '../src/core/store.mjs';
 import {createSync} from '../src/core/sync.mjs';
 import {createContext} from '../src/site/context.mjs';
-import {renderPath} from '../src/site/render.mjs';
+import {renderPath, calc} from '../src/site/render.mjs';
 import {seed} from '../src/import/seed.mjs';
 
 const ALL = ['/', '/ambassadors/', '/contact/', '/despre-noi/', '/politica-de-confidentialitate/', '/politica-de-cookie/',
@@ -55,6 +55,23 @@ test('§5.2 un preț schimbat reface doar paginile care îl afișează', () => {
   assert.match(html('/produse/'), /99 lei/);
   assert.deepEqual(propagate(() => store.update(SYSTEM, 'produse', ids.kit, {price: 1750}, {publish: true})).paths, ['/', '/produse/']);
   assert.match(html('/'), /1\.750 lei/);
+});
+
+test('calculatorul: costul anual vine din prețul și durata cartușelor; un preț nou de cartuș reface homepage-ul', () => {
+  const {store, ids, propagate, html} = setup();
+  // OK36M 389 lei la 12 luni + prefiltru 12,9 lei la 3 luni = 440,6 lei/an.
+  assert.match(html('/'), /&quot;yearly&quot;:440\.6/);
+  assert.match(html('/'), /În total 441 lei pe an/);
+  const {paths} = propagate(() => store.update(SYSTEM, 'produse', ids.ok36m, {price: 349}, {publish: true}));
+  assert.ok(paths.includes('/'), paths.join());
+  assert.match(html('/'), /&quot;yearly&quot;:400\.6/);
+});
+
+test('calculatorul: formula, amortizarea și cazul în care nu se merită', () => {
+  // 3 persoane × 1,5 L × 30 = 135 L; 135 × 3,5 − 440,6/12 = 435,78 lei/lună; kit 1.199 lei → 3 luni.
+  assert.deepEqual(calc({liters: 135, cost: 3.5, yearly: 440.6, kit: 1199, bottle: 2}),
+    {loss: false, monthly: '436 lei', annual: '5.229 lei', bottles: '810', payback: '3 luni'});
+  assert.equal(calc({liters: 5, cost: 1, yearly: 440.6, kit: 1199, bottle: 2}).loss, true);
 });
 
 test('§5.3 un produs mutat în altă categorie iese din lista veche și intră în cea nouă', () => {

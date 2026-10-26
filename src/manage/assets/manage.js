@@ -39,7 +39,7 @@
     if (el.type === 'checkbox') return el.checked;
     const v = el.value;
     if (['int', 'number', 'money', 'ref', 'image'].includes(t)) return v === '' ? null : Number(v);
-    if (['table', 'list', 'links', 'multiselect', 'texts'].includes(t)) {
+    if (['table', 'list', 'links', 'multiselect', 'texts', 'json'].includes(t)) {
       if (!v.trim()) return null;
       try { return JSON.parse(v); } catch { throw Object.assign(new Error(`„${el.name}” nu e JSON valid`), {field: el.name}); }
     }
