@@ -9,6 +9,14 @@ import {icon} from './icons.mjs';
 const ASSETS = new URL('./assets/', import.meta.url);
 const ASSET_V = createHash('sha1').update(readFileSync(new URL('site.css', ASSETS))).update(readFileSync(new URL('site.js', ASSETS))).digest('hex').slice(0, 10);
 const SITE_URL = (process.env.SITE_URL ?? 'https://purapa.ro').replace(/\/$/, '');
+// Cât purapa.ro e încă site-ul vechi, site-ul nou nu se indexează nicăieri. Doar SITE_INDEX=1 (în ziua lansării) îl deschide.
+// Se citește la fiecare cerere, ca exportul (--indexabil) să-l poată schimba după import.
+export const indexable = () => process.env.SITE_INDEX === '1';
+// Fără Disallow: Google trebuie să poată citi paginile ca să vadă „noindex”. O adresă blocată în robots.txt
+// poate ajunge totuși în index, din linkurile altor site-uri.
+export const robotsTxt = () => indexable()
+  ? `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`
+  : '# Previzualizare: paginile au „noindex” și nu apar în motoarele de căutare.\nUser-agent: *\nAllow: /\n';
 
 const num = n => new Intl.NumberFormat('ro-RO', {maximumFractionDigits: 2}).format(n);
 const lei = n => n == null ? '' : `${num(n)} lei`;
@@ -358,7 +366,7 @@ function shell(ctx, {path, title: pageTitle, description}, body) {
   const brand = ctx.within('Cap de pagină', 'Brandul în titlu', () => ctx.one('firma')?.brand ?? '');
   return `<!doctype html><html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(plainTitle(pageTitle))}${brand ? ` | ${esc(brand)}` : ''}</title>${description ? `<meta name="description" content="${esc(description)}">` : ''}
-${path ? `<link rel="canonical" href="${SITE_URL}${esc(path)}">` : ''}<meta name="theme-color" content="#254a99">
+${!indexable() ? '<meta name="robots" content="noindex, nofollow">' : path ? `<link rel="canonical" href="${SITE_URL}${esc(path)}">` : ''}<meta name="theme-color" content="#254a99">
 <link rel="preload" href="/assets/fonts/montserrat-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/site.css?v=${ASSET_V}"><script src="/assets/site.js?v=${ASSET_V}" defer></script></head>
 <body><a class="skip" href="#continut">Sari la conținut</a>${ctx.preview ? '<div class="preview-bar">Previzualizare — conținut nepublicat</div>' : ''}

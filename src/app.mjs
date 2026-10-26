@@ -13,7 +13,7 @@ import {createApi} from './manage/api.mjs';
 import {renderManage} from './manage/pages.mjs';
 import {login as loginPage} from './manage/views/users.mjs';
 import {createContext} from './site/context.mjs';
-import {renderPath} from './site/render.mjs';
+import {renderPath, publicPaths, indexable, robotsTxt} from './site/render.mjs';
 
 const ASSETS = join(dirname(fileURLToPath(import.meta.url)), 'manage', 'assets');
 const SITE_ASSETS = join(dirname(fileURLToPath(import.meta.url)), 'site', 'assets');
@@ -32,8 +32,9 @@ export function createApp({file = 'data/purapa.db', mediaDir = 'data/media', cro
   const api = createApi({db, store, sync, graph, todos, auth});
   const env = {db, store, sync, graph, todos, auth, api, syncStatus};
 
+  // Până la lansare (SITE_INDEX=1), niciun răspuns nu se indexează: pagini, imagini, fișiere.
   const send = (res, status, body, type = 'application/json; charset=utf-8', headers = {}) => {
-    res.writeHead(status, {'content-type': type, ...headers});
+    res.writeHead(status, {'content-type': type, ...(indexable() ? {} : {'x-robots-tag': 'noindex, nofollow'}), ...headers});
     res.end(type.startsWith('application/json') ? JSON.stringify(body) : body);
   };
   const secure = req => req.headers['x-forwarded-proto'] === 'https' || process.env.COOKIE_SECURE === '1';
@@ -145,6 +146,13 @@ export function createApp({file = 'data/purapa.db', mediaDir = 'data/media', cro
       }
 
       if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'Metodă nepermisă');
+
+      if (path === '/robots.txt') return send(res, 200, robotsTxt(), 'text/plain; charset=utf-8', {'cache-control': 'public, max-age=300'});
+      if (path === '/sitemap.xml' && indexable()) {
+        const site = (process.env.SITE_URL ?? 'https://purapa.ro').replace(/\/$/, '');
+        return send(res, 200, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${
+          publicPaths(store).map(p => `  <url><loc>${site}${p}</loc></url>`).join('\n')}\n</urlset>\n`, 'application/xml; charset=utf-8', {'cache-control': 'public, max-age=300'});
+      }
 
       const redirect = db.prepare('SELECT to_path, code FROM redirects WHERE from_path = ?').get(path);
       if (redirect?.to_path) return send(res, redirect.code, '', 'text/plain', {location: redirect.to_path + url.search});

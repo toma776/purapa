@@ -41,7 +41,18 @@ Lucrezi local (conținut, cod, design), iar restul se face singur:
 
 Cheia Blob vine local cu `npx vercel env pull .env.local` (fișierul nu intră în git). Fără ea, baza rămâne doar locală. Ultima stare sincronizată stă în `data/.blob-sync.json`.
 
-Cât timp purapa.ro e încă site-ul vechi, toate paginile au `x-robots-tag: noindex`, ca să nu concureze cu el în Google.
+**Indexarea e oprită.** Cât timp purapa.ro e încă site-ul vechi, site-ul nou nu trebuie să apară în Google și nici să concureze cu el:
+
+- antetul `X-Robots-Tag: noindex, nofollow` vine pe orice răspuns, inclusiv imagini și fișiere, de două ori: din aplicație și din `vercel.json`;
+- fiecare pagină are `<meta name="robots" content="noindex, nofollow">` și nu are `canonical`;
+- `robots.txt` lasă crawlerele să intre, ca să vadă „noindex”. Un `Disallow: /` ar ascunde „noindex”, iar adresele ar putea fi indexate din linkuri;
+- nu există `sitemap.xml`.
+
+**În ziua lansării** pe purapa.ro:
+
+1. adaugă `SITE_INDEX=1` în Vercel (Settings → Environment Variables, Production);
+2. scoate antetul `x-robots-tag` din `vercel.json`;
+3. publică. Paginile primesc atunci `canonical`, iar `robots.txt` și `sitemap.xml` trimit spre `https://purapa.ro`.
 
 **Adresele:** `purapa.vercel.app` e un proiect al altcuiva. Adresa noastră publică e `purapa-six.vercel.app`, iar `purapa-dwf3.vercel.app` cere login Vercel.
 

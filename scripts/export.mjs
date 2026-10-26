@@ -1,17 +1,19 @@
 // Exportul static al site-ului public, pentru Vercel: paginile randate din Brain, resursele, imaginile folosite,
 // redirecționările 301 și configurația. Panoul /manage rămâne local; după o modificare, se exportă și se publică din nou.
-//   npm run export                 → dist/, marcat „noindex” (previzualizare, cât purapa.ro e încă site-ul vechi)
+//   npm run export                 → dist/, marcat „noindex”, fără sitemap (previzualizare, cât purapa.ro e încă site-ul vechi)
 //   npm run export -- --indexabil  → fără „noindex”, cu sitemap în robots.txt (când devine site-ul oficial)
 import {mkdir, rm, writeFile, cp, readdir, access} from 'node:fs/promises';
 import {join} from 'node:path';
 import {openDb, migrate} from '../src/core/db.mjs';
 import {createStore} from '../src/core/store.mjs';
 import {createContext} from '../src/site/context.mjs';
-import {renderPath, publicPaths} from '../src/site/render.mjs';
+import {renderPath, publicPaths, robotsTxt} from '../src/site/render.mjs';
 
 const OUT = 'dist';
 const SITE_URL = (process.env.SITE_URL ?? 'https://purapa.ro').replace(/\/$/, '');
 const indexable = process.argv.includes('--indexabil');
+// Steagul hotărăște, nu mediul: paginile primesc „noindex” sau nu după el.
+process.env.SITE_INDEX = indexable ? '1' : '0';
 
 const db = openDb(process.env.DB ?? 'data/purapa.db');
 migrate(db);
@@ -64,8 +66,8 @@ await writeFile(join(OUT, 'vercel.json'), JSON.stringify({
 }, null, 2));
 // `vercel link` poate scrie un .env.local cu un token: nu trebuie să ajungă niciodată în deploy.
 await writeFile(join(OUT, '.vercelignore'), '.env*\n.gitignore\n');
-await writeFile(join(OUT, 'robots.txt'), indexable ? `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n` : 'User-agent: *\nDisallow: /\n');
-await writeFile(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${
+await writeFile(join(OUT, 'robots.txt'), robotsTxt());
+if (indexable) await writeFile(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${
   paths.map(p => `  <url><loc>${SITE_URL}${p}</loc></url>`).join('\n')}\n</urlset>\n`);
 
 console.log(`Export gata în ${OUT}/: ${paths.length} pagini, ${media} imagini, ${redirects.length} redirecționări${indexable ? '' : ', marcat noindex (previzualizare)'}.`);
