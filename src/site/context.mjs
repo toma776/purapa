@@ -4,7 +4,8 @@ import {byKey, publicPath, titleOf} from '../registry/entities.mjs';
 import {esc} from '../core/content.mjs';
 import {fillTokens} from '../core/values.mjs';
 
-export function createContext(store, {preview = false} = {}) {
+// `staticSite`: randare pentru exportul static (fără server), de exemplu fără formulare care trimit la /api.
+export function createContext(store, {preview = false, staticSite = false} = {}) {
   const deps = [];
   const layouts = new Map();
   let sink = deps;
@@ -18,7 +19,7 @@ export function createContext(store, {preview = false} = {}) {
   const view = r => preview && r?.draft ? {...r, ...r.draft} : r;
 
   const ctx = {
-    deps, layouts, preview,
+    deps, layouts, preview, staticSite,
     get component() { return cur.component; },
 
     within(component, reason, fn) {

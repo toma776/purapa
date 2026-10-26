@@ -344,6 +344,9 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
 .form input, .form textarea { font: inherit; padding: .85rem 1rem; border: 1.5px solid #c9d3e6; border-radius: var(--r-sm); background: var(--white); color: var(--ink); }
 .form input:focus, .form textarea:focus { border-color: var(--blue); outline: 3px solid rgb(37 74 153 / .2); outline-offset: 0; }
 .form textarea { min-height: 9rem; resize: vertical; }
+.contact-mail { padding: clamp(1.5rem, 1rem + 2vw, 2.25rem); border-radius: var(--r-lg); background: var(--mist); border: 1px solid var(--line); align-self: start; }
+.contact-mail p { color: var(--muted); margin-top: .5rem; }
+.contact-mail .btn { margin-top: 1rem; }
 @media (max-width: 880px) { .contact-grid { grid-template-columns: 1fr; } }
 
 /* Subsol */

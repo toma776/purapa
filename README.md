@@ -7,10 +7,32 @@ Analiza site-ului și registrul propus sunt în [docs/analiza-entitati.md](docs/
 npm run import             # crawl purapa.ro + Portalia → analyze → import → scan (data/purapa.db)
 npm run import -- --offline   # din snapshot-ul existent, fără rețea
 npm start                  # site: http://localhost:3000/ · panou: http://localhost:3000/manage/
-npm test                   # 34 de teste: propagare (§5), /manage, import
+npm test                   # 36 de teste: propagare (§5), /manage, import
+npm run export             # site-ul static în dist/ (noindex); --indexabil când devine site-ul oficial
+npm run deploy             # export + publicare pe Vercel (proiectul purapa, echipa DWF)
 ```
 
 La prima pornire nu există conturi: panoul e deschis fără parolă **doar de pe localhost**, până creezi primul administrator (din /manage/login/ sau din Utilizatori). După aceea, autentificarea e obligatorie peste tot.
+
+## Online (Vercel)
+
+Site-ul public e pe **https://purapa-six.vercel.app**: pagini statice exportate din Brain. Panoul `/manage` rămâne local; Vercel nu are disc permanent pentru baza SQLite.
+
+**Fluxul de lucru:** modifici în panoul local, apoi rulezi `npm run deploy`, care exportă tot site-ul și îl publică.
+
+Ce conține exportul (`scripts/export.mjs`):
+- **Paginile** randate din Brain.
+- **Resursele:** fonturi, CSS, JS și doar imaginile folosite.
+- **Redirecționările 301** din Brain, ca reguli Vercel.
+- **`robots.txt` și `sitemap.xml`.**
+- **Antetele de securitate.**
+- **Formularul de contact** devine un buton „Trimite un email”, pentru că pe site-ul static nu există `/api`.
+
+Cât timp purapa.ro e încă site-ul vechi, exportul e marcat `noindex` (`X-Robots-Tag` și `robots.txt`), ca să nu concureze cu el în Google.
+
+**Adresele:** `purapa.vercel.app` e un proiect al altcuiva. Adresa noastră publică e `purapa-six.vercel.app`, iar `purapa-dwf3.vercel.app` cere login Vercel.
+
+**Planul:** echipa DWF e pe planul Hobby, iar Vercel nu permite uz comercial pe Hobby. Pentru purapa.ro live e nevoie de Pro.
 
 ## Importul (§1.3)
 

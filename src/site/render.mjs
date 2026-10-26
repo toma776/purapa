@@ -252,14 +252,18 @@ const SECTIONS = {
       <li><span>Email</span><a href="mailto:${ctx.text('{email}')}">${ctx.text('{email}')}</a><br>Răspundem în ${ctx.text('{raspuns}')}.</li>
       <li><span>Sediu</span>${ctx.text('{adresa_completa}')}</li>
     </ul>
-    <form method="post" action="/api/public/contact" class="form">
+    ${ctx.staticSite
+      // Site static (fără server): mesajul pleacă din aplicația de email a vizitatorului, nu printr-un formular care n-ar trimite nimic.
+      ? `<div class="contact-mail"><h3>Scrie-ne un mesaj</h3><p>Îți răspundem în ${ctx.text('{raspuns}')}.</p>
+        <p><a class="btn" href="mailto:${ctx.text('{email}')}?subject=${encodeURIComponent('Întrebare de pe site')}">Trimite un email${icon('arrow')}</a></p></div>`
+      : `<form method="post" action="/api/public/contact" class="form">
       <label>Nume complet <input name="name" required autocomplete="name"></label>
       <label>Email <input name="email" type="email" required autocomplete="email"></label>
       <label>Telefon (opțional) <input name="phone" type="tel" autocomplete="tel"></label>
       <label>Subiect <input name="subject" required></label>
       <label>Mesaj <textarea name="message" minlength="20" required></textarea></label>
       <div><button class="btn">Trimite mesajul${icon('arrow')}</button></div>
-    </form></div>`)
+    </form>`}</div>`)
 };
 
 function renderSection(ctx, s, i) {

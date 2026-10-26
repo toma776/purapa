@@ -8,3 +8,5 @@ node_modules/
 *.db
 *.db-wal
 *.db-shm
+# Exportul static pentru Vercel (se generează cu npm run export).
+/dist/
