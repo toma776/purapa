@@ -102,6 +102,7 @@ export const ENTITIES = [
       {key: 'name', label: 'Nume', type: 'text', required: true},
       {key: 'symbol', label: 'Simbol', type: 'text'},
       {key: 'indicates', label: 'Ce indică', type: 'textarea'},
+      {key: 'group', label: 'Familie', type: 'select', options: ['Duritate și echilibru', 'Dezinfectare', 'Contaminanți', 'Metale']},
       {key: 'position', label: 'Ordine', type: 'int'},
       {key: 'recommends', label: 'Se rezolvă cu', type: 'refs', target: 'produse',
        rel: 'se rezolvă cu', inverseLabel: 'Recomandat pentru', sensitive: true}
@@ -164,6 +165,8 @@ export const ENTITIES = [
       {key: 'cta2_link', label: 'Destinație buton secundar', type: 'text'},
       {key: 'image_id', label: 'Imagine', type: 'image'},
       {key: 'video', label: 'Video YouTube', type: 'youtube', kinds: ['text']},
+      {key: 'note', label: 'Notă evidențiată (lângă text)', type: 'textarea', kinds: ['text']},
+      {key: 'facts', label: 'Cifre-cheie (câte una pe linie: valoare | etichetă)', type: 'textarea', kinds: ['hero']},
       {key: 'params', label: 'Ipotezele calculatorului', type: 'json', kinds: ['calculator']},
       {key: 'category_id', label: 'Categorie afișată', type: 'ref', target: 'categorii', rel: 'afișează categoria', inverseLabel: 'Secțiuni', kinds: ['produse']},
       {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero', 'calculator']},

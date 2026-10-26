@@ -82,24 +82,24 @@ export function seed(store, {user = SYSTEM} = {}) {
   store.setLinks(user, 'produse', ids.ok36m, 'stages', [ids.microfiltrare], {source: src('/produse/', '0,5 µm Pre-Coat')});
 
   const params = [
-    ['Duritate totală', null, 'nivelul de calcar și riscul de depuneri'],
-    ['Clor liber', 'Cl₂', 'dezinfectantul activ din apă'],
-    ['Clor total', null, 'clorul liber plus produșii dezinfecției'],
-    ['Brom', 'Br', 'dezinfectant alternativ'],
-    ['Alcalinitate totală', null, 'capacitatea de a neutraliza acizii; influențează stabilitatea pH-ului'],
-    ['pH', 'pH', 'aciditatea sau alcalinitatea apei'],
-    ['Nitrați', 'NO₃⁻', 'proveniți din îngrășăminte sau surse organice'],
-    ['Nitriți', 'NO₂⁻', 'indicator al unei poluări organice recente'],
-    ['Cupru', 'Cu', 'din coroziunea țevilor de cupru'],
-    ['Fier', 'Fe', 'colorarea apei și pete'],
-    ['Plumb', 'Pb', 'metal greu, mai ales din instalații vechi'],
-    ['Nichel', 'Ni', 'urme din unele materiale de instalații'],
-    ['Carbonat', 'CO₃²⁻', 'legat de alcalinitate și duritate'],
-    ['MPS (oxidant)', 'MPS', 'indicator al agenților oxidanți folosiți la tratare'],
-    ['Acid cianuric', null, 'folosit pentru stabilizarea clorului'],
-    ['Sulfiți', 'SO₃²⁻', 'conservanți sau antioxidanți; pot afecta mirosul și gustul']
+    ['Duritate totală', null, 'Duritate și echilibru', 'Nivelul de calcar din apă și cât de ușor apar depuneri pe țevi și electrocasnice.'],
+    ['Clor liber', 'Cl₂', 'Dezinfectare', 'Cantitatea de clor activ folosită la dezinfecție; poate influența gustul și mirosul apei.'],
+    ['Clor total', null, 'Dezinfectare', 'Clorul liber plus compușii rezultați după dezinfecție: arată cum a fost tratată apa.'],
+    ['Brom', 'Br', 'Dezinfectare', 'Dezinfectant alternativ folosit uneori la tratarea apei; poate afecta gustul și mirosul.'],
+    ['Alcalinitate totală', null, 'Duritate și echilibru', 'Capacitatea apei de a neutraliza acizii; influențează stabilitatea pH-ului și formarea depunerilor.'],
+    ['pH', 'pH', 'Duritate și echilibru', 'Cât de acidă sau alcalină e apa, cu impact asupra gustului și a confortului la consumul zilnic.'],
+    ['Nitrați', 'NO₃⁻', 'Contaminanți', 'Pot ajunge în apă din îngrășăminte sau surse organice; nivelurile ridicate nu sunt dorite în apa potabilă.'],
+    ['Nitriți', 'NO₂⁻', 'Contaminanți', 'Indicator de poluare organică recentă; valorile crescute arată o apă care cere atenție sporită.'],
+    ['Cupru', 'Cu', 'Metale', 'Poate proveni din coroziunea țevilor de cupru și poate da apei un gust metalic.'],
+    ['Fier', 'Fe', 'Metale', 'Poate colora apa și lasă pete galbene sau maronii pe textile și obiecte sanitare.'],
+    ['Plumb', 'Pb', 'Metale', 'Metal greu nedorit în apa potabilă; apare mai ales prin coroziunea instalațiilor vechi.'],
+    ['Nichel', 'Ni', 'Metale', 'Metal de urmă care poate proveni din unele materiale de instalații; util pentru evaluarea generală a apei.'],
+    ['Carbonat', 'CO₃²⁻', 'Duritate și echilibru', 'Parametru legat de alcalinitate și duritate; influențează depunerile și stabilitatea pH-ului.'],
+    ['MPS (oxidant)', 'MPS', 'Dezinfectare', 'Arată prezența unor agenți oxidanți folosiți la tratarea apei; ajută la evaluarea dezinfecției.'],
+    ['Acid cianuric', null, 'Dezinfectare', 'Folosit pentru stabilizarea clorului în anumite aplicații; completează tabloul tratamentului apei.'],
+    ['Sulfiți', 'SO₃²⁻', 'Contaminanți', 'Compuși folosiți uneori drept conservanți sau antioxidanți; valorile ridicate pot influența mirosul și gustul.']
   ];
-  ids.params = params.map(([name, symbol, indicates], i) => c('parametri', {name, symbol, indicates, position: i + 1}, src('/testare-apa/', `Știi ce ai în apă: ${name}`)));
+  ids.params = params.map(([name, symbol, group, indicates], i) => c('parametri', {name, symbol, group, indicates, position: i + 1}, src('/testare-apa/', `Știi ce ai în apă: ${name}`)));
   store.setLinks(user, 'produse', ids.test, 'parameters', ids.params, {source: src('/testare-apa/', '16 parametri')});
   // Dedusă, nu confirmată: clorul se rezolvă cu microfiltrarea (din textul despre cartuș). Așteaptă verificarea unui om.
   store.setLinks(user, 'parametri', ids.params[1], 'recommends', [{id: ids.ok36m, status: 'inferred', confidence: 0.8, note: 'cartușul „reține clorul și derivații”'}],
@@ -130,12 +130,25 @@ export function seed(store, {user = SYSTEM} = {}) {
 
   const step = (title, text, s) => c('pasi', {title, text}, s);
   const testSteps = [
-    step('Comandă kitul', `<p>Kitul se cumpără de la <a data-ref="produse:${ids.test}">partenerul nostru</a>.</p>`, src('/testare-apa/', 'Cum funcționează testarea apei')),
-    step('Testează în sub 5 minute', '<p>Umple un pahar, scufundă banda 2–3 secunde, ține-o orizontal și așteaptă circa 30 de secunde.</p>', src('/testare-apa/', 'pasul 2')),
-    step('Fotografiază banda', '<p>Lângă scala de culori, pe o suprafață plană, în lumină bună, cu toate pătratele vizibile.</p>', src('/testare-apa/', 'pasul 3')),
-    step('Încarcă fotografia', '<p>Scanează codul QR sau deschide aplicația <a href="/test-rapid/">Test Rapid</a> și primești raportul pentru {nr_parametri} parametri.</p>', src('/testare-apa/', 'pasul 4')),
-    step('Primești recomandări', '<p>Specialiștii Purapa îți recomandă soluția de filtrare potrivită.</p>', src('/testare-apa/', 'pasul 5'))
+    step('Comandă testul rapid Purapa', `<p>Primești acasă kitul de testare, scala de culori și instrucțiunile complete. Comanda se face prin <a data-ref="produse:${ids.test}">partenerul nostru, Portalia</a>.</p>`, src('/testare-apa/', 'Cum funcționează testarea apei')),
+    step('Testează apa în sub 5 minute', '<p>Umple un pahar sau o sticlă cu apa pe care vrei s-o testezi. Ține banda în apă 2–3 secunde, ca toate zonele de test să se ude, apoi scoate-o și ține-o orizontal. Nu o scutura și nu o șterge: las-o să reacționeze circa 30 de secunde.</p>', src('/testare-apa/', 'pasul 2')),
+    step('Fotografiază banda', '<p>Așază banda paralel cu scala de culori, pe o suprafață plană, în lumină bună, cu toate pătrățelele colorate la vedere.</p>', src('/testare-apa/', 'pasul 3')),
+    step('Încarcă fotografia și primește raportul', '<p>Scanează codul QR sau deschide aplicația <a href="/test-rapid/">Test Rapid</a> și încarcă fotografia. Citim culorile benzii față de scala de control și îți generăm un raport digital pentru cei {nr_parametri} parametri.</p>', src('/testare-apa/', 'pasul 4')),
+    step('Primește recomandările Purapa', '<p>Pe baza rezultatelor, experții Purapa îți recomandă soluția de filtrare potrivită pentru apa ta.</p>', src('/testare-apa/', 'pasul 5'))
   ];
+  const risks = [
+    benefit('Poate conține substanțe invizibile', 'Metale, nitrați sau alte reziduuri nu se văd cu ochiul liber.', 'eyeoff', src('/testare-apa/', 'De ce să testez apa?')),
+    benefit('Gustul și mirosul nu garantează siguranța', 'Apa poate avea gust neutru și totuși să nu fie optimă pentru consumul zilnic.', 'glass', src('/testare-apa/', 'De ce să testez apa?')),
+    benefit('Conductele vechi pot altera apa', 'Chiar dacă pleacă tratată din rețea, apa se poate contamina pe traseu, până la robinet.', 'pipe', src('/testare-apa/', 'De ce să testez apa?')),
+    benefit('Fântânile și puțurile sunt expuse', 'Infiltrațiile din sol, agricultura sau vecinătatea pot afecta calitatea apei.', 'well', src('/testare-apa/', 'De ce să testez apa?'))
+  ];
+  // Întrebările despre test: doar ce spune pagina veche de testare.
+  const testFaqs = [
+    ['Testul înlocuiește o analiză de laborator?', '<p>Nu. Testul rapid oferă o evaluare orientativă, pe baza unui screening făcut acasă. Pentru analize detaliate sau rezultate oficiale e recomandat un laborator acreditat.</p>'],
+    ['Pot testa apa din fântână sau din puț?', '<p>Da. Testul se potrivește pentru apa din rețeaua publică, din fântână sau din puț. La fântâni și puțuri e cu atât mai util, pentru că infiltrațiile din sol, agricultura sau vecinătatea pot afecta apa.</p>'],
+    ['Cât durează testul?', '<p>Sub 5 minute. Banda stă în apă 2–3 secunde, reacționează circa 30 de secunde, apoi fotografiezi rezultatul lângă scala de culori.</p>'],
+    ['Cum primesc rezultatul?', '<p>Încarci fotografia benzii în aplicația Purapa, prin codul QR sau linkul primit, și primești un raport digital pentru toți cei {nr_parametri} parametri, cu recomandări de filtrare.</p>']
+  ].map(([question, answer], i) => c('intrebari', {question, answer, position: 10 + i, products: [ids.test]}, src('/testare-apa/', question)));
   const ambSteps = [
     step('Înscrierea', '<p>Completezi formularul și parcurgi prezentarea programului.</p>', src('/ambassadors/', 'pasul 1')),
     step('Recomandarea naturală', '<p>Povestești experiența ta cu Purapa celor apropiați, offline sau online.</p>', src('/ambassadors/', 'pasul 2')),
@@ -198,15 +211,33 @@ export function seed(store, {user = SYSTEM} = {}) {
   store.update(user, 'sectiuni', home.calc, {cta_label: 'Vezi kit-ul complet', cta_link: `ref:sectiuni:${home.kit}`}, {source: src('/')});
   store.setLinks(user, 'pagini', ids.home, 'sections', Object.values(home));
   sec(ids.produse, [{kind: 'produse', title: 'Produse Purapa'}], src('/produse/'));
-  sec(ids.testare, [
-    {kind: 'hero', title: 'Apa e limpede – dar e și curată?',
-     text: '<p>Un test rapid, acasă, care detectează contaminanții și îți dă recomandări personalizate pentru o apă mai sigură și mai gustoasă.</p>',
-     cta_label: 'Comandă kitul de testare a apei', cta_link: `ref:produse:${ids.test}`, products: [ids.test]},
-    {kind: 'text', title: 'Ce este testul rapid Purapa',
-     text: '<p>O verificare rapidă a apei de la rețea, din fântână sau din foraj, cu un raport pe înțelesul tuturor. Rezultatele sunt orientative; pentru rezultate oficiale e nevoie de un laborator acreditat.</p>'},
-    {kind: 'pasi', title: 'Cum funcționează testarea apei', steps: testSteps},
-    {kind: 'test', title: 'Știi ce ai în apă', text: '<p>Testul măsoară {nr_parametri} parametri:</p>', parameters: ids.params}
-  ], src('/testare-apa/'));
+  const test = {};
+  for (const [key, data] of Object.entries({
+    hero: {kind: 'hero', kicker: 'Test rapid Purapa', title: 'Apa e limpede – dar e și *curată*?',
+      text: '<p>Află rapid ce se ascunde în apa de la robinet. Testezi apa la tine acasă și primești recomandări personalizate pentru o apă mai sigură și mai plăcută la gust.</p>',
+      cta_label: 'Comandă testul', cta_link: `ref:produse:${ids.test}`, products: [ids.test],
+      facts: '{nr_parametri} | parametri analizați\n5 min | sau chiar mai puțin\ndigital | raport cu recomandări'},
+    about: {kind: 'text', kicker: 'Ce este', title: 'Testul rapid *Purapa*',
+      text: '<p>Cea mai simplă metodă de a verifica apa potabilă. Faci testul acasă, în câteva minute, și afli dacă apa pe care o bei zilnic, din rețeaua publică, din fântână sau din puț, are probleme de calitate.</p><p>Primești un raport clar, pe înțelesul tuturor: ce substanțe sunt în apă și cum îi influențează gustul, mirosul, depunerile și siguranța. Plus recomandări personalizate pentru apa de la robinet.</p>',
+      note: 'Testul rapid oferă o evaluare orientativă, pe baza unui screening făcut acasă. Pentru analize detaliate sau rezultate oficiale e recomandat un laborator acreditat.'},
+    why: {kind: 'beneficii', theme: 'deschis', kicker: 'De ce să testezi', title: 'Limpede nu înseamnă *sigură*',
+      text: '<p>De multe ori credem că apa e „bună” pentru că:</p><ul><li>e limpede</li><li>nu are miros</li><li>vine de la robinet</li><li>vine din fântână sau puț</li></ul><p>Însă chiar aici apar riscurile.</p>',
+      benefits: risks},
+    steps: {kind: 'pasi', kicker: 'Cum funcționează', title: 'Cinci pași, de acasă până la *raport*',
+      text: '<p>Fără laborator, fără programări. Tot ce-ți trebuie e în kit, iar rezultatul îl primești pe telefon.</p>',
+      steps: testSteps, cta_label: 'Comandă testul', cta_link: `ref:produse:${ids.test}`},
+    params: {kind: 'test', theme: 'deschis', kicker: 'Ce analizează', title: 'Știi ce ai *în apă*',
+      text: '<p>Testul analizează {nr_parametri} parametri care influențează gustul, mirosul, depunerile și siguranța apei, inclusiv metale și substanțe folosite la tratare. Și afli ce poți face ca s-o îmbunătățești.</p>',
+      parameters: ids.params, cta_label: 'Comandă testul', cta_link: `ref:produse:${ids.test}`},
+    faq: {kind: 'intrebari', kicker: 'Întrebări frecvente', title: 'Despre *testul rapid*',
+      text: '<p>Nu găsești răspunsul? Scrie-ne și îți răspundem în {raspuns}.</p>', faqs: testFaqs, cta_label: 'Scrie-ne', cta_link: `ref:pagini:${ids.contact}`},
+    cta: {kind: 'cta', title: 'Află ce ai în apă în *mai puțin de 5 minute*',
+      text: '<p>Testul vine acasă, rezultatul îl primești pe telefon, iar recomandările sunt gândite pentru apa ta.</p>',
+      cta_label: 'Comandă testul', cta_link: `ref:produse:${ids.test}`, cta2_label: 'Întreabă un specialist', cta2_link: `ref:pagini:${ids.contact}`}
+  })) test[key] = c('sectiuni', data, src('/testare-apa/'));
+  store.update(user, 'sectiuni', test.hero, {cta2_label: 'Vezi cum funcționează', cta2_link: `ref:sectiuni:${test.steps}`}, {source: src('/testare-apa/')});
+  store.setLinks(user, 'pagini', ids.testare, 'sections', Object.values(test));
+  store.update(user, 'pagini', ids.testare, {seo_description: 'Testează apa acasă, în sub 5 minute: 16 parametri esențiali, raport digital și recomandări personalizate de filtrare.'}, {source: src('/testare-apa/')});
   sec(ids.despre, [
     {kind: 'hero', title: 'Tehnologie avansată pentru apă pură',
      text: '<p>Purapa e un brand dedicat calității apei și siguranței consumatorului: microfiltrare modernă, materiale de calitate, procese testate. Sistemele sunt proiectate în Europa.</p>'},

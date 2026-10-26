@@ -97,13 +97,15 @@ function productFacts(ctx, p) {
 const SECTIONS = {
   hero: (ctx, s, i) => {
     const product = ctx.within(ctx.component, 'Produsul din hero', () => ctx.related('sectiuni', s.id, 'products'))[0];
-    const facts = product ? productFacts(ctx, product) : [];
+    // Cifrele-cheie: cele scrise în secțiune („valoare | etichetă”, cu jetoane), altfel cele calculate din produs.
+    const facts = s.facts ? String(s.facts).split('\n').map(l => l.split('|').map(x => x.trim())).filter(([v]) => v).map(([v, l = '']) => ({value: ctx.text(v), label: ctx.text(l)}))
+      : product ? productFacts(ctx, product).map(f => ({value: esc(f.value), label: esc(f.label)})) : [];
     const visual = image(ctx, s.image_id ?? product?.image_id, {eager: true, sizes: '(max-width: 880px) 92vw, 480px'});
     return `<section class="hero" aria-labelledby="s-${s.id}"><div class="container grid">
       <div class="copy">${s.kicker ? `<p class="eyebrow">${ctx.text(s.kicker)}</p>` : ''}
         <${i === 0 ? 'h1' : 'h2'} id="s-${s.id}">${title(ctx, s.title)}</${i === 0 ? 'h1' : 'h2'}>
         ${s.text ? `<div class="lead">${ctx.rich(s.text)}</div>` : ''}${buttons(ctx, s)}
-        ${facts.length ? `<ul class="facts" aria-label="Pe scurt">${facts.map(f => `<li><strong>${esc(f.value)}</strong><span>${esc(f.label)}</span></li>`).join('')}</ul>` : ''}
+        ${facts.length ? `<ul class="facts" aria-label="Pe scurt">${facts.map(f => `<li><strong>${f.value}</strong><span>${f.label}</span></li>`).join('')}</ul>` : ''}
       </div>
       ${visual ? `<div class="visual"><div class="frame">${visual}</div>${product?.price != null ? `<div class="price-card">
         <span class="label">Preț</span>${priceBlock(product, {cls: 'pc-price'})}
@@ -205,6 +207,20 @@ const SECTIONS = {
   test: (ctx, s) => {
     const params = ctx.within(ctx.component, 'Parametrii testului', () => ctx.related('sectiuni', s.id, 'parameters'));
     const shown = params.slice(0, 9);
+    // Fără imagine și cu familii: câte un panou pe familie, cu ce indică fiecare parametru.
+    const groups = [...new Set(params.map(p => p.group).filter(Boolean))];
+    if (!s.image_id && groups.length) {
+      const GROUP_ICON = {'Duritate și echilibru': 'balance', 'Dezinfectare': 'flask', 'Contaminanți': 'alert', 'Metale': 'metal'};
+      const sets = [...groups, null].map(g => [g, params.filter(p => (p.group ?? null) === g)]).filter(([, ps]) => ps.length);
+      const count = ctx.text('{nr_parametri}');
+      return wrap(s, `<div class="params-head">${head(ctx, s).replace('class="head"', 'class="head" style="margin-bottom:0"')}
+        ${/^\d+$/.test(count) ? `<p class="params-stat"><strong>${count}</strong><span>parametri analizați, în ${sets.length} familii</span></p>` : ''}</div>
+        <div class="param-groups">${sets.map(([g, ps]) => `<div class="param-group">
+          <header><span class="icon">${icon(GROUP_ICON[g] ?? 'drop')}</span><h3>${esc(g ?? 'Alți parametri')}</h3><span class="n">${ps.length}</span></header>
+          <dl>${ps.map(p => `<div><dt>${esc(p.name)}${p.symbol && !p.name.includes(p.symbol) ? ` <abbr>${esc(p.symbol)}</abbr>` : ''}</dt>${p.indicates ? `<dd>${ctx.text(p.indicates)}</dd>` : ''}</div>`).join('')}</dl>
+        </div>`).join('')}</div>
+        ${buttons(ctx, s) ? `<div class="actions" style="justify-content:center;margin-top:2.5rem">${button(ctx, s.cta_label, s.cta_link)}${button(ctx, s.cta2_label, s.cta2_link, 'btn ghost')}</div>` : ''}`);
+    }
     if (!s.image_id) {
       return wrap(s, `${head(ctx, s)}${params.length ? `<ol class="params">${params.map(p =>
         `<li><strong>${esc(p.name)}${p.symbol ? ` (${esc(p.symbol)})` : ''}</strong>${p.indicates ? ` — ${ctx.text(p.indicates)}` : ''}</li>`).join('')}</ol>` : ''}${buttons(ctx, s)}`);
@@ -231,6 +247,12 @@ const SECTIONS = {
 
   pasi: (ctx, s) => {
     const steps = ctx.within(ctx.component, 'Pașii secțiunii', () => ctx.related('sectiuni', s.id, 'steps'));
+    // Mulți pași (sau cu imagine): antetul rămâne pe loc, iar pașii curg pe o axă verticală alături. Puțini: carduri pe un rând.
+    if (s.image_id || steps.length >= 4) {
+      return wrap(s, `<div class="timeline-grid"><div class="timeline-aside">${head(ctx, s).replace('class="head"', 'class="head" style="margin-bottom:0"')}${buttons(ctx, s)}
+        ${s.image_id ? `<div class="timeline-media">${image(ctx, s.image_id, {sizes: '(max-width: 960px) 92vw, 440px'})}</div>` : ''}</div>
+        <ol class="timeline">${steps.map((p, i) => `<li><span class="dot" aria-hidden="true">${i + 1}</span><div><h3>${ctx.text(p.title)}</h3>${ctx.rich(p.text ?? '')}</div></li>`).join('')}</ol></div>`);
+    }
     return wrap(s, `${head(ctx, s)}<ol class="steps">${steps.map(p => `<li><h3>${ctx.text(p.title)}</h3>${ctx.rich(p.text ?? '')}</li>`).join('')}</ol>
       ${buttons(ctx, s) ? `<div style="margin-top:2rem">${buttons(ctx, s)}</div>` : ''}`);
   },
@@ -243,8 +265,12 @@ const SECTIONS = {
         <div class="answer">${ctx.rich(q.answer)}</div></details>`).join('')}</div></div>`);
   },
 
-  // Cu video, secțiunea e o prezentare centrată (antet + video), ca pe site-ul vechi; fără, e text de citit.
-  text: (ctx, s) => s.video ? wrap(s, `${head(ctx, s, {center: true})}${buttons(ctx, s)}${video(s)}`) : wrap(s, `<div class="prose">${s.kicker ? `<p class="eyebrow">${ctx.text(s.kicker)}</p>` : ''}
+  // Cu video, secțiunea e o prezentare centrată (antet + video), ca pe site-ul vechi; cu notă, textul are alături un card
+  // cu precizarea; altfel e text de citit.
+  text: (ctx, s) => s.video ? wrap(s, `${head(ctx, s, {center: true})}${buttons(ctx, s)}${video(s)}`)
+    : s.note ? wrap(s, `<div class="intro-split"><div>${head(ctx, s).replace('class="head"', 'class="head" style="margin-bottom:0"')}${buttons(ctx, s)}</div>
+      <aside class="note-card"><span class="icon">${icon('shield')}</span><p>${ctx.text(s.note)}</p></aside></div>`)
+    : wrap(s, `<div class="prose">${s.kicker ? `<p class="eyebrow">${ctx.text(s.kicker)}</p>` : ''}
     ${s.title ? `<h2 id="s-${s.id}">${title(ctx, s.title)}</h2>` : ''}${s.text ? ctx.rich(s.text) : ''}${buttons(ctx, s)}</div>`),
 
   cta: (ctx, s) => `<section class="section" aria-labelledby="s-${s.id}"><div class="container"><div class="cta-panel on-dark">
