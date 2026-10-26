@@ -1,6 +1,8 @@
 node_modules/
 /data/
 /media/
+# Setări personale Claude Code (hook-ul de push automat).
+.claude/settings.local.json
 # Snapshot-ul site-ului vechi și al retailerului (conținut al terților); se reface cu `npm run import`.
 /reference/snapshot/
 *.db
