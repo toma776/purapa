@@ -381,6 +381,10 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .fx-stage::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: -3%; height: 9%; border-radius: 50%;
   background: radial-gradient(closest-side, rgb(37 74 153 / .28), transparent); filter: blur(10px); z-index: 0; }
 .fx-drop { position: absolute; left: -22%; top: -22%; width: 144%; height: 144%; z-index: 1; pointer-events: none; }
+/* Figurile unei scene, decupate din fundal, în picătură (render.mjs → cutout). Apar după ce site.js a scos fundalul. */
+.fx-product.cut { inset: 8%; mix-blend-mode: normal; }
+.fx-product.cut .fx-scene { width: 100%; height: 100%; transition: opacity .9s var(--ease); }
+.fx-js:not(.fx-still) .fx-cutout:not(.ready) { opacity: 0; }
 /* Fără WebGL: forma organică de pe site-ul actual. */
 .fx-stage.no-gl::before { content: ""; position: absolute; inset: 6%; border-radius: 48% 52% 46% 54% / 52% 44% 56% 48%;
   background: radial-gradient(closest-side, #fff 55%, var(--sky)); box-shadow: inset 0 0 0 2px rgb(37 74 153 / .25); }

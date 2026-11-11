@@ -9,11 +9,17 @@
 //   fill    culoarea de rezervă a peticului: o culoare sau un gradient [x1, y1, culoare, x2, y2, culoare]. În browser,
 //           site.js o înlocuiește cu fundalul întins din jurul peticului, calculat din imagine;
 //   blur    cât de moale e marginea feliei (implicit 3).
+// Pentru scenă, opțional, `cutout`: figurile fără fundal, pentru picătura din hero:
+//   view    pătratul din imagine care intră în picătură [x, y, latură]; marginile lui se sting rotund;
+//   key     luminozitatea de la care fundalul devine transparent și cea de la care figura rămâne întreagă;
+//   skip    forme de fundal închise la culoare, care trebuie scoase cu totul.
 // Mișcarea fiecărei felii: site.css, .fx-part-<nume>.
 export const SCENES = {
   // „Comunitatea Purapa Ambassadors”: femeia și bărbatul așezat își strâng mâna, iar cel din picioare îl bate pe umăr.
   '631161fb96315ca23d76bc7eaab4224d41f179ec.webp': {
     width: 682, height: 1024,
+    cutout: {view: [-79, 20, 840], key: [228, 214],
+      skip: ['0,0 200,0 120,120 60,215 0,330', '229,74 269,90 285,130 269,170 229,186 189,170 173,130 189,90']},
     parts: [
       {name: 'woman', origin: [140, 455],
         points: '100,228 150,216 205,225 238,262 240,300 250,350 238,385 228,415 200,428 180,440 172,462 105,452 85,440 50,438 18,410 15,370 40,310 65,262',

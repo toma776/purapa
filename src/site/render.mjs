@@ -89,6 +89,27 @@ function picture(ctx, id, uid, {sizes = ''} = {}) {
     ${sc.parts.map((p, k) => `<g class="fx-part fx-part-${p.name}" style="transform-origin:${p.origin[0]}px ${p.origin[1]}px" mask="url(#${uid}-${k})">${img}</g>`).join('')}</svg>`};
 }
 
+// Figurile unei scene, fără fundal, pentru picătura din hero (scenes.mjs → cutout). Fundalul îl scoate site.js din imagine
+// (ce e deschis la culoare devine transparent); aici e doar structura: imaginea de bază fără locurile feliilor, feliile
+// deasupra și o mască rotundă care stinge marginile, ca figurile să pară în apă. Fără JavaScript se vede imaginea cu fundal.
+function cutout(ctx, id, uid) {
+  const m = id == null ? null : ctx.media(id);
+  const sc = m && SCENES[/\/media\/([^?]+)/.exec(m.src)?.[1]];
+  if (!sc?.cutout) return null;
+  const [vx, vy, vs] = sc.cutout.view, r = vs / 2;
+  const img = `<image href="${esc(m.src)}" width="${sc.width}" height="${sc.height}"/>`;
+  const box = `maskUnits="userSpaceOnUse" x="0" y="0" width="${sc.width}" height="${sc.height}"`;
+  const blur = (fid, d) => `<filter id="${fid}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${d}"/></filter>`;
+  return `<svg class="fx-scene fx-cutout" viewBox="${vx} ${vy} ${vs} ${vs}" role="img" aria-label="${esc(m.alt)}" data-key='${esc(JSON.stringify(sc.cutout))}'>
+    <defs>${blur(`${uid}-fp`, 2)}
+    <radialGradient id="${uid}-v" gradientUnits="userSpaceOnUse" cx="${vx + r}" cy="${vy + r}" r="${r}"><stop offset=".76" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
+    <mask id="${uid}-vm" maskUnits="userSpaceOnUse" x="${vx}" y="${vy}" width="${vs}" height="${vs}"><circle cx="${vx + r}" cy="${vy + r}" r="${r}" fill="url(#${uid}-v)"/></mask>
+    <mask id="${uid}-b" ${box}><rect width="${sc.width}" height="${sc.height}" fill="#fff"/>${sc.parts.map(p => p.patch ? `<polygon points="${p.patch}" fill="#000" filter="url(#${uid}-fp)"/>` : '').join('')}</mask>
+    ${sc.parts.map((p, k) => `${blur(`${uid}-f${k}`, p.blur ?? 3)}<mask id="${uid}-${k}" ${box}><polygon points="${p.points}" fill="#fff" filter="url(#${uid}-f${k})"/></mask>`).join('')}</defs>
+    <g mask="url(#${uid}-vm)"><g mask="url(#${uid}-b)">${img}</g>
+    ${sc.parts.map((p, k) => `<g class="fx-part fx-part-${p.name}" style="transform-origin:${p.origin[0]}px ${p.origin[1]}px" mask="url(#${uid}-${k})">${img}</g>`).join('')}</g></svg>`;
+}
+
 function image(ctx, id, {cls = '', eager = false, sizes = ''} = {}) {
   const m = ctx.media(id);
   if (!m) return '';
@@ -143,7 +164,9 @@ const SECTIONS = {
     // Cifrele-cheie: cele scrise în secțiune („valoare | etichetă”, cu jetoane), altfel cele calculate din produs.
     const facts = s.facts ? String(s.facts).split('\n').map(l => l.split('|').map(x => x.trim())).filter(([v]) => v).map(([v, l = '']) => ({value: ctx.text(v), label: ctx.text(l)}))
       : product ? productFacts(ctx, product).map(f => ({value: esc(f.value), label: esc(f.label)})) : [];
-    const visual = image(ctx, s.image_id ?? product?.image_id, {eager: true, sizes: '(max-width: 880px) 60vw, 380px'});
+    // Imaginea secțiunii, dacă are o scenă cu decupaj, intră în picătură fără fundal, cu figurile în mișcare.
+    const cut = cutout(ctx, s.image_id, `hc${s.id}`);
+    const visual = cut ?? image(ctx, s.image_id ?? product?.image_id, {eager: true, sizes: '(max-width: 880px) 60vw, 380px'});
     // Lebăda din logo, în picătură: site.js o decupează din imaginea logo-ului și o arată refractată prin apă.
     const brand = !visual && s.drop_mark === 'lebada' ? ctx.within(ctx.component, 'Semnul din picătură', () => ctx.one('firma')) : null;
     const markMedia = brand?.logo_id ? ctx.within(ctx.component, 'Semnul din picătură', () => ctx.media(brand.logo_id)) : null;
@@ -157,7 +180,7 @@ const SECTIONS = {
         ${facts.length ? `<ul class="facts" aria-label="Pe scurt" data-reveal style="--i:5">${facts.map(f => `<li><strong data-count>${f.value}</strong><span>${f.label}</span></li>`).join('')}</ul>` : ''}
       </div>
       <div class="fx-stage"><canvas class="fx-drop" aria-hidden="true"${mark}></canvas>
-        ${visual ? `<div class="fx-product"><div class="fx-float">${visual}</div></div>` : ''}
+        ${cut ? `<div class="fx-product cut in">${cut}</div>` : visual ? `<div class="fx-product"><div class="fx-float">${visual}</div></div>` : ''}
         ${visual && product?.price != null ? `<div class="fx-chip fx-chip-price"><span class="label">Preț</span>${priceBlock(product, {cls: 'pc-price'})}
           ${product.availability ? `<span class="stock">${esc(product.availability)}</span>` : ''}</div>` : ''}
       </div>
