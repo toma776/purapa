@@ -143,15 +143,15 @@ float map(vec3 p){
   }
   return smin(d,length(p-vec3(M*1.4,.2))-.15,.5);
 }
-vec3 nrm(vec3 p){vec2 e=vec2(.002,0.);return normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)));}
+vec3 nrm(vec3 p){vec2 e=vec2(.003,-.003);return normalize(e.xyy*map(p+e.xyy)+e.yyx*map(p+e.yyx)+e.yxy*map(p+e.yxy)+e.xxx*map(p+e.xxx));}
 void main(){
   vec2 uv=(gl_FragCoord.xy*2.-R)/min(R.x,R.y);
   vec3 ro=vec3(0.,0.,4.),rd=normalize(vec3(uv*.46,-1.));
-  float b=dot(ro,rd),h=b*b-(16.-3.61);
+  float b=dot(ro,rd),h=b*b-(16.-3.24);
   if(h<0.){gl_FragColor=vec4(0.);return;}
   h=sqrt(h);
   float t=-b-h,tm=-b+h,md=9.;bool hit=false;
-  for(int i=0;i<60;i++){float d=map(ro+rd*t);md=min(md,d);if(d<.0015){hit=true;break;}t+=d*.9;if(t>tm)break;}
+  for(int i=0;i<40;i++){float d=map(ro+rd*t);md=min(md,d);if(d<.003){hit=true;break;}t+=d*.95;if(t>tm)break;}
   vec3 deep=vec3(.12,.34,.74);
   if(hit){
     vec3 p=ro+rd*t,n=nrm(p),v=-rd;
@@ -182,7 +182,8 @@ void main(){
     gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const uR = gl.getUniformLocation(prog, 'R'), uT = gl.getUniformLocation(prog, 'T'), uM = gl.getUniformLocation(prog, 'M');
     // Rezoluția scade singură dacă placa video nu ține pasul.
-    let scale = Math.min(window.devicePixelRatio || 1, 1.25), slow = 0;
+    const budget = () => Math.sqrt(420000 / Math.max(1, cv.clientWidth * cv.clientHeight));
+    let scale = Math.min(window.devicePixelRatio || 1, 1.25, budget()), slow = 0;
     const size = () => {
       const w = Math.round(cv.clientWidth * scale), h = Math.round(cv.clientHeight * scale);
       if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; gl.viewport(0, 0, w, h); }
@@ -190,7 +191,7 @@ void main(){
     new ResizeObserver(size).observe(cv);
     cv.addEventListener('webglcontextlost', fail);
     whileVisible(cv, (t, dt) => {
-      if (dt > .034 && scale > .6 && ++slow > 20) { scale *= .8; slow = 0; }
+      if (dt > .024 && scale > .4 && ++slow > 24) { scale *= .85; slow = 0; }
       size();
       const m = zone?._m ?? [0, 0];
       // Cursorul trage o picătură mică spre el; în repaus, ea stă ascunsă în picătura mare.
