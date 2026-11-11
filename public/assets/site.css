@@ -1090,8 +1090,8 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .crumbs a { font-size: .875rem; font-weight: 600; color: var(--muted); text-decoration: none; }
 .crumbs a::before { content: "← "; }
 .crumbs a:hover { color: var(--navy); }
-.post-cover { margin: 0 0 2.5rem; border-radius: var(--r-xl); overflow: hidden; }
-.post-cover img { display: block; width: 100%; height: auto; }
+.post-cover { margin: 0 0 2.5rem; border-radius: var(--r-xl); overflow: hidden; background: var(--mist); }
+.post-cover img { display: block; width: 100%; height: auto; max-height: 30rem; object-fit: contain; }
 .post-body { max-width: none; font-size: 1.0625rem; }
 .post-body img { max-width: 100%; height: auto; border-radius: var(--r-md); }
 .post-faq { margin-top: 3rem; }
