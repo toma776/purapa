@@ -286,7 +286,7 @@ document.querySelectorAll('[data-tutorial]').forEach(root => {
   // pornind de la marginea peticului, culorile fundalului se întind lin spre interior (medie cu vecinii, repetată),
   // pe o copie de patru ori mai mică. Până e gata, sau dacă nu reușește, rămân peticele simple puse de server.
   $$('.fx-scene').forEach(async svg => {
-    const group = svg.querySelector('.fx-patches'), polys = $$('polygon', group);
+    const group = svg.querySelector('.fx-patches'), polys = group ? $$('polygon', group) : [];
     if (!polys.length) return;
     const [, , W, H] = svg.getAttribute('viewBox').split(/\s+/).map(Number), k = 4, w = Math.ceil(W / k), h = Math.ceil(H / k);
     const img = new Image();
@@ -347,10 +347,9 @@ document.querySelectorAll('[data-tutorial]').forEach(root => {
       d[i + 3] = skip[i + 3] ? 0 : Math.round(255 * k * k * (3 - 2 * k));
     }
     g.putImageData(px, 0, 0);
-    cv.toBlob(blob => {
-      if (blob) { const url = URL.createObjectURL(blob); images.forEach(el => el.setAttribute('href', url)); }
-      svg.classList.add('ready');
-    });
+    const url = cv.toDataURL();
+    images.forEach(el => el.setAttribute('href', url));
+    svg.classList.add('ready');
   });
 
   // Picătura 3D din hero: un câmp de distanțe (o sferă care unduiește, plus picături mici care se desprind și se reunesc), trasat în shader.
