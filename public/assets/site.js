@@ -323,6 +323,36 @@ document.querySelectorAll('[data-tutorial]').forEach(root => {
     group.replaceChildren(patch);
   });
 
+  // Scenele decupate (în picătura din hero): fundalul iese din imagine după luminozitate. Ce e mai deschis decât `key[0]`
+  // devine transparent, ce e mai închis decât `key[1]` rămâne întreg; zonele din `skip` (forme de fundal închise la culoare)
+  // dispar cu totul. Toate copiile imaginii din scenă primesc apoi varianta fără fundal.
+  $$('.fx-cutout').forEach(async svg => {
+    const cfg = JSON.parse(svg.dataset.key), images = $$('image', svg), img = new Image();
+    img.src = images[0].getAttribute('href');
+    try { await img.decode(); } catch { return svg.classList.add('ready'); }
+    const cv = document.createElement('canvas'), w = cv.width = img.naturalWidth, h = cv.height = img.naturalHeight;
+    const g = cv.getContext('2d', {willReadFrequently: true});
+    for (const poly of cfg.skip ?? []) {
+      const pts = poly.trim().split(/\s+/).map(p => p.split(',').map(Number));
+      g.beginPath();
+      pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
+      g.closePath(); g.fill();
+    }
+    const skip = g.getImageData(0, 0, w, h).data;
+    g.clearRect(0, 0, w, h);
+    g.drawImage(img, 0, 0);
+    const px = g.getImageData(0, 0, w, h), d = px.data, [from, to] = cfg.key;
+    for (let i = 0; i < d.length; i += 4) {
+      const k = clamp((from - (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11)) / (from - to), 0, 1);
+      d[i + 3] = skip[i + 3] ? 0 : Math.round(255 * k * k * (3 - 2 * k));
+    }
+    g.putImageData(px, 0, 0);
+    cv.toBlob(blob => {
+      if (blob) { const url = URL.createObjectURL(blob); images.forEach(el => el.setAttribute('href', url)); }
+      svg.classList.add('ready');
+    });
+  });
+
   // Picătura 3D din hero: un câmp de distanțe (o sferă care unduiește, plus picături mici care se desprind și se reunesc), trasat în shader.
   (() => {
     const cv = document.querySelector('.fx-drop');
