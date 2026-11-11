@@ -38,7 +38,7 @@ document.querySelectorAll('form[data-calc]').forEach(form => {
 document.querySelectorAll('form[data-mailto]').forEach(form => form.addEventListener('submit', e => {
   e.preventDefault();
   const v = n => form.elements[n]?.value.trim() ?? '';
-  const body = [`Nume: ${v('name')}`, `Email: ${v('email')}`, v('phone') && `Telefon: ${v('phone')}`, '', v('message')].filter(l => l !== false && l !== undefined).join('\n');
+  const body = [`Nume: ${v('name')}`, `Email: ${v('email')}`, ...(v('phone') ? [`Telefon: ${v('phone')}`] : []), '', v('message')].join('\n');
   window.location.href = `mailto:${form.dataset.mailto}?subject=${encodeURIComponent(v('subject'))}&body=${encodeURIComponent(body)}`;
   const note = form.querySelector('.form-note');
   if (note) note.hidden = false;
