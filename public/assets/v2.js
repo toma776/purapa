@@ -213,7 +213,7 @@ void main(){
     const spawn = (p, fresh) => {
       const r = Math.random();
       p.kind = r < .5 ? -1 : Math.floor((r - .5) * 2 * n);
-      p.r = p.kind < 0 ? 1.4 + Math.random() * 1.4 : (7 / (p.kind * 1.7 + 1)) * (.75 + Math.random() * .5);
+      p.r = p.kind < 0 ? 1.4 + Math.random() * 1.4 : (7 / (p.kind * 1.1 + 1)) * (.75 + Math.random() * .5);
       p.x = fresh ? Math.random() * W : -20 - Math.random() * 60;
       // O particulă nu apare dincolo de etapa care o oprește.
       if (fresh && p.kind >= 0) p.x = Math.random() * (gate(p.kind) - p.r - 6);
