@@ -240,11 +240,30 @@ export function seed(store, {user = SYSTEM} = {}) {
   })) test[key] = c('sectiuni', data, src('/testare-apa/'));
   store.update(user, 'sectiuni', test.hero, {cta2_label: 'Vezi cum funcționează', cta2_link: `ref:sectiuni:${test.steps}`}, {source: src('/testare-apa/')});
   store.setLinks(user, 'pagini', ids.testare, 'sections', Object.values(test));
+  // Tutorialul de montaj: narațiunea filmării de pe YouTube (NPfIE4AtHnc), pas cu pas, cu scena ilustrată a fiecărui pas.
+  const yt = t => ({kind: 'site', url: 'https://www.youtube.com/watch?v=NPfIE4AtHnc', title: 'YouTube: Purapa – Tutorial de montaj pas cu pas', fetched_at: '2026-11-11', method: 'subtitrare automată, corectată', excerpt: t});
+  const installSteps = [
+    ['Bine ai venit', 'Bine ai venit! Acesta este un tutorial video pentru montarea filtrului Purapa.', 'intro', '0:00'],
+    ['Ce conține kitul', 'Iată ce conține kitul: cartușe de microfiltrare, prefiltru și cartușe de prefiltrare, suport pentru cartușul de microfiltrare, suport pentru prefiltru, cheie pentru prefiltru, furtun de alimentare, reductoare, set de fitinguri reductoare și set de șuruburi.', 'kit', '0:04'],
+    ['Izolează fitingurile', 'Începe prin a izola fitingurile.', 'izolare', '0:23'],
+    ['Suportul prefiltrului', 'Montează suportul pentru prefiltru pe capacul acestuia, folosind patru șuruburi din cele primite în kit.', 'capac', '0:31'],
+    ['Fitingurile prefiltrului', 'Montează fitingurile izolate pe capacul prefiltrului, folosind o cheie reglabilă.', 'cheie-prefiltru', '0:41'],
+    ['Fitingurile microfiltrului', 'Continuă izolarea fitingurilor și montează-le pe suportul pentru cartușul de microfiltrare, folosind o cheie reglabilă.', 'suport-micro', '1:17'],
+    ['Suportul pe perete', 'Fixează suportul pe peretele interior al dulapului de sub chiuvetă.', 'perete', '1:41'],
+    ['Și suportul prefiltrului', 'Acum fixează exact la fel și suportul prefiltrului.', 'perete-prefiltru', '1:59'],
+    ['Oprește apa rece', 'Oprește alimentarea cu apă rece de la robinet și deșurubează furtunul. Atenție: asigură-te că montezi filtrul pe circuitul de apă rece. De asemenea, este indicat să deschizi robinetul, ca să eliberezi presiunea din sistem.', 'apa-rece', '2:08'],
+    ['Racordurile', 'Conectează fitingul potrivit pe furtunul de alimentare și strânge-l cu o cheie reglabilă. De asemenea, montează fitingul potrivit și pe robinetul de alimentare cu apă rece.', 'racord', '2:20'],
+    ['Furtunul', 'Taie o bucată potrivită din furtunul de alimentare și conecteaz-o la suportul cartușului de microfiltrare și la racordul de apă rece de la chiuvetă. Taie altă bucată potrivită din furtunul de alimentare și unește suportul cartușului de microfiltrare cu capătul prefiltrului. Taie o a treia bucată din furtunul de alimentare și unește capătul prefiltrului cu robinetul de apă rece.', 'furtun', '2:31'],
+    ['Cartușele', 'Conectează cartușul de microfiltrare și cartușul de prefiltrare la suporții lor, în poziție verticală. Strânge bine prefiltrul cu ajutorul cheii din kit.', 'cartuse', '2:55'],
+    ['Pornește apa', 'Pornește apa și las-o să curgă timp de aproximativ 1–2 minute.', 'porneste', '3:04'],
+    ['Gata', 'Gata, ai montat filtrul. Acum te poți bucura de o apă pură și curată, chiar de la tine de la chiuvetă.', 'gata', '3:10']
+  ].map(([title, text, scene, t]) => c('pasi', {title, text: `<p>${text}</p>`, scene}, yt(`narațiunea de la ${t}`)));
   sec(ids.despre, [
     {kind: 'hero', title: 'Tehnologie avansată pentru apă pură',
      text: '<p>Purapa e un brand dedicat calității apei și siguranței consumatorului: microfiltrare modernă, materiale de calitate, procese testate. Sistemele sunt proiectate în Europa.</p>'},
     {kind: 'tehnologie', title: 'Cum funcționează filtrarea', stages: [ids.prefiltrare, ids.microfiltrare]},
-    {kind: 'text', title: 'Instalare fără bătăi de cap', text: '<p>Sistemul compact se integrează perfect sub chiuvetă. Vezi procesul de montaj pas cu pas.</p>', video: 'NPfIE4AtHnc'},
+    {kind: 'tutorial', title: 'Instalare fără bătăi de cap', text: '<p>Sistemul compact se integrează perfect sub chiuvetă. Vezi procesul de montaj pas cu pas.</p>',
+     video: 'NPfIE4AtHnc', steps: installSteps},
     {kind: 'cta', title: 'Ești gata pentru schimbare?', cta_label: 'Testează apa acum', cta_link: `ref:pagini:${ids.testare}`}
   ], src('/despre-noi/'));
   const perks = [

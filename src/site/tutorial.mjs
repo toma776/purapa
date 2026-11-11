@@ -129,8 +129,8 @@ function faucet(water = false) {
     <path d="M0 -118 C 0 -230, 190 -236, 196 -120" fill="none" stroke="${C.soft}" stroke-width="40" stroke-linecap="round"/>
     <path d="M0 -118 C 0 -230, 190 -236, 196 -120" fill="none" stroke="#f3f8fe" stroke-width="28" stroke-linecap="round"/>
     <rect x="-14" y="-170" width="90" height="22" rx="11" fill="url(#tg-dark)" transform="rotate(-18 -10 -160)"/>
-    ${water ? `<rect x="182" y="-104" width="28" height="330" rx="14" fill="url(#tg-water)" opacity=".9"/>
-      <line class="t-stream" x1="196" y1="-100" x2="196" y2="222" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-dasharray="18 34" opacity=".75"/>` : ''}`;
+    ${water ? `<g class="t-flowin" style="--d:calc(var(--T) * .12)"><rect x="182" y="-104" width="28" height="250" rx="14" fill="url(#tg-water)" opacity=".9"/>
+      <line class="t-stream" x1="196" y1="-100" x2="196" y2="140" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-dasharray="18 34" opacity=".75"/></g>` : ''}`;
 }
 
 // Scenele, în ordinea narațiunii. Fiecare primește eticheta (titlul pasului) și întoarce SVG-ul.
@@ -155,7 +155,7 @@ export const TUTORIAL_SCENES = {
     ${[[540, 180, .25], [1080, 120, .35], [1300, 420, .45]].map(([x, y, d]) => at(x, y, 1, anim('t-twinkle', sparkle(), d))).join('')}`),
 
   kit: label => svg(label, `${bg(1)}${KIT.map(([name, art], i) => {
-    const row = i < 5 ? 0 : 1, col = row ? i - 5 : i, x = row ? 380 + col * 280 : 240 + col * 280, y = row ? 610 : 270;
+    const row = i < 5 ? 0 : 1, col = row ? i - 5 : i, x = row ? 380 + col * 280 : 240 + col * 280, y = row ? 640 : 300;
     return at(x, y, 1, anim('t-pop', `<rect x="-120" y="-150" width="240" height="290" rx="34" fill="#fff" opacity=".88"/>
       <rect x="-120" y="-150" width="240" height="290" rx="34" fill="none" stroke="${C.pale}" stroke-width="3"/>${at(0, -20, 1, art)}
       <text x="0" y="112" text-anchor="middle" font-size="22" font-weight="600" fill="${C.deep}">${name}</text>`, .03 + i * .085));
@@ -171,7 +171,6 @@ export const TUTORIAL_SCENES = {
     ${at(800, 820, 1, shadow(260))}
     ${at(800, 470, 1.6, `${preHead()}${anim('t-drop', preBracket(), .05)}
       ${[-110, -40, 40, 110].map((x, i) => at(x, -60, 1, anim('t-drop', screw(), .3 + i * .12))).join('')}`)}
-    ${at(1210, 330, 1, anim('t-pop', turnArrow(56), .35))}
     <g class="t-pop" style="--d:calc(var(--T) * .3)"><rect x="1150" y="560" width="190" height="78" rx="39" fill="#fff"/><text x="1245" y="612" text-anchor="middle" font-size="40" font-weight="700" fill="${C.main}">× 4</text></g>`),
 
   'cheie-prefiltru': label => svg(label, `${bg(1)}<circle cx="760" cy="430" r="330" fill="url(#tg-glow)"/>
@@ -181,12 +180,12 @@ export const TUTORIAL_SCENES = {
   'suport-micro': label => svg(label, `${bg(2)}<circle cx="800" cy="440" r="320" fill="url(#tg-glow)"/>
     ${at(800, 360, 2, `${microHead()}${at(-150, 35, 1, anim('t-slide-l', `<g transform="scale(-1 1)">${fitting(true)}</g>`, .1))}${at(150, 35, 1, anim('t-slide-r', fitting(true), .25))}`)}
     ${at(1100, 430, 1, anim('t-pop', at(0, 0, 1, anim('t-turn', `<g transform="rotate(62)">${wrench()}</g>`, .45)), .4))}
-    ${at(470, 520, 1, anim('t-pop', `<circle r="70" fill="#fff" stroke="${C.pale}" stroke-width="4"/><circle r="48" fill="none" stroke="#f1f6fd" stroke-width="22"/><circle r="28" fill="url(#tg-body)"/>`, .05))}`),
+    ${at(430, 230, 1, anim('t-pop', `<circle r="70" fill="#fff" stroke="${C.pale}" stroke-width="4"/><circle r="48" fill="none" stroke="#f1f6fd" stroke-width="22"/><circle r="28" fill="url(#tg-body)"/>`, .05))}`),
 
   perete: label => svg(label, `${cabinet()}
     ${at(980, 340, 1, anim('t-mount', microHead(false) + microCart(), .05))}
     ${[-62, 62].map((x, i) => at(980 + x, 316, 1, anim('t-pop', screw(), .45 + i * .15))).join('')}
-    ${at(980, 300, 1, anim('t-pop', `<circle r="150" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="4 18" opacity=".9"/>`, .4))}`),
+`),
 
   'perete-prefiltru': label => svg(label, `${cabinet()}
     ${at(1150, 340, .8, microHead() + microCart())}
@@ -230,7 +229,7 @@ export const TUTORIAL_SCENES = {
   porneste: label => svg(label, `${bg(1)}<circle cx="700" cy="420" r="320" fill="url(#tg-glow)"/>
     <rect x="300" y="620" width="1000" height="40" rx="20" fill="url(#tg-body)" opacity=".5"/>
     <path d="M460 640 H1020 Q1020 780 900 780 H580 Q460 780 460 640Z" fill="url(#tg-light)" stroke="${C.soft}" stroke-width="3"/>
-    ${at(560, 600, 1.2, anim('t-flowin', faucet(true), .1))}${at(560, 600, 1.2, `<g class="t-hide" style="--d:calc(var(--T) * .1)">${faucet(false)}</g>`)}
+    ${at(560, 600, 1.2, faucet(true))}
     ${at(1220, 330, 1, anim('t-pop', `<circle r="120" fill="#fff"/><circle r="92" fill="none" stroke="${C.pale}" stroke-width="16"/>
       <g transform="rotate(-90)"><circle class="t-timer" r="92" pathLength="1" fill="none" stroke="${C.main}" stroke-width="16" stroke-linecap="round" style="--d:calc(var(--T) * .1);--len:calc(var(--T) * .8)"/></g>
       <text x="0" y="6" text-anchor="middle" font-size="44" font-weight="800" fill="${C.deep}">1–2</text><text x="0" y="44" text-anchor="middle" font-size="22" font-weight="600" fill="${C.main}">minute</text>`, .05))}`),

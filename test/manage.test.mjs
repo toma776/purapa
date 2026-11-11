@@ -106,10 +106,12 @@ test('harta: o trimitere din text spre o înregistrare ștearsă apare ca ruptă
 test('§1.6 b numele găsit în text, cu granițe de cuvânt, fără legătură salvată', () => {
   const {store, graph, ids} = setup();
   const prefiltrare = store.list('etape').find(e => e.name === 'Prefiltrare').id;
-  store.update(SYSTEM, 'pasi', store.list('pasi')[0].id, {text: '<p>Începe cu Prefiltrare, apoi restul.</p>'});
-  assert.ok(graph.mentionsOf('etape', prefiltrare).some(m => m.key === 'pasi'));
-  store.update(SYSTEM, 'pasi', store.list('pasi')[0].id, {text: '<p>Prefiltrarea e prima etapă.</p>'});
-  assert.ok(!graph.mentionsOf('etape', prefiltrare).some(m => m.key === 'pasi'), '„Prefiltrarea” nu e „Prefiltrare”');
+  // Alți pași pot pomeni prefiltrarea (tutorialul de montaj); contează doar pasul modificat aici.
+  const pas = store.list('pasi')[0].id, here = () => graph.mentionsOf('etape', prefiltrare).some(m => m.key === 'pasi' && m.id === pas);
+  store.update(SYSTEM, 'pasi', pas, {text: '<p>Începe cu Prefiltrare, apoi restul.</p>'});
+  assert.ok(here());
+  store.update(SYSTEM, 'pasi', pas, {text: '<p>Prefiltrarea e prima etapă.</p>'});
+  assert.ok(!here(), '„Prefiltrarea” nu e „Prefiltrare”');
   assert.equal(graph.mentionsOf('produse', ids.termos).length, 0);
 });
 
