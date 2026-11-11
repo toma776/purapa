@@ -333,7 +333,7 @@ document.querySelectorAll('[data-tutorial]').forEach(root => {
     if (!gl) return fail();
     const VS = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
     const FS = `precision highp float;
-uniform vec2 R;uniform float T;uniform vec2 M;
+uniform vec2 R;uniform float T;uniform vec2 M;uniform sampler2D S;uniform float K;
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
 float map(vec3 p){
   float d=length(p)-1.;
@@ -361,6 +361,14 @@ void main(){
     vec3 col=mix(vec3(.91,.96,1.),vec3(1.),n.y*.5+.5);
     col=mix(col,vec3(.40,.80,.98),smoothstep(.42,.78,f));
     col=mix(col,deep,smoothstep(.74,1.,f));
+    if(K>0.){
+      // Semnul din picătură: o placă în planul z=0, văzută prin apă (raza refractată la suprafață), care se leagănă ușor.
+      vec3 r=refract(rd,n,.75);
+      vec3 q=p+r*(-p.z/min(r.z,-.05));
+      vec2 u=(q.xy+vec2(.025*sin(T*.55),.02*sin(T*.8))+vec2(.04,-.04))/2.1+.5;
+      float a=texture2D(S,vec2(u.x,1.-u.y)).a*step(0.,u.x)*step(u.x,1.)*step(0.,u.y)*step(u.y,1.);
+      col=mix(col,mix(vec3(.10,.29,.62),vec3(.16,.45,.82),u.y),a*K*.8*(1.-smoothstep(.45,.9,f)));
+    }
     float s1=pow(max(dot(reflect(-normalize(vec3(-.55,.75,.6)),n),v),0.),80.);
     float s2=pow(max(dot(reflect(-normalize(vec3(.7,.25,.5)),n),v),0.),26.)*.22;
     float g=pow(max(dot(n,normalize(vec3(.5,-.72,.3))),0.),3.)*smoothstep(.3,.75,f)*.6;
@@ -382,7 +390,36 @@ void main(){
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p');
     gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    const uR = gl.getUniformLocation(prog, 'R'), uT = gl.getUniformLocation(prog, 'T'), uM = gl.getUniformLocation(prog, 'M');
+    const uR = gl.getUniformLocation(prog, 'R'), uT = gl.getUniformLocation(prog, 'T'), uM = gl.getUniformLocation(prog, 'M'), uK = gl.getUniformLocation(prog, 'K');
+    // Lebăda din logo (data-mark): partea de sus a imaginii, până la primul rând gol, decupată și centrată într-un pătrat.
+    // Apare treptat după încărcare; dacă logo-ul nu se poate citi, picătura rămâne goală.
+    let mark = 0, markOn = 0;
+    if (cv.dataset.mark) {
+      const img = new Image();
+      img.onload = () => {
+        const w = img.naturalWidth, h = img.naturalHeight, c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const g = c.getContext('2d', {willReadFrequently: true});
+        g.drawImage(img, 0, 0);
+        const px = g.getImageData(0, 0, w, h).data, row = y => { for (let x = 0; x < w; x++) if (px[(y * w + x) * 4 + 3] > 24) return true; return false; };
+        let top = 0; while (top < h && !row(top)) top++;
+        let bottom = top; while (bottom < h && row(bottom)) bottom++;
+        let left = w, right = 0;
+        for (let y = top; y < bottom; y++) for (let x = 0; x < w; x++) if (px[(y * w + x) * 4 + 3] > 24) { if (x < left) left = x; if (x > right) right = x; }
+        if (right <= left) return;
+        const N = 512, side = Math.max(right - left, bottom - top) * 1.08, sq = document.createElement('canvas');
+        sq.width = sq.height = N;
+        const k = N / side, sg = sq.getContext('2d');
+        sg.drawImage(c, left, top, right - left, bottom - top, (N - (right - left) * k) / 2, (N - (bottom - top) * k) / 2, (right - left) * k, (bottom - top) * k);
+        gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sq);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        mark = 1;
+      };
+      img.src = cv.dataset.mark;
+    }
     // Rezoluția scade singură dacă placa video nu ține pasul.
     const budget = () => Math.sqrt(420000 / Math.max(1, cv.clientWidth * cv.clientHeight));
     let scale = Math.min(window.devicePixelRatio || 1, 1.25, budget()), slow = 0;
@@ -398,6 +435,7 @@ void main(){
       const m = zone?._m ?? [0, 0];
       // Cursorul trage o picătură mică spre el; în repaus, ea stă ascunsă în picătura mare.
       gl.uniform2f(uR, cv.width, cv.height); gl.uniform1f(uT, t); gl.uniform2f(uM, m[0] * .95, -m[1] * .95);
+      markOn += (mark - markOn) * Math.min(1, dt * 1.5); gl.uniform1f(uK, markOn);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     });
   })();
