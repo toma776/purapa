@@ -186,7 +186,7 @@ function productCard(ctx, p, rs, retailer, cat = null) {
       ${p.summary ? `<p>${ctx.text(p.summary)}</p>` : ''}
       ${tags.length ? `<ul class="tags" aria-label="Pe scurt">${tags.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
       <div class="buy">${priceBlock(p)}${p.availability ? `<span class="stock${out ? ' out' : ''}">${esc(p.availability)}</span>` : ''}</div>
-      ${p.buy_url ? `<a class="btn small${out ? ' ghost' : ''}" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Vezi pe ${esc(retailer?.name ?? 'site-ul retailerului')}${icon('external')}<span class="sr-only"> ${esc(p.name)} (se deschide într-o fereastră nouă)</span></a>` : ''}</div>
+      ${p.buy_url ? `<a class="btn small${out ? ' ghost' : ''}" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Comandă pe ${esc(retailer?.name ?? 'site-ul retailerului')}${icon('external')}<span class="sr-only"> ${esc(p.name)} (se deschide într-o fereastră nouă)</span></a>` : ''}</div>
   </article>`;
 }
 
@@ -268,7 +268,7 @@ const SECTIONS = {
         <div class="fx-kit-body" data-reveal><h3 id="p-${p.id}">${esc(p.name)}</h3>${p.summary ? `<p class="summary">${ctx.text(p.summary)}</p>` : ''}${priceBlock(p)}
           <ul class="ticks" data-stagger>${ticks.map(t => `<li data-reveal>${icon('check')}<span>${t}</span></li>`).join('')}</ul>
           ${(sum => sum ? `<a class="rating big" href="${esc(rs[0].url)}" target="_blank" rel="noopener">${stars(sum.avg)}<strong>${dec(sum.avg)}</strong><span>${sum.n} ${reviewWord(sum.n)}${retailer ? ` pe ${esc(retailer.name)}` : ''}</span><span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : '')(summarize(rs))}
-          <div class="actions">${p.buy_url ? `<a class="btn" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Vezi pe ${esc(retailer?.name ?? 'site-ul retailerului')}${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : ''}
+          <div class="actions">${p.buy_url ? `<a class="btn" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Comandă pe ${esc(retailer?.name ?? 'site-ul retailerului')}${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : ''}
             ${button(ctx, s.cta_label, s.cta_link, 'btn ghost')}</div>
           ${retailer ? `<p class="note">Comanda, plata și livrarea se fac prin ${esc(retailer.name)}, partenerul nostru autorizat.</p>` : ''}</div>
       </article>`);
@@ -527,9 +527,9 @@ function header(ctx, path) {
     const f = ctx.within('Antet', 'Brandul', () => ctx.one('firma'));
     const menu = ctx.within('Antet', 'Meniul principal', () => ctx.query('pagini', {
       fields: ['menu_order'], as: 'link', where: p => p.menu_order != null, sort: (a, b) => a.menu_order - b.menu_order}));
-    // Vânzarea e la retailer: butonul spune unde duce („Vezi pe Portalia”), nu promite o comandă pe site.
+    // Vânzarea e la retailer: butonul spune unde duce („Comandă pe Portalia”): comanda se face acolo, nu pe site.
     const shop = ctx.within('Antet', 'Butonul spre retailer', () => ctx.query('retaileri', {fields: ['search_url', 'name']}))[0];
-    const cta = shop?.search_url ? (cls) => `<a class="btn small ${cls}" href="${esc(shop.search_url)}" target="_blank" rel="noopener">Vezi pe ${esc(shop.name)}${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : () => '';
+    const cta = shop?.search_url ? (cls) => `<a class="btn small ${cls}" href="${esc(shop.search_url)}" target="_blank" rel="noopener">Comandă pe ${esc(shop.name)}${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : () => '';
     const links = menu.map(p => {
       const href = ctx.within('Antet', 'Meniul principal', () => ctx.link(`pagini:${p.id}`));
       return href ? `<a href="${esc(href)}"${href === path ? ' aria-current="page"' : ''}>${esc(p.menu_label || p.title)}</a>` : '';

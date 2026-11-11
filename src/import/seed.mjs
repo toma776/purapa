@@ -197,7 +197,7 @@ export function seed(store, {user = SYSTEM} = {}) {
       products: [ids.kit]},
     test: {kind: 'test', kicker: 'Test rapid acasă', title: 'Apa ta este într-adevăr *sigură*?',
       text: '<p>Testul rapid verifică {nr_parametri} parametri esențiali în câteva minute. Primești un raport interpretat de specialiști și recomandări personalizate.</p>',
-      parameters: ids.params, cta_label: 'Analizează apa acum', cta_link: `ref:pagini:${ids.testare}`, cta2_label: 'Vezi testul pe Portalia', cta2_link: `ref:produse:${ids.test}`},
+      parameters: ids.params, cta_label: 'Analizează apa acum', cta_link: `ref:pagini:${ids.testare}`, cta2_label: 'Comandă testul pe Portalia', cta2_link: `ref:produse:${ids.test}`},
     tech: {kind: 'tehnologie', theme: 'deschis', kicker: 'Cum funcționează', title: 'Două etape, *apă curată*',
       text: '<p>Rezultatul: apă bună de băut, de gătit și pentru hidratarea de zi cu zi.</p>', stages: [ids.prefiltrare, ids.microfiltrare]},
     eco: {kind: 'beneficii', theme: 'inchis', kicker: 'Impact', title: 'Impactul tău *ecologic*',
@@ -216,7 +216,7 @@ export function seed(store, {user = SYSTEM} = {}) {
   // Produse: catalogul cu dovezi (recenziile de la Portalia vin la import), recenziile, cum cumperi, îndemnul final.
   const buySteps = [
     step('Alegi produsul', '<p>Compari aici sistemele de filtrare, cartușele și testele Purapa, cu notele și recenziile clienților.</p>', MANUAL),
-    step('Comanzi pe Portalia', '<p>Butonul „Vezi pe Portalia” te duce direct la produs. Comanda, plata și livrarea se fac prin Portalia, partenerul nostru autorizat.</p>', MANUAL),
+    step('Comanzi pe Portalia', '<p>Butonul „Comandă pe Portalia” te duce direct la produs. Comanda, plata și livrarea se fac prin Portalia, partenerul nostru autorizat.</p>', MANUAL),
     step('Primești acasă', '<p>Produsul ajunge la tine prin Portalia. Pentru întrebări despre montaj sau despre apa ta, ne găsești la {telefon}.</p>', MANUAL)
   ];
   sec(ids.produse, [
@@ -231,7 +231,7 @@ export function seed(store, {user = SYSTEM} = {}) {
   for (const [key, data] of Object.entries({
     hero: {kind: 'hero', kicker: 'Test rapid Purapa', title: 'Apa e limpede – dar e și *curată*?',
       text: '<p>Află rapid ce se ascunde în apa de la robinet. Testezi apa la tine acasă și primești recomandări personalizate pentru o apă mai sigură și mai plăcută la gust.</p>',
-      cta_label: 'Vezi testul pe Portalia', cta_link: `ref:produse:${ids.test}`, products: [ids.test],
+      cta_label: 'Comandă testul pe Portalia', cta_link: `ref:produse:${ids.test}`, products: [ids.test],
       facts: '{nr_parametri} | parametri analizați\n5 min | sau chiar mai puțin\ndigital | raport cu recomandări'},
     about: {kind: 'text', kicker: 'Ce este', title: 'Testul rapid *Purapa*',
       text: '<p>Cea mai simplă metodă de a verifica apa potabilă. Faci testul acasă, în câteva minute, și afli dacă apa pe care o bei zilnic, din rețeaua publică, din fântână sau din puț, are probleme de calitate.</p><p>Primești un raport clar, pe înțelesul tuturor: ce substanțe sunt în apă și cum îi influențează gustul, mirosul, depunerile și siguranța. Plus recomandări personalizate pentru apa de la robinet.</p>',
@@ -241,15 +241,15 @@ export function seed(store, {user = SYSTEM} = {}) {
       benefits: risks},
     steps: {kind: 'pasi', kicker: 'Cum funcționează', title: 'Cinci pași, de acasă până la *raport*',
       text: '<p>Fără laborator, fără programări. Tot ce-ți trebuie e în kit, iar rezultatul îl primești pe telefon.</p>',
-      steps: testSteps, cta_label: 'Vezi testul pe Portalia', cta_link: `ref:produse:${ids.test}`},
+      steps: testSteps, cta_label: 'Comandă testul pe Portalia', cta_link: `ref:produse:${ids.test}`},
     params: {kind: 'test', theme: 'deschis', kicker: 'Ce analizează', title: 'Știi ce ai *în apă*',
       text: '<p>Testul analizează {nr_parametri} parametri care influențează gustul, mirosul, depunerile și siguranța apei, inclusiv metale și substanțe folosite la tratare. Și afli ce poți face ca s-o îmbunătățești.</p>',
-      parameters: ids.params, cta_label: 'Vezi testul pe Portalia', cta_link: `ref:produse:${ids.test}`},
+      parameters: ids.params, cta_label: 'Comandă testul pe Portalia', cta_link: `ref:produse:${ids.test}`},
     faq: {kind: 'intrebari', kicker: 'Întrebări frecvente', title: 'Despre *testul rapid*',
       text: '<p>Nu găsești răspunsul? Scrie-ne și îți răspundem în {raspuns}.</p>', faqs: testFaqs, cta_label: 'Scrie-ne', cta_link: `ref:pagini:${ids.contact}`},
     cta: {kind: 'cta', title: 'Află ce ai în apă în *mai puțin de 5 minute*',
       text: '<p>Testul vine acasă, rezultatul îl primești pe telefon, iar recomandările sunt gândite pentru apa ta.</p>',
-      cta_label: 'Vezi testul pe Portalia', cta_link: `ref:produse:${ids.test}`, cta2_label: 'Întreabă un specialist', cta2_link: `ref:pagini:${ids.contact}`}
+      cta_label: 'Comandă testul pe Portalia', cta_link: `ref:produse:${ids.test}`, cta2_label: 'Întreabă un specialist', cta2_link: `ref:pagini:${ids.contact}`}
   })) test[key] = c('sectiuni', data, src('/testare-apa/'));
   store.update(user, 'sectiuni', test.hero, {cta2_label: 'Vezi cum funcționează', cta2_link: `ref:sectiuni:${test.steps}`}, {source: src('/testare-apa/')});
   store.setLinks(user, 'pagini', ids.testare, 'sections', Object.values(test));
