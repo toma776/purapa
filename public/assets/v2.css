@@ -72,8 +72,10 @@ html:not(.v2-js) .v2-ripples i:nth-child(3), .v2-still .v2-ripples i:nth-child(3
 .v2-js:not(.v2-still) .v2-chip .stock::before { animation: v2-pulse 2.2s ease-out infinite; }
 @media (max-width: 880px) {
   .v2-hero-grid { grid-template-columns: 1fr; }
-  .v2-stage { width: min(88%, 420px); margin-top: 1rem; }
-  .v2-chip-price { left: -4%; bottom: 4%; }
+  .v2-stage { width: min(88%, 420px); margin-top: 1rem; margin-bottom: 3.5rem; }
+  /* Pe ecrane înguste, prețul stă sub picătură, ca să nu acopere produsul. */
+  .v2-chip-price { left: 50%; bottom: -16%; translate: -50% 0; min-width: 0; white-space: nowrap; padding: .7rem 1.1rem; }
+  .v2-stage::after { display: none; }
 }
 @media (max-width: 520px) { .v2-hero .actions .btn { flex: 1 1 100%; } }
 
