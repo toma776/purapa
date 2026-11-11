@@ -349,7 +349,7 @@ body { overflow-x: clip; }
 .fx-w > span { display: inline-block; transform: translateY(115%); transition: transform 1.1s var(--ease) calc(var(--i) * 80ms); }
 .ready.in .fx-w > span { transform: none; }
 
-/* Plutire și înclinare după cursor (variabilele --mx, --my le pune v2.js pe zona [data-zone]). */
+/* Plutire și înclinare după cursor (variabilele --mx, --my le pune site.js pe zona [data-zone]). */
 @keyframes fx-float { 0%, 100% { transform: translateY(-7px); } 50% { transform: translateY(7px); } }
 .fx-js:not(.fx-still) .fx-float { animation: fx-float 7s ease-in-out infinite; }
 .fx-tilt, .fx-product { transform: perspective(900px) rotateY(calc(var(--mx, 0) * 11deg)) rotateX(calc(var(--my, 0) * -8deg))
@@ -501,7 +501,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .fx-flow-steps .retains { margin-top: .4rem; font-size: .9375rem; font-weight: 600; color: var(--sky); }
 .fx-flow-steps .text { margin-top: .6rem; font-size: 1rem; }
 .fx-flow-rail { display: none; }
-/* Scena vie (clasa o pune v2.js): rămâne pe loc, iar pașii se schimbă odată cu derularea. */
+/* Scena vie (clasa o pune site.js): rămâne pe loc, iar pașii se schimbă odată cu derularea. */
 .fx-flow.is-live { padding-block: 0; height: calc(100svh + var(--steps) * 75vh); }
 .is-live .fx-flow-pin { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); display: flex; flex-direction: column; justify-content: center;
   gap: clamp(1rem, 3vh, 2rem); overflow: hidden; }
@@ -516,10 +516,12 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 @media (max-width: 640px) { .fx-flow-tag { top: auto; bottom: 8px; translate: none; font-size: .75rem; padding: .35rem .7rem; } }
 @media (max-height: 660px) { .is-live .fx-flow-band { height: 26vh; min-height: 130px; } .is-live .fx-flow h2 { font-size: 1.75rem; } .is-live .fx-flow-steps .text { font-size: .9375rem; line-height: 1.5; } }
 
-/* Impact: fundalul continuă culoarea imaginii, iar picătura plutește fără ramă */
+/* Beneficii cu imagine: fundal de culoarea apei, iar imaginea se mișcă ușor în rama ei */
 .fx-impact { background: linear-gradient(#d3e6f2 0, #dcebf5 55%, var(--white) 100%); }
 .fx-impact-grid { display: grid; grid-template-columns: .95fr 1.05fr; gap: clamp(2rem, 1rem + 5vw, 5.5rem); align-items: center; }
-.fx-impact-media img { width: 100%; aspect-ratio: 1; object-fit: cover; -webkit-mask-image: radial-gradient(closest-side, #000 58%, transparent 98%); mask-image: radial-gradient(closest-side, #000 58%, transparent 98%); }
+.fx-impact-media { border-radius: var(--r-xl); overflow: hidden; }
+.fx-impact-media > div { scale: 1.14; }
+.fx-impact-media img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: 50% 20%; }
 .fx-impact .head { margin-bottom: 0; }
 .fx-impact-list { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1rem; }
 .fx-impact-list li { display: grid; grid-template-columns: 52px 1fr; gap: 1.1rem; align-items: start; padding: 1.1rem 1.25rem; border-radius: var(--r-md);
@@ -547,3 +549,70 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .fx-js:not(.fx-still) .fx-waves svg:nth-child(2) { animation-duration: 11s; animation-direction: reverse; }
 .fx-js:not(.fx-still) .fx-waves svg:nth-child(3) { animation-duration: 8s; }
 .site-footer { border-top: 0; }
+
+/* Treceri line între pagini (browserele care știu View Transitions; celelalte încarcă pagina ca de obicei). */
+@view-transition { navigation: auto; }
+@keyframes fx-page-out { to { opacity: 0; } }
+@keyframes fx-page-in { from { opacity: 0; transform: translateY(14px); } }
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) { animation: fx-page-out .22s ease both; }
+  ::view-transition-new(root) { animation: fx-page-in .5s var(--ease) both; }
+}
+.site-header { view-transition-name: site-header; }
+
+/* Butoane: săgeata face un pas înainte */
+.btn svg { transition: translate .25s var(--ease); }
+.btn:hover svg { translate: 3px 0; }
+
+/* Hero fără imagine (paginile interioare): mai scund, cu picătura goală alături */
+.fx-hero.solo { min-height: 0; padding-block: clamp(3rem, 2rem + 4vw, 5.5rem); }
+.fx-hero.solo .fx-hero-grid { grid-template-columns: 1.3fr .7fr; justify-items: stretch; text-align: left; }
+.fx-hero.solo .fx-stage { width: min(100%, 400px); justify-self: center; }
+.fx-hero.solo h1, .fx-hero.solo h2 { font-size: clamp(2.4rem, 1.3rem + 3.8vw, 4.25rem); }
+@media (max-width: 880px) {
+  .fx-hero.solo .fx-hero-grid { grid-template-columns: 1fr; }
+  .fx-hero.solo .fx-stage { width: min(58%, 250px); margin-bottom: 0; }
+}
+
+/* Începutul unei pagini fără hero (Produse, Contact, textele legale) */
+.section.fx-top { padding-top: clamp(3.5rem, 2rem + 5vw, 6rem);
+  background: radial-gradient(60rem 30rem at 88% -10%, rgb(11 187 239 / .15), transparent 62%), radial-gradient(40rem 24rem at 0% 0%, var(--soft), transparent 70%), var(--white); }
+.fx-top [data-split] { font-size: clamp(2.25rem, 1.4rem + 3.4vw, 3.75rem); letter-spacing: -.035em; line-height: 1.06; margin-top: 0; }
+.fx-404-n { margin: 0 0 1rem; font-size: clamp(6rem, 3rem + 16vw, 14rem); font-weight: 800; line-height: .9; letter-spacing: -.06em;
+  background: linear-gradient(135deg, var(--sky), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.fx-js:not(.fx-still) .fx-404-n { animation: fx-float 7s ease-in-out infinite; }
+
+/* Pata de lumină care urmărește cursorul, pe orice card cu data-spot */
+[data-spot]:not(.fx-card) { position: relative; }
+[data-spot]:not(.fx-card)::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(18rem circle at var(--x, 50%) var(--y, 0%), rgb(11 187 239 / .13), transparent 65%); }
+[data-spot]:not(.fx-card):hover::after { opacity: 1; }
+
+/* Grila de produse */
+.product { transition: box-shadow .3s, border-color .3s, translate .3s var(--ease); }
+.product .media { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--mist), var(--soft)); }
+.product .media img { transition: scale .6s var(--ease), rotate .6s var(--ease); }
+.product .badge { position: absolute; z-index: 1; top: .9rem; left: .9rem; padding: .3rem .75rem; border-radius: 999px; background: var(--navy); color: var(--white); font-size: .75rem; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) {
+  .product:hover { translate: 0 -6px; }
+  .product:hover .media img { scale: 1.07; rotate: -2deg; }
+  .steps li:hover, .param-group:hover { translate: 0 -4px; }
+}
+.steps li, .param-group { transition: border-color .3s, box-shadow .3s, translate .3s var(--ease); }
+.steps li:hover, .param-group:hover { border-color: #b9cdf0; box-shadow: var(--shadow-md); }
+
+/* Axa pașilor se umple pe măsură ce derulezi, iar punctele se aprind pe rând (--p și clasa `on` le pune site.js). */
+.timeline { position: relative; }
+.timeline .dot { position: relative; z-index: 1; transition: background .4s, color .4s, border-color .4s, scale .4s var(--ease); }
+.fx-js:not(.fx-still) .timeline[data-progress]::after { content: ""; position: absolute; left: 27px; top: 28px; bottom: 56px; width: 2px; border-radius: 2px;
+  background: linear-gradient(var(--cyan), var(--blue)); transform-origin: 50% 0; transform: scaleY(var(--p, 0)); }
+.fx-js:not(.fx-still) .timeline[data-progress] li:not(.on) .dot { background: var(--white); border-color: var(--soft); color: var(--blue); }
+.fx-js:not(.fx-still) .timeline[data-progress] li.on .dot { background: var(--blue); border-color: var(--blue); color: var(--white); scale: 1.08; }
+@media (max-width: 520px) { .fx-js:not(.fx-still) .timeline[data-progress]::after { left: 21px; top: 22px; } }
+
+/* Întrebările se deschid lin */
+@supports (interpolate-size: allow-keywords) {
+  .accordion details { interpolate-size: allow-keywords; }
+  .accordion details::details-content { block-size: 0; overflow: clip; transition: block-size .45s var(--ease), content-visibility .45s allow-discrete; }
+  .accordion details[open]::details-content { block-size: auto; }
+}

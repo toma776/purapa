@@ -111,13 +111,13 @@ document.documentElement.classList.add('js');
   }
 
   // Apariții la derulare; copiii unui [data-stagger] vin pe rând.
-  $$('[data-stagger]').forEach(g => [...g.children].forEach((c, i) => c.style.setProperty('--i', i)));
+  $$('[data-stagger]').forEach(g => [...g.children].forEach((c, i) => c.style.setProperty('--i', Math.min(i, 8))));
   const io = new IntersectionObserver(entries => entries.forEach(e => {
     if (!e.isIntersecting) return;
     e.target.classList.add('in');
     $$('[data-count]', e.target).forEach(countUp);
     io.unobserve(e.target);
-  }), {threshold: .12, rootMargin: '0px 0px -6% 0px'});
+  }), {rootMargin: '0px 0px -8% 0px'});
   $$('[data-reveal]').forEach(el => io.observe(el));
 
   // Derularea: bara de progres și paralaxa.
@@ -139,6 +139,17 @@ document.documentElement.classList.add('js');
   const queue = () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } };
   window.addEventListener('scroll', queue, {passive: true});
   window.addEventListener('resize', queue);
+
+  // Axa pașilor: se umple până la linia de citire, iar punctele trecute se aprind.
+  $('.timeline[data-progress]').forEach(list => {
+    const items = [...list.children];
+    onScrollFns.push(vh => {
+      const r = list.getBoundingClientRect(), line = vh * .62;
+      if (r.bottom < -100 || r.top > vh + 100) return;
+      list.style.setProperty('--p', clamp((line - r.top - 28) / Math.max(1, r.height - 84), 0, 1).toFixed(4));
+      items.forEach(li => li.classList.toggle('on', li.getBoundingClientRect().top + 28 < line));
+    });
+  });
 
   // Zonele care se înclină după cursor: --mx și --my între −1 și 1, netezite.
   $$('[data-zone]').forEach(zone => {
