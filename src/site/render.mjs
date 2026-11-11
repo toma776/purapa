@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {esc} from '../core/content.mjs';
 import {byKey, publicPath} from '../registry/entities.mjs';
 import {icon} from './icons.mjs';
+import {SCENES} from './scenes.mjs';
 
 const ASSETS = new URL('./assets/', import.meta.url);
 const ASSET_V = createHash('sha1').update(readFileSync(new URL('site.css', ASSETS))).update(readFileSync(new URL('site.js', ASSETS))).digest('hex').slice(0, 10);
@@ -63,6 +64,25 @@ const buttons = (ctx, s, light = false) => {
   const html = button(ctx, s.cta_label, s.cta_link, light ? 'btn light' : 'btn') + button(ctx, s.cta2_label, s.cta2_link, light ? 'btn ghost-light' : 'btn ghost');
   return html ? `<div class="actions">${html}</div>` : '';
 };
+
+// O imagine întreagă, la proporțiile ei. Dacă pentru fișierul ei există o scenă (scenes.mjs), imaginea e desenată în SVG:
+// întreagă dedesubt și, deasupra, câte o copie pentru fiecare felie, decupată cu o mască cu margini moi. Feliile se mișcă
+// din CSS; în repaus se suprapun exact peste imagine, deci fără mișcare se vede imaginea neschimbată.
+function picture(ctx, id, uid, {sizes = ''} = {}) {
+  const m = ctx.media(id);
+  if (!m) return {html: '', tall: false};
+  const tall = m.height > m.width * 1.15;
+  const sc = SCENES[/\/media\/([^?]+)/.exec(m.src)?.[1]];
+  if (!sc) {
+    const dims = m.width && m.height ? ` width="${m.width}" height="${m.height}"` : '';
+    return {tall, html: `<img src="${esc(m.src)}" alt="${esc(m.alt)}"${dims}${sizes ? ` sizes="${sizes}"` : ''} loading="lazy" decoding="async">`};
+  }
+  const img = `<image href="${esc(m.src)}" width="${sc.width}" height="${sc.height}"/>`;
+  return {tall, html: `<svg class="fx-scene" viewBox="0 0 ${sc.width} ${sc.height}" width="${sc.width}" height="${sc.height}" role="img" aria-label="${esc(m.alt)}">
+    <defs><filter id="${uid}-f" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3"/></filter>
+    ${sc.parts.map((p, k) => `<mask id="${uid}-${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="${sc.width}" height="${sc.height}"><polygon points="${p.points}" fill="#fff" filter="url(#${uid}-f)"/></mask>`).join('')}</defs>
+    ${img}${sc.parts.map((p, k) => `<g class="fx-part fx-part-${p.name}" style="transform-origin:${p.origin[0]}px ${p.origin[1]}px" mask="url(#${uid}-${k})">${img}</g>`).join('')}</svg>`};
+}
 
 function image(ctx, id, {cls = '', eager = false, sizes = ''} = {}) {
   const m = ctx.media(id);
@@ -137,10 +157,11 @@ const SECTIONS = {
 
   beneficii: (ctx, s) => {
     const items = ctx.within(ctx.component, 'Beneficiile secțiunii', () => ctx.related('sectiuni', s.id, 'benefits'));
-    // Cu imagine: text și listă lângă o imagine care se mișcă ușor în rama ei, pe un fundal de culoarea apei.
+    // Cu imagine: text și listă lângă imaginea întreagă, la proporțiile ei, pe un fundal de culoarea apei.
     if (s.image_id) {
+      const pic = picture(ctx, s.image_id, `sc${s.id}`, {sizes: '(max-width: 880px) 80vw, 520px'});
       return `<section class="section fx-impact" aria-labelledby="s-${s.id}"><div class="container fx-impact-grid">
-        <div class="fx-impact-media" data-reveal><div data-parallax=".1">${image(ctx, s.image_id, {sizes: '(max-width: 880px) 80vw, 520px'})}</div></div>
+        <div class="fx-impact-media${pic.tall ? ' tall' : ''}" data-reveal>${pic.html}</div>
         <div>${rhead(ctx, s)}
           <ul class="fx-impact-list" data-stagger>${items.map(b => `<li data-reveal><span class="icon">${icon(b.icon)}</span><div><h3>${ctx.text(b.title)}</h3><p>${ctx.text(b.text)}</p></div></li>`).join('')}</ul>
           ${ractions(buttons(ctx, s))}</div></div></section>`;
