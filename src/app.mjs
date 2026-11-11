@@ -14,7 +14,6 @@ import {renderManage} from './manage/pages.mjs';
 import {login as loginPage} from './manage/views/users.mjs';
 import {createContext} from './site/context.mjs';
 import {renderPath, publicPaths, indexable, robotsTxt} from './site/render.mjs';
-import {renderV2, V2_PATH} from './site/v2.mjs';
 
 const ASSETS = join(dirname(fileURLToPath(import.meta.url)), 'manage', 'assets');
 const SITE_ASSETS = join(dirname(fileURLToPath(import.meta.url)), 'site', 'assets');
@@ -159,12 +158,6 @@ export function createApp({file = 'data/purapa.db', mediaDir = 'data/media', cro
       if (redirect?.to_path) return send(res, redirect.code, '', 'text/plain', {location: redirect.to_path + url.search});
       // Bara de la final, ca pe site-ul vechi; adresele vechi WordPress dau 404 (§3.8).
       if (!path.endsWith('/') && !extname(path)) return send(res, 301, '', 'text/plain', {location: `${path}/${url.search}`});
-
-      // A doua variantă de design a primei pagini: aceleași date, randate pe loc (nu intră în propagare și nici în sitemap).
-      if (path === V2_PATH) {
-        const v2 = renderV2(createContext(store), store);
-        if (v2) return send(res, 200, v2.html, 'text/html; charset=utf-8');
-      }
 
       const out = sync.get(path);
       return send(res, out.status, out.html, 'text/html; charset=utf-8');

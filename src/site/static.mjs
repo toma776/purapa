@@ -6,7 +6,6 @@ import {join, dirname, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createContext} from './context.mjs';
 import {renderPath, publicPaths, robotsTxt} from './render.mjs';
-import {renderV2, V2_PATH} from './v2.mjs';
 
 const ASSETS_DIR = fileURLToPath(new URL('./assets/', import.meta.url));
 const exists = p => access(p).then(() => true, () => false);
@@ -32,9 +31,6 @@ export async function buildStatic(store, {out = 'public', mediaDir = 'data/media
     if (res.status !== 200) throw new Error(`${path} nu s-a randat (${res.status})`);
     await put(join(path, 'index.html'), res.html);
   }
-  // /v2/: a doua variantă de design a primei pagini (aceleași date).
-  const v2 = renderV2(createContext(store, {staticSite: true}), store);
-  if (v2) await put(join(V2_PATH, 'index.html'), v2.html);
   await put('404.html', render('/__pagina-inexistenta__/').html);
   await put('robots.txt', robotsTxt());
 
