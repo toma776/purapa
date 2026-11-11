@@ -159,6 +159,21 @@ document.querySelectorAll('[data-tutorial]').forEach(root => {
   root.classList.remove('paused');
 });
 
+// Filtrul pe categorii din catalog: arată doar produsele categoriei alese (aria-pressed pe buton).
+document.querySelectorAll('[data-filter]').forEach(bar => {
+  const cards = [...bar.parentElement.querySelectorAll('.product[data-cat]')];
+  bar.hidden = false;
+  bar.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    bar.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    for (const c of cards) {
+      c.hidden = !!b.dataset.cat && c.dataset.cat !== b.dataset.cat;
+      if (!c.hidden) c.classList.add('in');
+    }
+  });
+});
+
 // Recenziile: după primele șase, restul se deschid la cerere.
 document.querySelectorAll('.reviews-list').forEach(list => {
   const more = list.querySelector('.reviews-more');

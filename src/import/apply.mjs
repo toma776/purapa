@@ -92,6 +92,14 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
         image: image && {...image, alt: p.name},
         source: src('endpoint', p.extern_id, p.retailer.file, p.retailer.fetched_at, `${p.retailer.name}: ${p.retailer.price} lei${p.retailer.list_price ? ` (tăiat ${p.retailer.list_price} lei)` : ''}, ${p.retailer.availability ?? ''}`, `Portalia — ${p.retailer.name}`)});
     }
+    // Recenziile de la retailer, legate de produs după cheia lui; potrivite după ID-ul recenziei, deci fără dubluri la reimport.
+    for (const r of p.retailer?.reviews ?? []) {
+      const curReview = db.prepare('SELECT id FROM reviews WHERE extern_id = ?').get(r.extern_id);
+      ops.push({key: 'recenzii', id: curReview?.id ?? null, match: {extern_id: r.extern_id}, productMatch: {extern_id: p.extern_id},
+        create: {extern_id: r.extern_id},
+        data: {author: r.author, rating: r.rating, title: r.title, text: r.text, posted_at: r.posted_at, verified: r.verified, url: r.url},
+        source: src('endpoint', r.url, p.retailer.file, p.retailer.fetched_at, `${r.author}, ${r.rating}/5: ${r.title ?? ''}`.slice(0, 160), `Portalia — recenzie la ${p.retailer.name}`)});
+    }
     if (p.description && listing) {
       ops.push({key: 'produse', id: cur?.id ?? null, match: {extern_id: p.extern_id}, create: {name: p.name, extern_id: p.extern_id, position: p.position},
         data: {description: `<p>${esc(p.description)}</p>`},
@@ -176,6 +184,8 @@ export async function applyImport(store, analysis, {overwriteEdits = false, medi
       let id = op.id ?? ids[matchKey] ?? null;
       const before = id ? store.get(op.key, id) : null;
       const data = {...op.data};
+      // Legătura spre un produs creat sau găsit mai devreme în același import.
+      if (op.productMatch) data.product_id = ids[JSON.stringify(op.productMatch)] ?? db.prepare('SELECT id FROM products WHERE extern_id = ?').get(op.productMatch.extern_id)?.id;
       if (op.image) {
         let media = db.prepare('SELECT id FROM media WHERE sha1 = ?').get(op.image.sha1);
         if (!media) {

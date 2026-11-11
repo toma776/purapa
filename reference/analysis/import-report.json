@@ -1,68 +1,32 @@
 {
-  "at": "2026-10-26T09:53:40.143Z",
-  "created": [],
+  "at": "2026-11-11T10:50:41.675Z",
+  "created": [
+    "recenzii:1",
+    "recenzii:2",
+    "recenzii:3",
+    "recenzii:4",
+    "recenzii:5",
+    "recenzii:6",
+    "recenzii:7",
+    "recenzii:8",
+    "recenzii:9",
+    "recenzii:10",
+    "recenzii:11",
+    "recenzii:12",
+    "recenzii:13",
+    "recenzii:14",
+    "recenzii:15",
+    "recenzii:16",
+    "recenzii:17",
+    "recenzii:18"
+  ],
   "updated": [
-    "produse:1",
-    "produse:1",
-    "produse:2",
-    "produse:2",
-    "produse:3",
-    "produse:3",
-    "produse:4",
-    "produse:4",
-    "produse:5",
-    "produse:5",
-    "produse:6",
-    "produse:6",
-    "produse:7",
-    "produse:7",
-    "produse:8",
-    "produse:8",
-    "produse:9",
-    "produse:9",
-    "firma:1",
-    "sectiuni:4",
-    "sectiuni:8",
-    "sectiuni:10",
-    "pagini:1",
-    "pagini:5",
-    "pagini:6",
-    "pagini:4",
-    "pagini:8",
-    "pagini:9",
-    "pagini:2",
-    "pagini:7",
-    "pagini:3",
-    "sectiuni:2",
-    "sectiuni:3",
-    "sectiuni:1"
+    "produse:1"
   ],
-  "unchanged": 7,
-  "media": 13,
-  "tokens": 41,
-  "roundtrip": [
-    {
-      "path": "/politica-de-confidentialitate/",
-      "blocks": 83,
-      "exact": true,
-      "tokens": 17,
-      "sameMeaning": true
-    },
-    {
-      "path": "/politica-de-cookie/",
-      "blocks": 40,
-      "exact": true,
-      "tokens": 6,
-      "sameMeaning": true
-    },
-    {
-      "path": "/termeni-si-conditii/",
-      "blocks": 56,
-      "exact": true,
-      "tokens": 18,
-      "sameMeaning": true
-    }
-  ],
+  "unchanged": 17,
+  "media": 0,
+  "tokens": 0,
+  "roundtrip": [],
   "conflicts": [],
   "findings": [
     {
@@ -79,12 +43,6 @@
       "impact": "mediu",
       "kind": "canonical",
       "text": "Nicio pagină nu are <link rel=\"canonical\">."
-    },
-    {
-      "impact": "mare",
-      "kind": "pret",
-      "text": "Kit complet de filtrare apă pentru chiuveta de bucătărie 11.000 L, Purapa: purapa.ro afișează 1800 lei, retailerul vinde la 1199 lei (1800 e prețul tăiat).",
-      "extern_id": "portalia:p651"
     },
     {
       "impact": "mare",

@@ -120,6 +120,24 @@ export const ENTITIES = [
     ]
   },
   {
+    // Recenziile clienților, preluate de la retailer (Portalia) la import. Numele autorului e scurtat de la citire
+    // (prenume + inițială), iar o recenzie se ascunde de pe site trecând-o în ciornă.
+    key: 'recenzii', table: 'reviews', label: 'Recenzii', one: 'Recenzie',
+    category: 'catalog', color: '#1f9e8f', title: 'title',
+    duplicates: {keys: ['extern_id']},
+    fields: [
+      {key: 'product_id', label: 'Produs', type: 'ref', target: 'produse', required: true, rel: 'recenzie la', inverseLabel: 'Recenzii'},
+      {key: 'author', label: 'Autor (prenume și inițială)', type: 'text', required: true, max: 60, list: true},
+      {key: 'rating', label: 'Nota (1–5)', type: 'int', required: true, list: true},
+      {key: 'title', label: 'Titlu', type: 'text', max: 160},
+      {key: 'text', label: 'Text', type: 'textarea'},
+      {key: 'posted_at', label: 'Data (AAAA-LL-ZZ)', type: 'text', max: 10},
+      {key: 'verified', label: 'Achiziție verificată', type: 'boolean'},
+      {key: 'url', label: 'Pagina recenziei', type: 'url'},
+      {key: 'extern_id', label: 'ID extern', type: 'text', unique: true, intern: true}
+    ]
+  },
+  {
     key: 'beneficii', table: 'benefits', label: 'Beneficii', one: 'Beneficiu',
     category: 'continut', color: '#7d5ba6', title: 'title', hub: false, noStatus: true,
     fields: [
@@ -157,7 +175,7 @@ export const ENTITIES = [
     anchor: r => `#s-${r.id}`,
     fields: [
       {key: 'kind', label: 'Tip', type: 'select', required: true,
-       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'text', 'tutorial', 'contact', 'cta']},
+       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'recenzii', 'text', 'tutorial', 'contact', 'cta']},
       {key: 'theme', label: 'Fundal', type: 'select', options: ['alb', 'deschis', 'inchis']},
       {key: 'kicker', label: 'Supratitlu', type: 'text', max: 60},
       {key: 'title', label: 'Titlu (*cuvinte* = evidențiate)', type: 'text'},
@@ -174,7 +192,7 @@ export const ENTITIES = [
       {key: 'drop_mark', label: 'În picătura din hero', type: 'select', options: ['lebada'], kinds: ['hero']},
       {key: 'params', label: 'Ipotezele calculatorului', type: 'json', kinds: ['calculator']},
       {key: 'category_id', label: 'Categorie afișată', type: 'ref', target: 'categorii', rel: 'afișează categoria', inverseLabel: 'Secțiuni', kinds: ['produse']},
-      {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero', 'calculator']},
+      {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero', 'calculator', 'recenzii']},
       {key: 'benefits', label: 'Beneficii', type: 'refs', target: 'beneficii', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['beneficii']},
       {key: 'steps', label: 'Pași', type: 'refs', target: 'pasi', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['pasi', 'tutorial']},
       {key: 'faqs', label: 'Întrebări', type: 'refs', target: 'intrebari', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['intrebari']},

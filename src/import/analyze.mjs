@@ -27,6 +27,34 @@ const AVAILABILITY = {InStock: 'în stoc', LimitedAvailability: 'stoc limitat', 
 const PHONE_RE = /(?<!\d)(?:\+40[\s.-]?|0)(\d{3})[\s.-]?(\d{3})[\s.-]?(\d{3})(?!\d)/g;
 const phoneKey = s => s.replace(/\D/g, '').replace(/^40/, '0');
 
+// Prenumele și inițiala numelui („Cristina Nica” → „Cristina N.”): numele întregi ale clienților nu intră în Brain.
+export const shortName = full => {
+  const cap = w => w.toLowerCase().replace(/(^|-)(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  const parts = decode(full).trim().split(/\s+/).filter(Boolean).map(cap);
+  if (!parts.length) return 'Client';
+  return parts.length === 1 ? parts[0] : `${parts[0]} ${parts.at(-1)[0].toUpperCase()}.`;
+};
+
+// Recenziile de pe o pagină de produs Portalia: fiecare rând .comentarii-container-row are autorul, data,
+// marcajul „Achizitie verificata”, nota (lățimea stelelor), titlul, textul și ID-ul recenziei (din butoanele de vot).
+export function retailerReviews(html, pageUrl) {
+  return html.split('<div class="comentarii-container-row">').slice(1).map(row => {
+    const id = row.match(/rating_review\('(\d+)'/)?.[1];
+    const date = row.match(/Postat pe (\d{2})\.(\d{2})\.(\d{4})/);
+    const width = Number(row.match(/class="rating fill" style="width:\s*([\d.]+)%/)?.[1] ?? NaN);
+    const body = row.match(/<div class="comentariu-continut">([\s\S]*?)<\/div>/)?.[1] ?? '';
+    return id && {
+      extern_id: `portalia:r${id}`, url: `${pageUrl}#review_goto`,
+      author: shortName(row.match(/<p class="autor-head">([^<]*)<\/p>/)?.[1] ?? ''),
+      posted_at: date ? `${date[3]}-${date[2]}-${date[1]}` : null,
+      verified: /class="autor-verificat"/.test(row),
+      rating: Number.isFinite(width) ? Math.max(1, Math.min(5, Math.round(width / 20))) : null,
+      title: plain(row.match(/<span class="comentariu-head">([\s\S]*?)<\/span>/)?.[1] ?? '') || null,
+      text: plain(body) || null
+    };
+  }).filter(r => r && r.rating);
+}
+
 export function analyzeSnapshot(manifest, read) {
   const entries = manifest.entries.filter(e => e.file);
   const html = e => read(e.file).toString('utf8');
@@ -77,7 +105,8 @@ export function analyzeSnapshot(manifest, read) {
       retailer: p ? {
         file: re.file, fetched_at: re.fetched_at, name: decode(p.name).replace(/\s*-\s*Portalia$/, ''),
         price: Number(p.offers?.price), list_price: p.offers?.priceSpecification?.priceType?.endsWith('StrikethroughPrice') ? Number(p.offers.priceSpecification.price) : null,
-        availability: AVAILABILITY[String(p.offers?.availability ?? '').split('/').pop()] ?? null
+        availability: AVAILABILITY[String(p.offers?.availability ?? '').split('/').pop()] ?? null,
+        reviews: retailerReviews(html(re), url)
       } : null,
       images
     };

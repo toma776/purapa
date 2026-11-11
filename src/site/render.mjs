@@ -157,6 +157,39 @@ const rhead = (ctx, s, opts) => head(ctx, s, opts).replace('class="head', 'data-
 const flush = html => html.replace('class="head"', 'class="head" style="margin-bottom:0"');
 const ractions = (html, attrs = 'data-reveal') => html.replace('class="actions"', 'class="actions" ' + attrs);
 
+// Dovezile: recenziile clienților de la retailer (entitatea „recenzii”), doar cele publicate.
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.85 5.95 6.55.85-4.8 4.55 1.2 6.5L12 17.3l-5.8 3.15 1.2-6.5-4.8-4.55 6.55-.85z"/></svg>';
+const dec = v => Number(v).toFixed(1).replace('.', ',');
+const stars = v => `<span class="stars" role="img" aria-label="${dec(v)} din 5 stele" style="--v:${Math.max(0, Math.min(1, v / 5))}">
+  <span class="stars-bg">${STAR.repeat(5)}</span><span class="stars-fill">${STAR.repeat(5)}</span></span>`;
+const reviewWord = n => n === 1 ? 'recenzie' : 'recenzii';
+const MONTHS = ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'];
+const monthYear = d => { const [y, m] = String(d ?? '').split('-').map(Number); return y && m ? `${MONTHS[m - 1]} ${y}` : ''; };
+const shortProduct = name => String(name).split(/,| – | - /)[0].trim();
+function reviewsOf(ctx, productIds = null) {
+  return ctx.within(ctx.component, 'Recenziile produselor', () => ctx.query('recenzii', {
+    fields: ['product_id', 'rating', 'verified', 'posted_at', 'author', 'title', 'text', 'url'],
+    where: r => !productIds || productIds.includes(r.product_id)}));
+}
+const summarize = rs => rs.length ? {n: rs.length, avg: rs.reduce((a, r) => a + r.rating, 0) / rs.length,
+  verified: Math.round(100 * rs.filter(r => r.verified).length / rs.length)} : null;
+
+// Cardul de produs: nota și recenziile (spre retailer), scurta descriere, cifrele-cheie, prețul, disponibilitatea.
+function productCard(ctx, p, rs, retailer, cat = null) {
+  const sum = summarize(rs);
+  const tags = [p.capacity_l && `${num(p.capacity_l)} L`, p.lifetime_months && `${p.lifetime_months} luni`].filter(Boolean);
+  const out = p.availability === 'indisponibil';
+  return `<article class="product" aria-labelledby="p-${p.id}" data-reveal data-spot${cat ? ` data-cat="${esc(cat.slug)}"` : ''}>
+    <div class="media">${p.list_price > p.price ? '<span class="badge">Ofertă</span>' : ''}${image(ctx, p.image_id, {sizes: '(max-width: 600px) 92vw, 280px'})}</div>
+    <div class="body">${cat ? `<p class="cat">${esc(cat.name)}</p>` : ''}<h3 id="p-${p.id}">${esc(p.name)}</h3>
+      ${sum ? `<a class="rating" href="${esc(rs[0].url)}" target="_blank" rel="noopener">${stars(sum.avg)}<strong>${dec(sum.avg)}</strong><span>${sum.n} ${reviewWord(sum.n)}</span><span class="sr-only"> pe ${esc(retailer?.name ?? 'site-ul retailerului')} (se deschide într-o fereastră nouă)</span></a>` : ''}
+      ${p.summary ? `<p>${ctx.text(p.summary)}</p>` : ''}
+      ${tags.length ? `<ul class="tags" aria-label="Pe scurt">${tags.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
+      <div class="buy">${priceBlock(p)}${p.availability ? `<span class="stock${out ? ' out' : ''}">${esc(p.availability)}</span>` : ''}</div>
+      ${p.buy_url ? `<a class="btn small${out ? ' ghost' : ''}" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Vezi pe ${esc(retailer?.name ?? 'site-ul retailerului')}${icon('external')}<span class="sr-only"> ${esc(p.name)} (se deschide într-o fereastră nouă)</span></a>` : ''}</div>
+  </article>`;
+}
+
 const SECTIONS = {
   // Hero: textul în stânga, picătura 3D în dreapta; dacă există o imagine (a secțiunii sau a produsului), plutește în picătură.
   hero: (ctx, s, i) => {
@@ -213,7 +246,8 @@ const SECTIONS = {
       items = ctx.within(ctx.component, 'Produsele alese în secțiune', () => ctx.related('sectiuni', s.id, 'products'));
     } else {
       items = ctx.within(ctx.component, 'Toate produsele', () => ctx.query('produse', {
-        fields: ['name', 'summary', 'price', 'list_price', 'availability', 'image_id', 'buy_url', 'position'], sort: (a, b) => (a.position ?? 0) - (b.position ?? 0)}));
+        fields: ['name', 'summary', 'price', 'list_price', 'availability', 'image_id', 'buy_url', 'position', 'capacity_l', 'lifetime_months', 'category_id', 'retailer_id'],
+        sort: (a, b) => (a.position ?? 0) - (b.position ?? 0)}));
     }
     // Un singur produs ales: vitrină, cu produsul care se înclină după cursor. Mai multe: grilă.
     if (items.length === 1 && !s.category_id) {
@@ -221,6 +255,7 @@ const SECTIONS = {
       const cartridges = ctx.within(ctx.component, 'Cartușele produsului', () => ctx.related('produse', p.id, 'cartridges'));
       const stages = ctx.within(ctx.component, 'Etapele produsului', () => ctx.related('produse', p.id, 'stages'));
       const retailer = ctx.within(ctx.component, 'Retailerul produsului', () => ctx.get('retaileri', p.retailer_id));
+      const rs = reviewsOf(ctx, [p.id]);
       const ticks = [
         p.capacity_l && `Capacitate de <strong>${num(p.capacity_l)} L</strong>${p.lifetime_months ? `, până la ${p.lifetime_months} luni de folosire` : ''}`,
         stages.length && `Filtrare în ${stages.length} etape: ${stages.map(e => `${esc(e.name.toLowerCase())} ${microns(e.microns)}`).join(', ')}`,
@@ -232,16 +267,67 @@ const SECTIONS = {
           <div class="fx-tilt" data-reveal><div class="fx-float">${image(ctx, p.image_id, {sizes: '(max-width: 880px) 80vw, 440px'})}</div></div></div>
         <div class="fx-kit-body" data-reveal><h3 id="p-${p.id}">${esc(p.name)}</h3>${p.summary ? `<p class="summary">${ctx.text(p.summary)}</p>` : ''}${priceBlock(p)}
           <ul class="ticks" data-stagger>${ticks.map(t => `<li data-reveal>${icon('check')}<span>${t}</span></li>`).join('')}</ul>
-          <div class="actions">${p.buy_url ? `<a class="btn" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Cumpără${retailer ? ` de la ${esc(retailer.name)}` : ''}${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : ''}
+          ${(sum => sum ? `<a class="rating big" href="${esc(rs[0].url)}" target="_blank" rel="noopener">${stars(sum.avg)}<strong>${dec(sum.avg)}</strong><span>${sum.n} ${reviewWord(sum.n)}${retailer ? ` pe ${esc(retailer.name)}` : ''}</span><span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : '')(summarize(rs))}
+          <div class="actions">${p.buy_url ? `<a class="btn" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Vezi pe ${esc(retailer?.name ?? 'site-ul retailerului')}${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : ''}
             ${button(ctx, s.cta_label, s.cta_link, 'btn ghost')}</div>
           ${retailer ? `<p class="note">Comanda, plata și livrarea se fac prin ${esc(retailer.name)}, partenerul nostru autorizat.</p>` : ''}</div>
       </article>`);
     }
-    return wrap(s, `${rhead(ctx, s)}<div class="products" data-stagger>${items.map(p => `<article class="product" aria-labelledby="p-${p.id}" data-reveal data-spot>
-      <div class="media">${p.list_price > p.price ? '<span class="badge">Ofertă</span>' : ''}${image(ctx, p.image_id, {sizes: '(max-width: 600px) 92vw, 280px'})}</div>
-      <div class="body"><h3 id="p-${p.id}">${esc(p.name)}</h3>${p.summary ? `<p>${ctx.text(p.summary)}</p>` : ''}${priceBlock(p)}
-        ${p.buy_url ? `<a class="btn small" href="${esc(p.buy_url)}" target="_blank" rel="noopener">Cumpără${icon('external')}<span class="sr-only"> ${esc(p.name)} (se deschide într-o fereastră nouă)</span></a>` : ''}</div>
-      </article>`).join('')}</div>${ractions(buttons(ctx, s))}`);
+    // Grila: deasupra, dovezile (nota medie, numărul de recenzii, achizițiile verificate, cine livrează), calculate din
+    // recenzii; când secțiunea arată tot catalogul, produsele sunt grupate pe categorii, cu un cuprins de categorii.
+    const rs = reviewsOf(ctx, items.map(p => p.id));
+    const sum = summarize(rs);
+    const retailers = ctx.within(ctx.component, 'Retailerul produselor', () => ctx.query('retaileri', {fields: ['name']}));
+    const retailerOf = p => retailers.find(r => r.id === p.retailer_id) ?? (retailers.length === 1 ? retailers[0] : null);
+    const shop = retailers.length === 1 ? retailers[0] : null;
+    const proof = sum ? `<ul class="proof" data-reveal aria-label="De ce să ai încredere">
+      <li><span class="proof-big">${dec(sum.avg)}</span>${stars(sum.avg)}<span>nota medie din ${sum.n} ${reviewWord(sum.n)}${shop ? ` pe ${esc(shop.name)}` : ''}</span></li>
+      <li><span class="proof-big">${sum.verified}%</span><span>dintre recenzii vin de la clienți cu achiziție verificată</span></li>
+      ${shop ? `<li><span class="proof-icon">${icon('truck')}</span><span>Comanda, plata și livrarea se fac prin ${esc(shop.name)}, partenerul nostru autorizat</span></li>` : ''}</ul>` : '';
+    // Tot catalogul: fiecare card își arată categoria, iar deasupra e un filtru pe categorii (site.js îl activează;
+    // fără JavaScript, filtrul rămâne ascuns și se văd toate produsele).
+    const grouped = !s.category_id && !ctx.hasLinks('sectiuni', s.id, 'products');
+    const cats = grouped ? ctx.within(ctx.component, 'Categoriile produselor', () => ctx.query('categorii', {fields: ['name', 'slug']}))
+      .map(c => ({...c, n: items.filter(p => p.category_id === c.id).length})).filter(c => c.n) : [];
+    const catOf = p => cats.find(c => c.id === p.category_id);
+    const card = p => productCard(ctx, p, rs.filter(r => r.product_id === p.id), retailerOf(p), catOf(p));
+    const body = `${cats.length > 1 ? `<div class="cat-nav" role="group" aria-label="Filtrează după categorie" data-filter hidden>
+        <button type="button" aria-pressed="true" data-cat="">Toate<span>${items.length}</span></button>
+        ${cats.map(c => `<button type="button" aria-pressed="false" data-cat="${esc(c.slug)}">${esc(c.name)}<span>${c.n}</span></button>`).join('')}</div>` : ''}
+      <div class="products" data-stagger>${items.map(card).join('')}</div>`;
+    return wrap(s, `${rhead(ctx, s)}${proof}${body}${ractions(buttons(ctx, s))}`, ' shop');
+  },
+
+  // Recenziile clienților: rezumatul (nota medie, distribuția pe stele, achizițiile verificate) și cardurile.
+  // Doar ale produselor alese în secțiune, altfel toate. Întâi cele cu text consistent, apoi cele mai noi;
+  // după primele 6, restul se deschid la cerere (fără JavaScript, sunt toate vizibile).
+  recenzii: (ctx, s) => {
+    const chosen = ctx.hasLinks('sectiuni', s.id, 'products') ? ctx.within(ctx.component, 'Produsele secțiunii', () => ctx.related('sectiuni', s.id, 'products')) : null;
+    const rs = reviewsOf(ctx, chosen?.map(p => p.id) ?? null);
+    const sum = summarize(rs);
+    if (!sum) return '';
+    const products = Object.fromEntries(ctx.within(ctx.component, 'Produsele recenziilor', () => ctx.query('produse', {fields: ['name']})).map(p => [p.id, p]));
+    const shop = ctx.within(ctx.component, 'Retailerul', () => ctx.query('retaileri', {fields: ['name']}))[0];
+    const weight = r => (String(r.text ?? '').length > 70 ? 2 : 0) + (r.verified ? 1 : 0);
+    const sorted = [...rs].sort((a, b) => weight(b) - weight(a) || String(b.posted_at).localeCompare(String(a.posted_at)));
+    const dist = [5, 4, 3, 2, 1].map(n => [n, rs.filter(r => r.rating === n).length]);
+    const SHOW = 6;
+    return wrap(s, `<div class="reviews">
+      <aside class="reviews-summary" data-reveal>${flush(head(ctx, s))}
+        <div class="score"><span class="proof-big">${dec(sum.avg)}</span><div>${stars(sum.avg)}<p>din ${sum.n} ${reviewWord(sum.n)}${shop ? ` pe ${esc(shop.name)}` : ''}</p></div></div>
+        <ul class="dist" aria-label="Distribuția notelor">${dist.map(([n, c]) => `<li><span>${n} ${STAR}</span><i style="--w:${c / sum.n}"></i><span>${c}</span></li>`).join('')}</ul>
+        <p class="verified-share">${icon('shield')}<span><strong>${sum.verified}%</strong> dintre recenzii vin de la clienți cu achiziție verificată.</span></p>
+        ${buttons(ctx, s)}</aside>
+      <div class="reviews-list"><ul class="review-cards" data-stagger>${sorted.map((r, i) => { const p = products[r.product_id];
+        return `<li class="review${i >= SHOW ? ' more' : ''}" data-reveal><figure>
+          <div class="review-top">${stars(r.rating)}${r.verified ? `<span class="verified">${icon('check')}Achiziție verificată</span>` : ''}</div>
+          ${r.title ? `<h3>${esc(r.title)}</h3>` : ''}${r.text ? `<blockquote><p>${esc(r.text)}</p></blockquote>` : ''}
+          <figcaption><span class="avatar" aria-hidden="true">${esc(r.author[0] ?? '·')}</span><span><strong>${esc(r.author)}</strong>
+            <span>${monthYear(r.posted_at)}${p ? ` · <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(shortProduct(p.name))}<span class="sr-only"> (recenzia pe ${esc(shop?.name ?? 'site-ul retailerului')}, se deschide într-o fereastră nouă)</span></a>` : ''}</span></span></figcaption>
+        </figure></li>`; }).join('')}</ul>
+        ${rs.length > SHOW ? `<p class="reviews-more" hidden><button class="btn ghost" type="button" aria-expanded="false">Arată toate cele ${rs.length} ${reviewWord(rs.length)}</button></p>` : ''}
+        <p class="reviews-source">Recenziile sunt preluate de pe ${esc(shop?.name ?? 'site-ul retailerului')}, unde au fost scrise de clienți; numele sunt scurtate.</p></div>
+    </div>`, ' reviews-section');
   },
 
   // Calculatorul de economii: costul anual al cartușelor vine din prețul și durata lor (nu e scris de mână);
@@ -441,8 +527,9 @@ function header(ctx, path) {
     const f = ctx.within('Antet', 'Brandul', () => ctx.one('firma'));
     const menu = ctx.within('Antet', 'Meniul principal', () => ctx.query('pagini', {
       fields: ['menu_order'], as: 'link', where: p => p.menu_order != null, sort: (a, b) => a.menu_order - b.menu_order}));
-    const shop = ctx.within('Antet', 'Butonul «Comandă acum»', () => ctx.query('retaileri', {fields: ['search_url']}))[0];
-    const cta = shop?.search_url ? (cls) => `<a class="btn small ${cls}" href="${esc(shop.search_url)}" target="_blank" rel="noopener">Comandă acum${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : () => '';
+    // Vânzarea e la retailer: butonul spune unde duce („Vezi pe Portalia”), nu promite o comandă pe site.
+    const shop = ctx.within('Antet', 'Butonul spre retailer', () => ctx.query('retaileri', {fields: ['search_url', 'name']}))[0];
+    const cta = shop?.search_url ? (cls) => `<a class="btn small ${cls}" href="${esc(shop.search_url)}" target="_blank" rel="noopener">Vezi pe ${esc(shop.name)}${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : () => '';
     const links = menu.map(p => {
       const href = ctx.within('Antet', 'Meniul principal', () => ctx.link(`pagini:${p.id}`));
       return href ? `<a href="${esc(href)}"${href === path ? ' aria-current="page"' : ''}>${esc(p.menu_label || p.title)}</a>` : '';

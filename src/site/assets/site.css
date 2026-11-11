@@ -797,3 +797,105 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
   .tut-scene [class*="t-"], .tut-scene [class*="t-"] path, .is-player .tut-scene figcaption > * { animation: none !important; }
   .tut-scene .t-draw path, .tut-scene .t-timer { stroke-dasharray: none; }
 }
+
+/* Magazinul: dovezi (recenziile clienților de la retailer), produse pe categorii, recenzii. */
+.stars { position: relative; display: inline-flex; flex: none; line-height: 0; }
+.stars-bg, .stars-fill { display: inline-flex; gap: 1px; }
+.stars svg { width: 1em; height: 1em; }
+.stars-bg svg { fill: #d9e1ef; }
+.stars-fill { position: absolute; inset: 0; overflow: hidden; width: calc(var(--v) * 100%); }
+.stars-fill svg { fill: #f2b01e; flex: none; }
+
+.rating { display: inline-flex; align-items: center; gap: .45rem; width: fit-content; font-size: .875rem; color: var(--muted); text-decoration: none; }
+.rating .stars { font-size: 1rem; }
+.rating strong { color: var(--navy); font-weight: 800; }
+.rating:hover span:not(.stars):not(.sr-only) { text-decoration: underline; text-underline-offset: 3px; }
+.rating.big { margin-top: 1.5rem; font-size: 1rem; }
+.rating.big .stars { font-size: 1.25rem; }
+
+.shop .head { max-width: 760px; }
+.proof { list-style: none; margin: 2rem 0 3rem; padding: 0; display: grid; grid-template-columns: 1.15fr 1fr 1.2fr; border: 1px solid var(--line); border-radius: var(--r-xl); background: linear-gradient(135deg, var(--white), var(--mist)); box-shadow: var(--shadow-sm); }
+.proof li { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem .85rem; padding: 1.4rem 1.75rem; font-size: .9375rem; color: var(--muted); line-height: 1.45; }
+.proof li + li { border-left: 1px solid var(--line); }
+.proof li > span:last-child { flex: 1 1 12rem; }
+.proof .stars { font-size: 1.15rem; }
+.proof-big { font-size: 2.5rem; font-weight: 800; letter-spacing: -.04em; color: var(--navy); line-height: 1; }
+.proof-icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; background: var(--soft); color: var(--blue); flex: none; }
+.proof-icon svg { width: 1.5rem; height: 1.5rem; }
+
+.cat-nav { position: sticky; top: calc(var(--header-h) + .5rem); z-index: 5; display: flex; gap: .5rem; overflow-x: auto; scrollbar-width: none; margin: 0 0 2rem; padding: .4rem;
+  width: fit-content; max-width: 100%; border-radius: 999px; background: rgb(255 255 255 / .85); backdrop-filter: blur(12px); border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+.cat-nav::-webkit-scrollbar { display: none; }
+.cat-nav[hidden] { display: none; }
+.cat-nav button { flex: none; display: inline-flex; align-items: center; gap: .5rem; padding: .5rem 1rem; border: 0; border-radius: 999px; background: none; color: var(--navy);
+  font: 600 .9375rem/1.2 var(--font); cursor: pointer; transition: background .2s, color .2s; }
+.cat-nav button:hover { background: var(--soft); }
+.cat-nav button[aria-pressed="true"] { background: var(--navy); color: var(--white); }
+.cat-nav button[aria-pressed="true"] span { background: rgb(255 255 255 / .18); color: var(--white); }
+.cat-nav button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+.cat-nav button span { display: grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .4rem; border-radius: 999px; background: var(--soft); color: var(--blue); font-size: .75rem; font-weight: 800; }
+.product[hidden] { display: none; }
+.product .cat { margin: 0; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); }
+
+.shop .products { grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 1.5rem; }
+.product .media { padding: 1.75rem; }
+.product .media img { aspect-ratio: 4 / 3.4; }
+.product .body { gap: .6rem; padding: 1.35rem 1.4rem 1.5rem; }
+.product h3 { font-size: 1.0625rem; line-height: 1.3; }
+.product .tags { list-style: none; margin: .1rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+.product .tags li { padding: .2rem .65rem; border-radius: 999px; background: var(--mist); border: 1px solid var(--line); color: var(--navy); font-size: .8125rem; font-weight: 600; }
+.product .buy { margin-top: auto; padding-top: .75rem; display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+.product .buy .price { margin-top: 0; padding-top: 0; }
+.stock { display: inline-flex; align-items: center; gap: .4rem; font-size: .8125rem; font-weight: 600; color: var(--ok); }
+.stock::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px rgb(21 122 75 / .15); }
+.stock.out { color: var(--muted); }
+.stock.out::before { box-shadow: none; }
+.product .btn { margin-top: .5rem; width: 100%; justify-content: center; }
+
+/* Recenziile: rezumatul fix la stânga, cardurile în coloane la dreapta. */
+.reviews { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: clamp(2rem, 4vw, 4rem); align-items: start; }
+.reviews-summary { position: sticky; top: calc(var(--header-h) + 1.5rem); }
+.reviews-summary .score { display: flex; align-items: center; gap: 1rem; margin: 1.75rem 0 1.25rem; }
+.reviews-summary .score .proof-big { font-size: 4rem; }
+.reviews-summary .score .stars { font-size: 1.4rem; }
+.reviews-summary .score p { margin: .3rem 0 0; color: var(--muted); font-size: .9375rem; }
+.dist { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.dist li { display: grid; grid-template-columns: 2.5rem 1fr 1.75rem; align-items: center; gap: .6rem; font-size: .875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dist li > span:first-child { display: inline-flex; align-items: center; gap: .2rem; font-weight: 700; color: var(--navy); }
+.dist svg { width: .85rem; height: .85rem; fill: #f2b01e; }
+.dist i { height: 8px; border-radius: 4px; background: var(--line); position: relative; overflow: hidden; }
+.dist i::after { content: ""; position: absolute; inset: 0; width: calc(var(--w) * 100%); border-radius: inherit; background: #f2b01e; }
+.verified-share { display: flex; gap: .75rem; align-items: flex-start; margin: 1.5rem 0; padding: 1rem 1.1rem; border-radius: var(--r-md); background: var(--white); border: 1px solid var(--line); font-size: .9375rem; color: var(--muted); }
+.verified-share svg { width: 1.4rem; height: 1.4rem; flex: none; color: var(--ok); }
+.verified-share strong { color: var(--navy); }
+
+.review-cards { list-style: none; margin: 0; padding: 0; columns: 2 18rem; column-gap: 1.25rem; }
+.review { break-inside: avoid; margin-bottom: 1.25rem; }
+.reviews-list.collapsed .review.more { display: none; }
+.review figure { margin: 0; padding: 1.5rem 1.5rem 1.35rem; background: var(--white); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.review-top { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.review-top .stars { font-size: 1rem; }
+.verified { display: inline-flex; align-items: center; gap: .3rem; font-size: .75rem; font-weight: 700; color: var(--ok); }
+.verified svg { width: .95rem; height: .95rem; }
+.review h3 { margin-top: .9rem; font-size: 1.0625rem; line-height: 1.35; }
+.review blockquote { margin: .5rem 0 0; }
+.review blockquote p { margin: 0; color: var(--ink); font-size: .9688rem; line-height: 1.6; }
+.review figcaption { display: flex; align-items: center; gap: .75rem; margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: .875rem; }
+.review figcaption strong { display: block; color: var(--navy); }
+.review figcaption span span { color: var(--muted); }
+.review figcaption a { color: var(--blue); }
+.avatar { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; flex: none; border-radius: 50%; background: linear-gradient(135deg, var(--soft), var(--sky)); color: var(--blue); font-weight: 800; }
+.reviews-more { margin: .5rem 0 0; }
+.reviews-source { margin: 1.25rem 0 0; color: var(--muted); font-size: .8125rem; }
+
+@media (max-width: 960px) {
+  .proof { grid-template-columns: 1fr; }
+  .proof li + li { border-left: 0; border-top: 1px solid var(--line); }
+  .reviews { grid-template-columns: 1fr; }
+  .reviews-summary { position: static; }
+}
+@media (max-width: 640px) {
+  .proof li { padding: 1.1rem 1.25rem; }
+  .proof-big { font-size: 2rem; }
+  .cat-nav { margin-left: calc(var(--gutter) * -1); margin-right: calc(var(--gutter) * -1); border-radius: 0; border-left: 0; border-right: 0; width: auto; max-width: none; }
+}

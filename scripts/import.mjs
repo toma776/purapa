@@ -2,6 +2,7 @@
 //   node scripts/import.mjs                 descarcă din nou și importă
 //   node scripts/import.mjs --offline       folosește snapshot-ul existent (reference/snapshot)
 //   node scripts/import.mjs --overwrite-edits  suprascrie și modificările făcute de oameni
+//   node scripts/import.mjs --doar-produse  doar produsele de la retailer (prețuri, imagini, recenzii)
 import {writeFile, mkdir} from 'node:fs/promises';
 import {openDb, migrate} from '../src/core/db.mjs';
 import {createStore} from '../src/core/store.mjs';
@@ -27,8 +28,14 @@ if (!store.list('firma').length) {
   seed(store, {user: IMPORT_USER});
 }
 
+// --doar-produse: doar datele de la retailer (prețuri, disponibilitate, imagini, recenzii) și descrierile din listă;
+// paginile, firma, imaginile site-ului și textele legale rămân cum sunt.
+const scope = args.has('--doar-produse')
+  ? {...analysis, pages: analysis.pages.filter(p => p.path === '/produse/').map(p => ({...p, description: null})), images: [], legal: [], socials: [], company: {source: null}}
+  : analysis;
+
 try {
-  const report = await applyImport(store, analysis, {overwriteEdits: args.has('--overwrite-edits'), snapshotDir: SNAPSHOT});
+  const report = await applyImport(store, scope, {overwriteEdits: args.has('--overwrite-edits'), snapshotDir: SNAPSHOT});
   const scan = createSync(db, store).scan();
   await mkdir(ANALYSIS, {recursive: true});
   await writeFile(`${ANALYSIS}/import-report.json`, JSON.stringify(report, null, 2));

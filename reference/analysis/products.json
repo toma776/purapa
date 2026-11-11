@@ -9,11 +9,53 @@
     "shown_price": 1800,
     "retailer": {
       "file": "portalia.ro/kit-complet-de-filtrare-apa-pentru-chiuveta-de-bucatarie-11-000-l-purapa-p651/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Kit complet de filtrare apa pentru chiuveta de bucatarie 11.000 L, PurApa",
-      "price": 1199,
-      "list_price": 1800,
-      "availability": "în stoc"
+      "price": 1800,
+      "list_price": null,
+      "availability": "în stoc",
+      "reviews": [
+        {
+          "extern_id": "portalia:r1027",
+          "url": "https://www.portalia.ro/kit-complet-de-filtrare-apa-pentru-chiuveta-de-bucatarie-11-000-l-purapa-p651/#review_goto",
+          "author": "Cristina N.",
+          "posted_at": "2026-05-21",
+          "verified": false,
+          "rating": 5,
+          "title": "Recomand!",
+          "text": "Cred că atunci când e vorba despre ceva atât de important — apa pe care o bei tu, familia ta, copiii tăi — nu are cum să nu îți pese. Mi se pare genial ca păstrează mineralele benefice din apă (nu este un proces de osmoză inversă). Recomand!"
+        },
+        {
+          "extern_id": "portalia:r641",
+          "url": "https://www.portalia.ro/kit-complet-de-filtrare-apa-pentru-chiuveta-de-bucatarie-11-000-l-purapa-p651/#review_goto",
+          "author": "Ileana",
+          "posted_at": "2025-12-02",
+          "verified": true,
+          "rating": 5,
+          "title": "Foarte bun, recomand cu încredere!",
+          "text": "Folosesc kitul de filtrare pentru chiuvetă de la Portalia și sunt foarte mulțumită! Gustul este mult mai plăcut, fără mirosuri, iar claritatea este mult mai bună. Instalarea a fost simplă și rapida, iar filtrul funcționează excelent. Presiunea apei a rămas la fel de bună ca înainte. Livrare a fost rapidă, ambalarea impecabilă și un produs foarte bun și util. De când l-am montat bem apa doar de la chiuveta. Recomand!"
+        },
+        {
+          "extern_id": "portalia:r607",
+          "url": "https://www.portalia.ro/kit-complet-de-filtrare-apa-pentru-chiuveta-de-bucatarie-11-000-l-purapa-p651/#review_goto",
+          "author": "Karina P.",
+          "posted_at": "2025-11-17",
+          "verified": true,
+          "rating": 5,
+          "title": "Recomand!",
+          "text": "Acest filtru de apa mi-a schimbat viata. Nu mai car sticle cu apa, nu imi mai fac griji pentru calitatea apei (ma ingrozea gandul ca PET-urile au stat in conditii necorespunzatoare) si pot sa beau apa curata de la robinet. Apa are gust bun si nu mai am pete de calcar pe pahare. Am inceput sa consum mai multa apa de cand am filtru montat la robinet pentru ca are alt gust apa. Mereu stateam sa ma gandesc daca am ales brand-ul bun de apa plata si de cele mai multe ori alegeam apa cea mai scumpa. Am facut investitia in kit o singura data, dupa care schimb cartusul de prefiltrare (panza) o data la 2-3 luni (se murdareste foarte repede pentru ca este multa rugina pe tevi) si cartusul de microfiltare o data pe an. Recomand cu mare incredere!"
+        },
+        {
+          "extern_id": "portalia:r476",
+          "url": "https://www.portalia.ro/kit-complet-de-filtrare-apa-pentru-chiuveta-de-bucatarie-11-000-l-purapa-p651/#review_goto",
+          "author": "Savuica D.",
+          "posted_at": "2025-09-27",
+          "verified": false,
+          "rating": 5,
+          "title": "Recomand filtrul Pur Apa de la Portalia.ro",
+          "text": "Sunt f multumita de filtrul Pur Apa. De cand l-am instalat am vazut clar imbunatatirea apei ca aspect, puritate si mai ales ca o pot utiliza pt a o bea fara stresul ca are impuritati. Acum le dau si pisicii, catelusei apa de la robinet filtrata, economisind banii dati pe apa imbuteliata in plastic. Sincer, faptul ca aveti campania instalarii gratuite a filtrului pt domicilii in Bucuresti si Ilfov ajuta f mult. ⭐️⭐️⭐️⭐️⭐️"
+        }
+      ]
     },
     "images": [
       {
@@ -43,11 +85,12 @@
     "shown_price": 1699,
     "retailer": {
       "file": "portalia.ro/dedurizator-apa-automat-compact-pentru-locuinta-sistem-anti-calcar-protectie-instalatii-si-electrocasnice-9l-rasina-1mc-h-purapa-p762/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Dedurizator apă automat compact pentru locuință – sistem anti-calcar, protecție instalații și electrocasnice, 9L rasina, 1MC/h, Purapa",
       "price": 2000,
       "list_price": null,
-      "availability": "în stoc"
+      "availability": "în stoc",
+      "reviews": []
     },
     "images": [
       {
@@ -87,11 +130,23 @@
     "shown_price": 389,
     "retailer": {
       "file": "portalia.ro/cartus-microfiltrare-ok36m-medium-11-000l-purapa-by-oceano-p662/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Cartus microfiltrare OK36M medium, 11.000L, Purapa by Oceano",
       "price": 389,
       "list_price": 590,
-      "availability": "în stoc"
+      "availability": "în stoc",
+      "reviews": [
+        {
+          "extern_id": "portalia:r451",
+          "url": "https://www.portalia.ro/cartus-microfiltrare-ok36m-medium-11-000l-purapa-by-oceano-p662/#review_goto",
+          "author": "Cristian",
+          "posted_at": "2025-08-05",
+          "verified": false,
+          "rating": 5,
+          "title": "Prin filtrul asta ai cea mai garantata calitate de apa sanatoasa echilibrata de dat la copii.",
+          "text": "Folosesc de peste 25 ani utilizind si un aparat Bevco si nu mai car apa, doar apas pe butoane, iar filtrele astea scot tot ce nu e bun din apa de retea. Schimb odata la 6 luni ( da citeodata uit si schimb la un an ) filtrele Mi-am recuperat banii cu virf si indesat!"
+        }
+      ]
     },
     "images": [
       {
@@ -111,11 +166,113 @@
     "shown_price": 89,
     "retailer": {
       "file": "portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Test rapid apă potabilă Purapa – auto-testare acasă, rezultat interpretat digital",
       "price": 89,
       "list_price": null,
-      "availability": "în stoc"
+      "availability": "în stoc",
+      "reviews": [
+        {
+          "extern_id": "portalia:r1099",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Puscas P.",
+          "posted_at": "2026-06-21",
+          "verified": true,
+          "rating": 5,
+          "title": "Conform așteptări - Recomand",
+          "text": "- livrare rapidă - conform descriere - raspunsul cu rezultatul analizelor a venit repede."
+        },
+        {
+          "extern_id": "portalia:r991",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Cristian C.",
+          "posted_at": "2026-05-02",
+          "verified": true,
+          "rating": 5,
+          "title": "Ok",
+          "text": "Ok pentru promptitudine"
+        },
+        {
+          "extern_id": "portalia:r946",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "László B.",
+          "posted_at": "2026-04-12",
+          "verified": true,
+          "rating": 4,
+          "title": "Recomand",
+          "text": "Test simplu, care dă rezultat în câteva minute, după care se poate ști calitatea apei folosite în gospodărie. Merită făcut, recomand cu încredere."
+        },
+        {
+          "extern_id": "portalia:r908",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Mircea C.",
+          "posted_at": "2026-03-24",
+          "verified": true,
+          "rating": 5,
+          "title": "Produs ok",
+          "text": "Raportul Calitate-preț e foarte bun."
+        },
+        {
+          "extern_id": "portalia:r896",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Gabriela M.",
+          "posted_at": "2026-03-15",
+          "verified": true,
+          "rating": 5,
+          "title": "Recomand",
+          "text": "Făcut testul, foarte simplu și ușor de folosit. Mi-a ieșit foarte mult plumb la apa de la robinet. Culmea, puțul forat are apa mai curăță. Am înțeles eu greșit? Nu trebuia să primesc e-mail cu rezultatele testului? Mi-ar fi plăcut să le am și in scris..."
+        },
+        {
+          "extern_id": "portalia:r893",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Sava I.",
+          "posted_at": "2026-03-14",
+          "verified": true,
+          "rating": 5,
+          "title": "Foarte folositor",
+          "text": "Am cumpărat testele pentru apa si le-am folosit pt apa de la retea din oraș si de la sat si pentru apa de izvor de unde bem in mod regulat. Am fost foarte mulțumiți!"
+        },
+        {
+          "extern_id": "portalia:r886",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Bodeanu M.",
+          "posted_at": "2026-03-11",
+          "verified": true,
+          "rating": 5,
+          "title": "Recomand acest produs",
+          "text": "Testul este simplu de realizat și îți indică clar dacă apa este bună pentru consum sau doar pentru utilități. Recomand cu încredere!"
+        },
+        {
+          "extern_id": "portalia:r873",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Liviu B.",
+          "posted_at": "2026-03-05",
+          "verified": true,
+          "rating": 5,
+          "title": "10",
+          "text": "Super"
+        },
+        {
+          "extern_id": "portalia:r867",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Mekkaoui A.",
+          "posted_at": "2026-03-03",
+          "verified": true,
+          "rating": 5,
+          "title": "5 din 5",
+          "text": "5 din 5"
+        },
+        {
+          "extern_id": "portalia:r818",
+          "url": "https://www.portalia.ro/test-rapid-apa-potabila-purapa-auto-testare-acasa-rezultat-interpretat-digital-p759/#review_goto",
+          "author": "Karina P.",
+          "posted_at": "2026-02-11",
+          "verified": false,
+          "rating": 5,
+          "title": "Un test simplu care ne-a ajutat să luăm o decizie corectă",
+          "text": "Am cumpărat testul rapid Purapa pentru părinții mei, care locuiesc în mediul rural, în județul Olt, și folosesc apă din fântână. Inițial voiam să le cumpăr un filtru de apă, dar am fost sfătuită să testăm întâi apa. Rezultatul testului rapid a arătat valori îngrijorătoare (nitriți ridicați, cianuri și duritate mare), așa că tatăl meu a decis să facă analize de laborator. Analizele au confirmat că apa nu este potabilă. Testul nu înlocuiește laboratorul, dar pentru noi a fost primul semnal clar că trebuie să verificăm mai atent. M-a ajutat să iau o decizie informată și să nu presupun că apa este bună doar pentru că arată limpede. Recomand testul celor care vor să verifice orientativ apa, mai ales dacă provine din puț sau fântână."
+        }
+      ]
     },
     "images": [
       {
@@ -160,11 +317,33 @@
     "shown_price": 89,
     "retailer": {
       "file": "portalia.ro/kit-de-testare-apa-e-coli-o157-1-test-purapa-p1229/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Kit de testare apă E.Coli O157 – 1 test, Purapa",
       "price": 89,
       "list_price": null,
-      "availability": "în stoc"
+      "availability": "în stoc",
+      "reviews": [
+        {
+          "extern_id": "portalia:r1172",
+          "url": "https://www.portalia.ro/kit-de-testare-apa-e-coli-o157-1-test-purapa-p1229/#review_goto",
+          "author": "Elena B.",
+          "posted_at": "2026-07-18",
+          "verified": true,
+          "rating": 5,
+          "title": "Foarte usor de testat apa, folosind un recipient steril",
+          "text": "Noi am verificat apa din fantana deoarece ne temeam de microbi. Rezultatul a fost OK. Recomand cu seriozitate."
+        },
+        {
+          "extern_id": "portalia:r1171",
+          "url": "https://www.portalia.ro/kit-de-testare-apa-e-coli-o157-1-test-purapa-p1229/#review_goto",
+          "author": "Elena B.",
+          "posted_at": "2026-07-18",
+          "verified": true,
+          "rating": 5,
+          "title": "Neasteprat de cuprinzator",
+          "text": "Noi am verificat apa din fantana deoarece ne temeam de miberale periculoase sau nitriti. Rezultatul a fost OK si am primit atat interpretare pe site cat si pe email. Atentie cum faceri forografia. Anumite culori ale testerului pot avea nuante diferite in poza.. Recomand cu seriozitate."
+        }
+      ]
     },
     "images": [
       {
@@ -194,11 +373,23 @@
     "shown_price": 12.9,
     "retailer": {
       "file": "portalia.ro/cartus-prefiltrare-10-39-39-pp-grosier-5-microni-purapa-p714/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Cartus prefiltrare 10'' PP grosier 5 microni, Purapa",
       "price": 12.9,
       "list_price": null,
-      "availability": "în stoc"
+      "availability": "în stoc",
+      "reviews": [
+        {
+          "extern_id": "portalia:r606",
+          "url": "https://www.portalia.ro/cartus-prefiltrare-10-39-39-pp-grosier-5-microni-purapa-p714/#review_goto",
+          "author": "Karina P.",
+          "posted_at": "2025-11-17",
+          "verified": true,
+          "rating": 5,
+          "title": "Multumita!",
+          "text": "Folosesc cate un cartus o data la 2-3 luni. Se schimba foarte usor si filtreaza impuritatile mari (in special rugina de pe tevile vechi). Ma ajuta sa protejez cartusul pentru microfiltrare (de la Purapa), pe acesta il schimba o data pe an. Recomand cu incredere!"
+        }
+      ]
     },
     "images": [
       {
@@ -218,11 +409,12 @@
     "shown_price": 3500,
     "retailer": {
       "file": "portalia.ro/sistem-de-dedurizare-a-apei-aroma-white-35l-purapa-p660/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Sistem de dedurizare a apei AROMA WHITE 35L, PurApa",
       "price": 3500,
       "list_price": null,
-      "availability": "indisponibil"
+      "availability": "indisponibil",
+      "reviews": []
     },
     "images": [
       {
@@ -242,11 +434,12 @@
     "shown_price": 7139,
     "retailer": {
       "file": "portalia.ro/dozator-de-apa-18l-ora-venus-dry-purapa-p655/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Dozator de apa 18L/ora, VENUS DRY PurApa",
       "price": 7139,
       "list_price": null,
-      "availability": "în stoc"
+      "availability": "în stoc",
+      "reviews": []
     },
     "images": [
       {
@@ -266,11 +459,12 @@
     "shown_price": 89,
     "retailer": {
       "file": "portalia.ro/termos-inteligent-albastru-cu-afisaj-digital-otel-inoxidabil-izolare-termica-dubla-500ml-purapa-p716/index.html",
-      "fetched_at": "2026-10-26T09:33:52.908Z",
+      "fetched_at": "2026-11-11T10:49:41.372Z",
       "name": "Termos inteligent Albastru cu afisaj digital| Otel inoxidabil, izolare termica dubla, 500ml, Purapa",
       "price": 89,
       "list_price": 120,
-      "availability": "în stoc"
+      "availability": "în stoc",
+      "reviews": []
     },
     "images": [
       {

@@ -147,3 +147,19 @@ test('fișierele media se copiază o singură dată, după amprentă', async () 
   await run();
   assert.equal((await readdir(opts.mediaDir)).length, 1);
 });
+
+test('recenziile de la retailer: nume scurtat, nota din stele, data, achiziția verificată, ID-ul', async () => {
+  const {retailerReviews, shortName} = await import('../src/import/analyze.mjs');
+  assert.equal(shortName('Cristina Nica'), 'Cristina N.');
+  assert.equal(shortName('ELENA BOGDAN'), 'Elena B.');
+  assert.equal(shortName('cristian'), 'Cristian');
+  const row = (id, name, date, width, verified, head, text) => `<div class="comentarii-container-row"><div class="autor"><p class="autor-head">${name}</p>
+    <p class="autor-info">Postat pe ${date} / 10:45</p>${verified ? '<div class="autor-verificat">Achizitie verificata</div>' : ''}
+    <span class="rating fill" style="width:${width}%"></span></div><div class="comentariu"><span class="comentariu-head">${head}</span>
+    <div class="comentariu-continut"><p>${text}</p></div><span onclick="rating_review('${id}', '1', 'rating-review');"></span></div></div>`;
+  const rs = retailerReviews(row(1027, 'Cristina Nica', '21.05.2026', 100, false, 'Recomand!', 'Apă bună.') + row(1099, 'László Bara', '12.04.2026', 80, true, 'Ok', 'Merge.'), 'https://www.portalia.ro/kit-p651/');
+  assert.deepEqual(rs.map(r => [r.extern_id, r.author, r.rating, r.posted_at, r.verified, r.title, r.text]), [
+    ['portalia:r1027', 'Cristina N.', 5, '2026-05-21', false, 'Recomand!', 'Apă bună.'],
+    ['portalia:r1099', 'László B.', 4, '2026-04-12', true, 'Ok', 'Merge.']]);
+  assert.equal(rs[0].url, 'https://www.portalia.ro/kit-p651/#review_goto');
+});
