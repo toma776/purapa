@@ -66,8 +66,9 @@ const buttons = (ctx, s, light = false) => {
 };
 
 // O imagine întreagă, la proporțiile ei. Dacă pentru fișierul ei există o scenă (scenes.mjs), imaginea e desenată în SVG:
-// întreagă dedesubt și, deasupra, câte o copie pentru fiecare felie, decupată cu o mască cu margini moi. Feliile se mișcă
-// din CSS; în repaus se suprapun exact peste imagine, deci fără mișcare se vede imaginea neschimbată.
+// întreagă dedesubt, apoi peticele de fundal care ascund figurile din ea și, deasupra, câte o copie pentru fiecare felie,
+// decupată cu o mască cu margini moi. Feliile se mișcă din CSS; fără mișcare, peticele sunt ascunse, iar feliile se
+// suprapun exact peste imagine, deci se vede imaginea neschimbată.
 function picture(ctx, id, uid, {sizes = ''} = {}) {
   const m = ctx.media(id);
   if (!m) return {html: '', tall: false};
@@ -78,10 +79,13 @@ function picture(ctx, id, uid, {sizes = ''} = {}) {
     return {tall, html: `<img src="${esc(m.src)}" alt="${esc(m.alt)}"${dims}${sizes ? ` sizes="${sizes}"` : ''} loading="lazy" decoding="async">`};
   }
   const img = `<image href="${esc(m.src)}" width="${sc.width}" height="${sc.height}"/>`;
+  const box = `maskUnits="userSpaceOnUse" x="0" y="0" width="${sc.width}" height="${sc.height}"`;
+  const blur = (id, d) => `<filter id="${id}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${d}"/></filter>`;
+  const grad = (p, k) => Array.isArray(p.fill) ? `<linearGradient id="${uid}-g${k}" gradientUnits="userSpaceOnUse" x1="${p.fill[0]}" y1="${p.fill[1]}" x2="${p.fill[3]}" y2="${p.fill[4]}"><stop stop-color="${p.fill[2]}"/><stop offset="1" stop-color="${p.fill[5]}"/></linearGradient>` : '';
   return {tall, html: `<svg class="fx-scene" viewBox="0 0 ${sc.width} ${sc.height}" width="${sc.width}" height="${sc.height}" role="img" aria-label="${esc(m.alt)}">
-    <defs><filter id="${uid}-f" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3"/></filter>
-    ${sc.parts.map((p, k) => `<mask id="${uid}-${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="${sc.width}" height="${sc.height}"><polygon points="${p.points}" fill="#fff" filter="url(#${uid}-f)"/></mask>`).join('')}</defs>
-    ${img}${sc.parts.map((p, k) => `<g class="fx-part fx-part-${p.name}" style="transform-origin:${p.origin[0]}px ${p.origin[1]}px" mask="url(#${uid}-${k})">${img}</g>`).join('')}</svg>`};
+    <defs>${blur(`${uid}-fp`, 2)}${sc.parts.map((p, k) => `${blur(`${uid}-f${k}`, p.blur ?? 3)}${grad(p, k)}<mask id="${uid}-${k}" ${box}><polygon points="${p.points}" fill="#fff" filter="url(#${uid}-f${k})"/></mask>`).join('')}</defs>
+    ${img}<g class="fx-patches">${sc.parts.map((p, k) => p.patch ? `<polygon points="${p.patch}" fill="${Array.isArray(p.fill) ? `url(#${uid}-g${k})` : p.fill}" filter="url(#${uid}-fp)"/>` : '').join('')}</g>
+    ${sc.parts.map((p, k) => `<g class="fx-part fx-part-${p.name}" style="transform-origin:${p.origin[0]}px ${p.origin[1]}px" mask="url(#${uid}-${k})">${img}</g>`).join('')}</svg>`};
 }
 
 function image(ctx, id, {cls = '', eager = false, sizes = ''} = {}) {

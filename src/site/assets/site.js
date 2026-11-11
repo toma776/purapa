@@ -189,6 +189,47 @@ document.documentElement.classList.add('js');
     setInterval(() => { if (auto && visible && !document.hidden) show((cur + 1) % pads.length); }, 2400);
   });
 
+  // Scenele din felii: peticul de sub fiecare felie ascunde figura din imaginea de bază. Culoarea lui vine din imagine:
+  // pornind de la marginea peticului, culorile fundalului se întind lin spre interior (medie cu vecinii, repetată),
+  // pe o copie de patru ori mai mică. Până e gata, sau dacă nu reușește, rămân peticele simple puse de server.
+  $$('.fx-scene').forEach(async svg => {
+    const group = svg.querySelector('.fx-patches'), polys = $$('polygon', group);
+    if (!polys.length) return;
+    const [, , W, H] = svg.getAttribute('viewBox').split(/\s+/).map(Number), k = 4, w = Math.ceil(W / k), h = Math.ceil(H / k);
+    const img = new Image();
+    img.src = svg.querySelector('image').getAttribute('href');
+    try { await img.decode(); } catch { return; }
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    const g = cv.getContext('2d', {willReadFrequently: true});
+    g.drawImage(img, 0, 0, w, h);
+    const src = g.getImageData(0, 0, w, h).data;
+    // Masca: peticele, lărgite cu câțiva pixeli, ca marginea lor să cadă pe fundal, nu pe conturul figurii.
+    g.clearRect(0, 0, w, h);
+    g.lineWidth = 8 / k; g.lineJoin = 'round';
+    for (const poly of polys) {
+      const pts = poly.getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number));
+      g.beginPath();
+      pts.forEach(([x, y], i) => i ? g.lineTo(x / k, y / k) : g.moveTo(x / k, y / k));
+      g.closePath(); g.fill(); g.stroke();
+    }
+    const mask = g.getImageData(0, 0, w, h).data, inside = [];
+    for (let i = 0; i < w * h; i++) if (mask[i * 4 + 3] > 127) inside.push(i);
+    const d = new Float32Array(w * h * 3);
+    for (let i = 0; i < w * h; i++) for (let c = 0; c < 3; c++) d[i * 3 + c] = src[i * 4 + c];
+    for (let it = 0; it < 500; it++) for (const i of inside) {
+      const x = i % w, l = x ? i - 1 : i, r = x < w - 1 ? i + 1 : i, u = i >= w ? i - w : i, b = i < w * (h - 1) ? i + w : i;
+      for (let c = 0; c < 3; c++) d[i * 3 + c] += 1.7 * ((d[l * 3 + c] + d[r * 3 + c] + d[u * 3 + c] + d[b * 3 + c]) / 4 - d[i * 3 + c]);
+    }
+    const out = g.createImageData(w, h);
+    for (const i of inside) { for (let c = 0; c < 3; c++) out.data[i * 4 + c] = clamp(d[i * 3 + c], 0, 255); out.data[i * 4 + 3] = 255; }
+    g.putImageData(out, 0, 0);
+    const patch = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    patch.setAttribute('href', cv.toDataURL()); patch.setAttribute('width', W); patch.setAttribute('height', H);
+    patch.setAttribute('filter', polys[0].getAttribute('filter'));
+    group.replaceChildren(patch);
+  });
+
   // Picătura 3D din hero: un câmp de distanțe (o sferă care unduiește, plus picături mici care se desprind și se reunesc), trasat în shader.
   (() => {
     const cv = document.querySelector('.fx-drop');
