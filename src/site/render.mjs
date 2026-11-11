@@ -1,7 +1,7 @@
 // Site-ul public, randat din Brain prin contextul urmărit. Fiecare citire are o componentă și un motiv (§3.2).
 // Aspectul și mișcarea: src/site/assets/site.css și site.js. Aici e doar structura (semantică, accesibilă) și datele.
 // Clasa `fx-js` (pusă în <head>) ascunde ce apare la derulare; dacă scriptul nu pornește în 4 secunde, `fx-still` arată tot.
-import {readFileSync} from 'node:fs';
+import {readFileSync, existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {esc} from '../core/content.mjs';
 import {byKey, publicPath} from '../registry/entities.mjs';
@@ -11,6 +11,9 @@ import {TUTORIAL_SCENES, DEFS, sceneSeconds} from './tutorial.mjs';
 import {ANALYSIS, TEST_PARAMS} from './testrapid.mjs';
 
 const ASSETS = new URL('./assets/', import.meta.url);
+// Imaginile pregătite dinainte (npm run bake:images), după numele fișierului din media: peticele și decupajul scenelor,
+// imaginea scenei în WebP și logo-ul micșorat.
+const baked = (file, kind) => { const f = `baked/${file.replace(/\.\w+$/, '')}-${kind}.webp`; return existsSync(new URL(f, ASSETS)) ? `/assets/${f}` : null; };
 const ASSET_V = createHash('sha1').update(readFileSync(new URL('site.css', ASSETS))).update(readFileSync(new URL('site.js', ASSETS))).digest('hex').slice(0, 10);
 const SITE_URL = (process.env.SITE_URL ?? 'https://purapa.ro').replace(/\/$/, '');
 // Cât purapa.ro e încă site-ul vechi, site-ul nou nu se indexează nicăieri. Doar SITE_INDEX=1 (în ziua lansării) îl deschide.
@@ -75,33 +78,33 @@ function picture(ctx, id, uid, {sizes = ''} = {}) {
   const m = ctx.media(id);
   if (!m) return {html: '', tall: false};
   const tall = m.height > m.width * 1.15;
-  const sc = SCENES[/\/media\/([^?]+)/.exec(m.src)?.[1]];
+  const file = /\/media\/([^?]+)/.exec(m.src)?.[1], sc = SCENES[file];
   if (!sc) {
     const dims = m.width && m.height ? ` width="${m.width}" height="${m.height}"` : '';
     return {tall, html: `<img src="${esc(m.src)}" alt="${esc(m.alt)}"${dims}${sizes ? ` sizes="${sizes}"` : ''} loading="lazy" decoding="async">`};
   }
-  const img = `<image href="${esc(m.src)}" width="${sc.width}" height="${sc.height}"/>`;
+  const img = `<image href="${esc(baked(file, 'base') ?? m.src)}" width="${sc.width}" height="${sc.height}"/>`, patch = baked(file, 'patch');
   const box = `maskUnits="userSpaceOnUse" x="0" y="0" width="${sc.width}" height="${sc.height}"`;
   const blur = (id, d) => `<filter id="${id}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${d}"/></filter>`;
   const grad = (p, k) => Array.isArray(p.fill) ? `<linearGradient id="${uid}-g${k}" gradientUnits="userSpaceOnUse" x1="${p.fill[0]}" y1="${p.fill[1]}" x2="${p.fill[3]}" y2="${p.fill[4]}"><stop stop-color="${p.fill[2]}"/><stop offset="1" stop-color="${p.fill[5]}"/></linearGradient>` : '';
   return {tall, html: `<svg class="fx-scene" viewBox="0 0 ${sc.width} ${sc.height}" width="${sc.width}" height="${sc.height}" role="img" aria-label="${esc(m.alt)}">
     <defs>${blur(`${uid}-fp`, 2)}${sc.parts.map((p, k) => `${blur(`${uid}-f${k}`, p.blur ?? 3)}${grad(p, k)}<mask id="${uid}-${k}" ${box}><polygon points="${p.points}" fill="#fff" filter="url(#${uid}-f${k})"/></mask>`).join('')}</defs>
-    ${img}<g class="fx-patches">${sc.parts.map((p, k) => p.patch ? `<polygon points="${p.patch}" fill="${Array.isArray(p.fill) ? `url(#${uid}-g${k})` : p.fill}" filter="url(#${uid}-fp)"/>` : '').join('')}</g>
+    ${img}<g class="fx-patches">${patch ? `<image href="${patch}" width="${sc.width}" height="${sc.height}" filter="url(#${uid}-fp)"/>` : sc.parts.map((p, k) => p.patch ? `<polygon points="${p.patch}" fill="${Array.isArray(p.fill) ? `url(#${uid}-g${k})` : p.fill}" filter="url(#${uid}-fp)"/>` : '').join('')}</g>
     ${sc.parts.map((p, k) => `<g class="fx-part fx-part-${p.name}" style="transform-origin:${p.origin[0]}px ${p.origin[1]}px" mask="url(#${uid}-${k})">${img}</g>`).join('')}</svg>`};
 }
 
-// Figurile unei scene, fără fundal, pentru picătura din hero (scenes.mjs → cutout). Fundalul îl scoate site.js din imagine
-// (ce e deschis la culoare devine transparent); aici e doar structura: imaginea de bază fără locurile feliilor, feliile
-// deasupra și o mască rotundă care stinge marginile, ca figurile să pară în apă. Fără JavaScript se vede imaginea cu fundal.
+// Figurile unei scene, fără fundal, pentru picătura din hero (scenes.mjs → cutout). Imaginea fără fundal e pregătită
+// dinainte (npm run bake:images); fără ea, secțiunea arată imaginea simplă. Aici e doar structura: imaginea de bază
+// fără locurile feliilor, feliile deasupra și o mască rotundă care stinge marginile, ca figurile să pară în apă.
 function cutout(ctx, id, uid) {
   const m = id == null ? null : ctx.media(id);
-  const sc = m && SCENES[/\/media\/([^?]+)/.exec(m.src)?.[1]];
-  if (!sc?.cutout) return null;
+  const file = m && /\/media\/([^?]+)/.exec(m.src)?.[1], sc = file && SCENES[file], src = sc?.cutout && baked(file, 'cutout');
+  if (!src) return null;
   const [vx, vy, vs] = sc.cutout.view, r = vs / 2;
-  const img = `<image href="${esc(m.src)}" width="${sc.width}" height="${sc.height}"/>`;
+  const img = `<image href="${src}" width="${sc.width}" height="${sc.height}"/>`;
   const box = `maskUnits="userSpaceOnUse" x="0" y="0" width="${sc.width}" height="${sc.height}"`;
   const blur = (fid, d) => `<filter id="${fid}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${d}"/></filter>`;
-  return `<svg class="fx-scene fx-cutout" viewBox="${vx} ${vy} ${vs} ${vs}" role="img" aria-label="${esc(m.alt)}" data-key='${esc(JSON.stringify(sc.cutout))}'>
+  return `<svg class="fx-scene fx-cutout" viewBox="${vx} ${vy} ${vs} ${vs}" role="img" aria-label="${esc(m.alt)}">
     <defs>${blur(`${uid}-fp`, 2)}
     <radialGradient id="${uid}-v" gradientUnits="userSpaceOnUse" cx="${vx + r}" cy="${vy + r}" r="${r}"><stop offset=".76" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
     <mask id="${uid}-vm" maskUnits="userSpaceOnUse" x="${vx}" y="${vy}" width="${vs}" height="${vs}"><circle cx="${vx + r}" cy="${vy + r}" r="${r}" fill="url(#${uid}-v)"/></mask>
@@ -609,7 +612,12 @@ function renderSection(ctx, s, i) {
 
 function logo(ctx, f) {
   const m = f?.logo_id ? ctx.within(ctx.component, 'Logo-ul', () => ctx.media(f.logo_id)) : null;
-  return m ? `<img src="${esc(m.src)}" alt="${esc(f.brand)}"${m.width ? ` width="${m.width}" height="${m.height}"` : ''}>` : `<span class="word">${esc(f?.brand)}</span>`;
+  if (!m) return `<span class="word">${esc(f?.brand)}</span>`;
+  // Varianta micșorată (npm run bake:images), dacă există: logo-ul apare la ~40 px înălțime, nu are nevoie de originalul mare.
+  const small = baked(/\/media\/([^?]+)/.exec(m.src)?.[1] ?? '', 'w160');
+  const h = m.width ? Math.round(m.height * 160 / m.width) : 0;
+  return small ? `<img src="${small}" alt="${esc(f.brand)}"${h ? ` width="160" height="${h}"` : ''}>`
+    : `<img src="${esc(m.src)}" alt="${esc(f.brand)}"${m.width ? ` width="${m.width}" height="${m.height}"` : ''}>`;
 }
 
 function header(ctx, path) {

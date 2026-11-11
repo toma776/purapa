@@ -510,84 +510,17 @@ document.querySelectorAll('[data-testrapid]').forEach(root => {
     setInterval(() => { if (auto && visible && !document.hidden) show((cur + 1) % pads.length); }, 2400);
   });
 
-  // Scenele din felii: peticul de sub fiecare felie ascunde figura din imaginea de bază. Culoarea lui vine din imagine:
-  // pornind de la marginea peticului, culorile fundalului se întind lin spre interior (medie cu vecinii, repetată),
-  // pe o copie de patru ori mai mică. Până e gata, sau dacă nu reușește, rămân peticele simple puse de server.
-  $$('.fx-scene').forEach(async svg => {
-    const group = svg.querySelector('.fx-patches'), polys = group ? $$('polygon', group) : [];
-    if (!polys.length) return;
-    const [, , W, H] = svg.getAttribute('viewBox').split(/\s+/).map(Number), k = 4, w = Math.ceil(W / k), h = Math.ceil(H / k);
-    const img = new Image();
-    img.src = svg.querySelector('image').getAttribute('href');
-    try { await img.decode(); } catch { return; }
-    const cv = document.createElement('canvas');
-    cv.width = w; cv.height = h;
-    const g = cv.getContext('2d', {willReadFrequently: true});
-    g.drawImage(img, 0, 0, w, h);
-    const src = g.getImageData(0, 0, w, h).data;
-    // Masca: peticele, lărgite cu câțiva pixeli, ca marginea lor să cadă pe fundal, nu pe conturul figurii.
-    g.clearRect(0, 0, w, h);
-    g.lineWidth = 8 / k; g.lineJoin = 'round';
-    for (const poly of polys) {
-      const pts = poly.getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number));
-      g.beginPath();
-      pts.forEach(([x, y], i) => i ? g.lineTo(x / k, y / k) : g.moveTo(x / k, y / k));
-      g.closePath(); g.fill(); g.stroke();
-    }
-    const mask = g.getImageData(0, 0, w, h).data, inside = [];
-    for (let i = 0; i < w * h; i++) if (mask[i * 4 + 3] > 127) inside.push(i);
-    const d = new Float32Array(w * h * 3);
-    for (let i = 0; i < w * h; i++) for (let c = 0; c < 3; c++) d[i * 3 + c] = src[i * 4 + c];
-    for (let it = 0; it < 500; it++) for (const i of inside) {
-      const x = i % w, l = x ? i - 1 : i, r = x < w - 1 ? i + 1 : i, u = i >= w ? i - w : i, b = i < w * (h - 1) ? i + w : i;
-      for (let c = 0; c < 3; c++) d[i * 3 + c] += 1.7 * ((d[l * 3 + c] + d[r * 3 + c] + d[u * 3 + c] + d[b * 3 + c]) / 4 - d[i * 3 + c]);
-    }
-    const out = g.createImageData(w, h);
-    for (const i of inside) { for (let c = 0; c < 3; c++) out.data[i * 4 + c] = clamp(d[i * 3 + c], 0, 255); out.data[i * 4 + 3] = 255; }
-    g.putImageData(out, 0, 0);
-    const patch = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-    patch.setAttribute('href', cv.toDataURL()); patch.setAttribute('width', W); patch.setAttribute('height', H);
-    patch.setAttribute('filter', polys[0].getAttribute('filter'));
-    group.replaceChildren(patch);
-  });
-
-  // Scenele decupate (în picătura din hero): fundalul iese din imagine după luminozitate. Ce e mai deschis decât `key[0]`
-  // devine transparent, ce e mai închis decât `key[1]` rămâne întreg; zonele din `skip` (forme de fundal închise la culoare)
-  // dispar cu totul. Toate copiile imaginii din scenă primesc apoi varianta fără fundal.
-  $$('.fx-cutout').forEach(async svg => {
-    const cfg = JSON.parse(svg.dataset.key), images = $$('image', svg), img = new Image();
-    img.src = images[0].getAttribute('href');
-    try { await img.decode(); } catch { return svg.classList.add('ready'); }
-    const cv = document.createElement('canvas'), w = cv.width = img.naturalWidth, h = cv.height = img.naturalHeight;
-    const g = cv.getContext('2d', {willReadFrequently: true});
-    for (const poly of cfg.skip ?? []) {
-      const pts = poly.trim().split(/\s+/).map(p => p.split(',').map(Number));
-      g.beginPath();
-      pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
-      g.closePath(); g.fill();
-    }
-    const skip = g.getImageData(0, 0, w, h).data;
-    g.clearRect(0, 0, w, h);
-    g.drawImage(img, 0, 0);
-    const px = g.getImageData(0, 0, w, h), d = px.data, [from, to] = cfg.key;
-    for (let i = 0; i < d.length; i += 4) {
-      const k = clamp((from - (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11)) / (from - to), 0, 1);
-      d[i + 3] = skip[i + 3] ? 0 : Math.round(255 * k * k * (3 - 2 * k));
-    }
-    g.putImageData(px, 0, 0);
-    const url = cv.toDataURL();
-    images.forEach(el => el.setAttribute('href', url));
-    svg.classList.add('ready');
-  });
-
   // Picătura 3D din hero: un câmp de distanțe (o sferă care unduiește, plus picături mici care se desprind și se reunesc), trasat în shader.
-  (() => {
+  const drop = () => {
     const cv = document.querySelector('.fx-drop');
     if (!cv) return;
     const stage = cv.parentElement, zone = cv.closest('[data-zone]');
     const gl = cv.getContext('webgl', {alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: 'low-power'});
     const fail = () => stage.classList.add('no-gl');
     if (!gl) return fail();
+    // Fără placă video adevărată (randare în software), shader-ul ar ține procesorul ocupat: picătura rămâne statică.
+    const info = gl.getExtension('WEBGL_debug_renderer_info');
+    if (info && /swiftshader|llvmpipe|software|basic render/i.test(gl.getParameter(info.UNMASKED_RENDERER_WEBGL))) return fail();
     const VS = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
     const FS = `precision highp float;
 uniform vec2 R;uniform float T;uniform vec2 M;uniform sampler2D S;uniform float K;
@@ -679,7 +612,7 @@ void main(){
     }
     // Rezoluția scade singură dacă placa video nu ține pasul.
     const budget = () => Math.sqrt(420000 / Math.max(1, cv.clientWidth * cv.clientHeight));
-    let scale = Math.min(window.devicePixelRatio || 1, 1.25, budget()), slow = 0;
+    let scale = Math.min(window.devicePixelRatio || 1, 1.25, budget()), slow = 0, shown = false;
     const size = () => {
       const w = Math.round(cv.clientWidth * scale), h = Math.round(cv.clientHeight * scale);
       if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; gl.viewport(0, 0, w, h); }
@@ -694,8 +627,13 @@ void main(){
       gl.uniform2f(uR, cv.width, cv.height); gl.uniform1f(uT, t); gl.uniform2f(uM, m[0] * .95, -m[1] * .95);
       markOn += (mark - markOn) * Math.min(1, dt * 1.5); gl.uniform1f(uK, markOn);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (!shown) { shown = true; cv.classList.add('on'); }
     });
-  })();
+  };
+  // Pornește după ce pagina s-a încărcat și browserul e liber: compilarea shader-ului nu mai întârzie primul ecran.
+  const idle = window.requestIdleCallback ?? (f => setTimeout(f, 200));
+  const later = () => idle(drop, {timeout: 1500});
+  if (document.readyState === 'complete') later(); else window.addEventListener('load', later, {once: true});
 
   // Drumul apei: particulele curg de la stânga la dreapta; fiecare etapă le oprește pe ale ei.
   $$('.fx-flow').forEach(section => {

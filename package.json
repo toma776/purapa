@@ -19,7 +19,8 @@
     "blob:upload": "node scripts/blob.mjs upload",
     "blob:download": "node scripts/blob.mjs download",
     "deploy:static": "node scripts/export.mjs && npx vercel deploy dist --prod --yes",
-    "blob:sync": "node scripts/blob.mjs sync"
+    "blob:sync": "node scripts/blob.mjs sync",
+    "bake:images": "node scripts/bake-images.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2"
