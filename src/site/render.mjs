@@ -144,6 +144,10 @@ const SECTIONS = {
     const facts = s.facts ? String(s.facts).split('\n').map(l => l.split('|').map(x => x.trim())).filter(([v]) => v).map(([v, l = '']) => ({value: ctx.text(v), label: ctx.text(l)}))
       : product ? productFacts(ctx, product).map(f => ({value: esc(f.value), label: esc(f.label)})) : [];
     const visual = image(ctx, s.image_id ?? product?.image_id, {eager: true, sizes: '(max-width: 880px) 60vw, 380px'});
+    // Lebăda din logo, în picătură: site.js o decupează din imaginea logo-ului și o arată refractată prin apă.
+    const brand = !visual && s.drop_mark === 'lebada' ? ctx.within(ctx.component, 'Semnul din picătură', () => ctx.one('firma')) : null;
+    const markMedia = brand?.logo_id ? ctx.within(ctx.component, 'Semnul din picătură', () => ctx.media(brand.logo_id)) : null;
+    const mark = markMedia ? ` data-mark="${esc(markMedia.src)}"` : '';
     const tag = i === 0 ? 'h1' : 'h2';
     return `<section class="fx-hero${visual ? '' : ' solo'}" aria-labelledby="s-${s.id}" data-zone><div class="container fx-hero-grid">
       <div class="copy">${s.kicker ? `<p class="eyebrow" data-reveal>${ctx.text(s.kicker)}</p>` : ''}
@@ -152,7 +156,7 @@ const SECTIONS = {
         ${ractions(buttons(ctx, s), 'data-reveal style="--i:4"')}
         ${facts.length ? `<ul class="facts" aria-label="Pe scurt" data-reveal style="--i:5">${facts.map(f => `<li><strong data-count>${f.value}</strong><span>${f.label}</span></li>`).join('')}</ul>` : ''}
       </div>
-      <div class="fx-stage"><canvas class="fx-drop" aria-hidden="true"></canvas>
+      <div class="fx-stage"><canvas class="fx-drop" aria-hidden="true"${mark}></canvas>
         ${visual ? `<div class="fx-product"><div class="fx-float">${visual}</div></div>` : ''}
         ${visual && product?.price != null ? `<div class="fx-chip fx-chip-price"><span class="label">Preț</span>${priceBlock(product, {cls: 'pc-price'})}
           ${product.availability ? `<span class="stock">${esc(product.availability)}</span>` : ''}</div>` : ''}

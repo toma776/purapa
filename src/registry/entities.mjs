@@ -170,6 +170,8 @@ export const ENTITIES = [
       {key: 'video', label: 'Video YouTube', type: 'youtube', kinds: ['text', 'tutorial']},
       {key: 'note', label: 'Notă evidențiată (lângă text)', type: 'textarea', kinds: ['text']},
       {key: 'facts', label: 'Cifre-cheie (câte una pe linie: valoare | etichetă)', type: 'textarea', kinds: ['hero']},
+      // Semnul mărcii (lebăda din logo), văzut prin apa picăturii 3D; doar pe hero fără imagine.
+      {key: 'drop_mark', label: 'În picătura din hero', type: 'select', options: ['lebada'], kinds: ['hero']},
       {key: 'params', label: 'Ipotezele calculatorului', type: 'json', kinds: ['calculator']},
       {key: 'category_id', label: 'Categorie afișată', type: 'ref', target: 'categorii', rel: 'afișează categoria', inverseLabel: 'Secțiuni', kinds: ['produse']},
       {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero', 'calculator']},

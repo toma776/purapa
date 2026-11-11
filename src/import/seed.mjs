@@ -259,7 +259,7 @@ export function seed(store, {user = SYSTEM} = {}) {
     ['Gata', 'Gata, ai montat filtrul. Acum te poți bucura de o apă pură și curată, chiar de la tine de la chiuvetă.', 'gata', '3:10']
   ].map(([title, text, scene, t]) => c('pasi', {title, text: `<p>${text}</p>`, scene}, yt(`narațiunea de la ${t}`)));
   sec(ids.despre, [
-    {kind: 'hero', title: 'Tehnologie avansată pentru apă pură',
+    {kind: 'hero', title: 'Tehnologie avansată pentru apă pură', drop_mark: 'lebada',
      text: '<p>Purapa e un brand dedicat calității apei și siguranței consumatorului: microfiltrare modernă, materiale de calitate, procese testate. Sistemele sunt proiectate în Europa.</p>'},
     {kind: 'tehnologie', title: 'Cum funcționează filtrarea', stages: [ids.prefiltrare, ids.microfiltrare]},
     {kind: 'tutorial', title: 'Instalare fără bătăi de cap', text: '<p>Sistemul compact se integrează perfect sub chiuvetă. Vezi procesul de montaj pas cu pas.</p>',
