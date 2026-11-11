@@ -1,10 +1,11 @@
-// Fișierele statice pentru Vercel, în public/: imaginile de la import (data/media → public/media).
-// Vercel le servește direct, înaintea funcției; tot restul trece prin api/index.mjs.
-import {mkdir, cp, readdir, rm} from 'node:fs/promises';
-import {join} from 'node:path';
+// Site-ul public ca fișiere statice în public/ (pagini, resurse, imaginile folosite, robots.txt).
+// De obicei nu e nevoie de el: serverul local (npm start) le regenerează și le publică singur.
+import {openDb, migrate} from '../src/core/db.mjs';
+import {createStore} from '../src/core/store.mjs';
+import {buildStatic} from '../src/site/static.mjs';
 
-await rm('public/media', {recursive: true, force: true});
-await mkdir('public/media', {recursive: true});
-const files = await readdir('data/media').catch(() => []);
-for (const f of files) await cp(join('data/media', f), join('public/media', f));
-console.log(`public/media: ${files.length} imagini.`);
+const db = openDb(process.env.DB ?? 'data/purapa.db');
+migrate(db);
+const {pages, changed} = await buildStatic(createStore(db));
+db.close();
+console.log(`public/: ${pages} pagini, ${changed.length} fișiere schimbate.`);

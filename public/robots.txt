@@ -1,0 +1,3 @@
+# Previzualizare: paginile au „noindex” și nu apar în motoarele de căutare.
+User-agent: *
+Allow: /
