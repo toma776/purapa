@@ -365,7 +365,7 @@ void main(){
       // Semnul din picătură: o placă în planul z=0, văzută prin apă (raza refractată la suprafață), care se leagănă ușor.
       vec3 r=refract(rd,n,.75);
       vec3 q=p+r*(-p.z/min(r.z,-.05));
-      vec2 u=(q.xy+vec2(.025*sin(T*.55),.02*sin(T*.8))+vec2(.04,-.04))/2.1+.5;
+      vec2 u=(q.xy+vec2(.025*sin(T*.55),.02*sin(T*.8))+vec2(.05,-.02))/3.3+.5;
       float a=texture2D(S,vec2(u.x,1.-u.y)).a*step(0.,u.x)*step(u.x,1.)*step(0.,u.y)*step(u.y,1.);
       col=mix(col,mix(vec3(.10,.29,.62),vec3(.16,.45,.82),u.y),a*K*.8*(1.-smoothstep(.45,.9,f)));
     }
