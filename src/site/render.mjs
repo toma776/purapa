@@ -389,3 +389,7 @@ export function renderPath(ctx, store, path) {
 }
 
 export const ASSET_VERSION = ASSET_V;
+
+// Piesele comune, pentru variantele de design ale unei pagini (src/site/v2.mjs): aceleași date, altă punere în scenă.
+export {SECTIONS};
+export const parts = {header, footer, head, wrap, button, buttons, image, priceBlock, title, plainTitle, productFacts, findPage, num, microns};

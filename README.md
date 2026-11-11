@@ -23,6 +23,7 @@ La prima pornire nu există conturi: panoul e deschis fără parolă **doar de p
 Site-ul e pe **https://purapa-six.vercel.app**, iar panoul online la [`/manage/`](https://purapa-six.vercel.app/manage/).
 
 - **Site-ul public e static:** paginile, resursele, imaginile folosite și `robots.txt` stau în `public/`, generate din Brain (`src/site/static.mjs`). Vercel le servește direct, fără funcție și fără Blob, deci vizitatorii nu consumă nimic din cota de stocare. Formularul de contact e un link de email.
+- **`/v2/`** e a doua variantă de design a primei pagini (`src/site/v2.mjs`, `assets/v2.css`, `assets/v2.js`): aceleași secțiuni și date din Brain ca la `/`, altă punere în scenă. Nu se indexează și nu apare în sitemap.
 - **Funcția** (`api/index.mjs`) primește doar `/manage`, `/api` și adresele care nu există (301 spre bara finală sau 404).
 - **Baza panoului online** (`purapa.db`) stă într-un **Blob privat** (`purapa-brain`, Frankfurt). Funcția o citește doar pentru `/manage` și `/api`, cel mult o dată la 30 de secunde pe instanță. După o salvare, baza se urcă înapoi condiționat: dacă între timp a salvat altcineva, panoul primește „Reîncarcă și salvează din nou”.
 

@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    {"name": "purapa", "runtimeExecutable": "node", "runtimeArgs": ["src/server.mjs"], "port": 3100, "autoPort": false}
+    {"name": "purapa", "runtimeExecutable": "node", "runtimeArgs": ["src/server.mjs"], "port": 3100, "autoPort": false},
+    {"name": "purapa-previzualizare", "runtimeExecutable": "node", "runtimeArgs": ["--input-type=module", "-e", "process.env.PORT='3101';process.env.DB='data/purapa.db';await import('./src/server.mjs')"], "port": 3101, "autoPort": false}
   ]
 }
