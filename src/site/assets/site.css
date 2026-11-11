@@ -544,6 +544,20 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .fx-js:not(.fx-still) .in .fx-part-seated { animation-name: fx-sc-seated; }
 .fx-js:not(.fx-still) .in .fx-part-standing { animation-name: fx-sc-standing; }
 .fx-js:not(.fx-still) .in .fx-part-pat { animation-name: fx-sc-pat; }
+/* Scena „Impact ecologic”: sticlele se scufundă și se sting pe rând, frunza crește și se apleacă spre glob, globul se
+   rotește spre ea; apoi sticlele urcă la loc și bucla reîncepe. */
+@keyframes fx-sc-bottle-a { 0%, 12%, 90%, 100% { transform: none; opacity: 1; } 22% { transform: translateY(-8px) rotate(-4deg); opacity: 1; }
+  40%, 72% { transform: translateY(54px) rotate(14deg) scale(.86); opacity: 0; } }
+@keyframes fx-sc-bottle-b { 0%, 20%, 94%, 100% { transform: none; opacity: 1; } 30% { transform: translateY(-7px) rotate(5deg); opacity: 1; }
+  48%, 76% { transform: translateY(50px) rotate(-16deg) scale(.84); opacity: 0; } }
+@keyframes fx-sc-leaf { 0%, 14%, 96%, 100% { transform: none; } 28% { transform: rotate(7deg); } 46% { transform: rotate(-9deg) scale(1.16); }
+  60% { transform: rotate(-3deg) scale(1.22); } 74% { transform: rotate(-9deg) scale(1.18); } 88% { transform: rotate(3deg) scale(1.04); } }
+@keyframes fx-sc-globe { 0%, 100% { transform: none; } 24% { transform: rotate(-10deg); } 50% { transform: rotate(14deg) scale(1.07); }
+  74% { transform: rotate(4deg) scale(1.09); } 90% { transform: rotate(-6deg); } }
+.fx-js:not(.fx-still) .in .fx-part-bottle-a { animation-name: fx-sc-bottle-a; }
+.fx-js:not(.fx-still) .in .fx-part-bottle-b { animation-name: fx-sc-bottle-b; }
+.fx-js:not(.fx-still) .in .fx-part-leaf { animation-name: fx-sc-leaf; }
+.fx-js:not(.fx-still) .in .fx-part-globe { animation-name: fx-sc-globe; }
 .fx-impact .head { margin-bottom: 0; }
 .fx-impact-list { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1rem; }
 .fx-impact-list li { display: grid; grid-template-columns: 52px 1fr; gap: 1.1rem; align-items: start; padding: 1.1rem 1.25rem; border-radius: var(--r-md);

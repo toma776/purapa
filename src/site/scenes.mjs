@@ -36,5 +36,21 @@ export const SCENES = {
         patch: '578,615 600,601 650,601 682,613 682,660 640,675 600,675 581,660',
         fill: [575, 600, '#80afd9', 682, 680, '#5a92c6']}
     ]
+  },
+
+  // „Impact ecologic”: în picătură, sticlele de plastic se scufundă și dispar, iar frunza crește și se apleacă spre glob.
+  // Elementele plutesc libere în apă, deci peticul e chiar conturul feliei.
+  '54c7120d12445ad5fb10a850e4f12eed4a4e9e0f.jpg': {
+    width: 1024, height: 1024,
+    parts: [
+      {name: 'globe', origin: [437, 538], fill: '#b4d5ee',
+        points: '437,464 474,474 501,501 511,538 501,575 474,602 437,612 400,602 373,575 363,538 373,501 400,474'},
+      {name: 'leaf', origin: [476, 446], fill: '#b9d8ef',
+        points: '506,324 554,324 558,372 550,410 532,432 505,446 482,454 462,450 446,425 446,392 455,365 478,342'},
+      {name: 'bottle-a', origin: [553, 640], fill: '#b6d6ee',
+        points: '536,455 568,455 572,484 587,500 587,648 519,648 519,500 534,484'},
+      {name: 'bottle-b', origin: [615, 640], fill: '#b0d2ec',
+        points: '600,491 630,491 632,512 643,526 643,648 589,648 589,526 598,512'}
+    ].map(p => ({...p, patch: p.points}))
   }
 };
