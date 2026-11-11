@@ -1110,3 +1110,9 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .post-cta .icon { background: var(--white); }
 .post-cta h2 { margin: 0 0 .5rem; font-size: 1.375rem; }
 .post-cta p { margin: 0 0 1.25rem; }
+/* Tabelele din textul articolului: pe telefon se derulează lateral, nu lărgesc pagina. */
+.post-body table { width: 100%; margin: 1.5rem 0 2rem; border-collapse: collapse; font-size: .9375rem; }
+.post-body th, .post-body td { padding: .7rem .9rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.post-body thead th { background: var(--mist); color: var(--navy); font-weight: 700; border-bottom: 2px solid #c6d3ea; }
+.post-body tbody tr:hover { background: var(--mist); }
+@media (max-width: 700px) { .post-body table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; } .post-body th, .post-body td { min-width: 9rem; } }
