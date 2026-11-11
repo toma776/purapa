@@ -6,9 +6,10 @@ Analiza site-ului și registrul propus sunt în [docs/analiza-entitati.md](docs/
 ```bash
 npm run import             # crawl purapa.ro + Portalia → analyze → import → scan (data/purapa.db)
 npm run import -- --offline   # din snapshot-ul existent, fără rețea
-npm start                  # site: http://localhost:3100/ · panou: http://localhost:3100/manage/ · baza se sincronizează singură cu cea online
+npm start                  # site: http://localhost:3100/ · panou: http://localhost:3100/manage/ · publică singur site-ul (vezi mai jos)
 npm test                   # 36 de teste: propagare (§5), /manage, import
-npm run blob:sync          # o sincronizare a bazei acum, cu serverul oprit (de obicei nu e nevoie)
+npm run build:public       # regenerează site-ul static în public/ (de obicei nu e nevoie: npm start o face)
+npm run blob:sync          # o sincronizare a bazei panoului online acum, cu serverul oprit (de obicei nu e nevoie)
 npm run blob:upload -- --force    # doar în situații speciale: baza locală peste cea online
 npm run blob:download -- --force  # doar în situații speciale: baza online peste cea locală (cea locală rămâne în data/backup/)
 npm run deploy             # publicare manuală pe Vercel (de obicei nu e nevoie: fiecare push pe main publică singur)
@@ -19,40 +20,42 @@ La prima pornire nu există conturi: panoul e deschis fără parolă **doar de p
 
 ## Online (Vercel)
 
-Site-ul și panoul sunt pe **https://purapa-six.vercel.app**, cu panoul la [`/manage/`](https://purapa-six.vercel.app/manage/). Rulează același cod ca local (`api/index.mjs`), după modelul Nixodor.
+Site-ul e pe **https://purapa-six.vercel.app**, iar panoul online la [`/manage/`](https://purapa-six.vercel.app/manage/).
 
-- **Baza** (`purapa.db`) stă într-un **Blob privat** (`purapa-brain`, Frankfurt). Fiecare instanță o ține în `/tmp` și o reîncarcă doar când i se schimbă ETag-ul.
-- **După o salvare din panou** rulează propagarea, iar baza se urcă înapoi condiționat. Dacă între timp a salvat altcineva, panoul primește „Reîncarcă și salvează din nou”, deci nu se pierde nimic.
-- **Imaginile** de la import sunt statice, în `public/media` (`npm run build:public`).
+- **Site-ul public e static:** paginile, resursele, imaginile folosite și `robots.txt` stau în `public/`, generate din Brain (`src/site/static.mjs`). Vercel le servește direct, fără funcție și fără Blob, deci vizitatorii nu consumă nimic din cota de stocare. Formularul de contact e un link de email.
+- **Funcția** (`api/index.mjs`) primește doar `/manage`, `/api` și adresele care nu există (301 spre bara finală sau 404).
+- **Baza panoului online** (`purapa.db`) stă într-un **Blob privat** (`purapa-brain`, Frankfurt). Funcția o citește doar pentru `/manage` și `/api`, cel mult o dată la 30 de secunde pe instanță. După o salvare, baza se urcă înapoi condiționat: dacă între timp a salvat altcineva, panoul primește „Reîncarcă și salvează din nou”.
 
-**Panoul e deschis oricui, fără parolă:** variabila de mediu `MANAGE_OPEN=1` din Vercel, cerută explicit. Oricine are adresa poate modifica sau șterge conținut, iar schimbarea apare imediat pe site. Ca să-l închizi, șterge `MANAGE_OPEN` din Vercel (Settings → Environment Variables) și redeployează. Atunci panoul cere login, iar contul de administrator se creează local și se urcă cu baza (`npm run blob:upload`).
+**Panoul e deschis oricui, fără parolă:** variabila de mediu `MANAGE_OPEN=1` din Vercel, cerută explicit. Ca să-l închizi, șterge `MANAGE_OPEN` din Vercel (Settings → Environment Variables) și redeployează. Atunci panoul cere login, iar contul de administrator se creează local și se urcă cu baza (`npm run blob:upload`).
+
+**Cota gratuită Blob (Hobby):** 10.000 de operații simple și 2.000 avansate pe lună. Peste ea, store-ul e blocat 30 de zile. Pe 28.10.2026 a fost blocat: sincronizarea verifica Blob-ul la fiecare 5 secunde, iar funcția îl citea la fiecare vizită. De aceea site-ul public nu mai depinde de Blob, iar panoul online e indisponibil până la deblocare (aproximativ 27.11.2026).
 
 ## Fluxul de lucru: totul automat
 
 Lucrezi local (conținut, cod, design), iar restul se face singur:
 
-- **Codul și designul** se comit și se urcă pe GitHub (`toma776/purapa`) după fiecare modificare. Vercel e legat de repo și publică automat fiecare push pe `main`.
-- **Conținutul** (baza) se sincronizează cât rulează `npm start`, la fiecare 5 secunde (`SYNC_SECONDS`):
-  - ce modifici local ajunge online;
-  - ce s-a schimbat online (formularul de contact, panoul online) vine local, iar serverul redeschide baza fără repornire.
+- **Codul și designul** se comit și se urcă pe GitHub (`toma776/purapa`) după fiecare modificare. Vercel publică automat fiecare push pe `main`.
+- **Conținutul:** cât rulează `npm start`, orice schimbare din panoul local regenerează paginile din `public/`. După 15 secunde fără alte schimbări, serverul le comite („Conținut publicat din panou”) și le urcă pe GitHub, iar Vercel le publică în aproximativ 40 de secunde (`src/core/publisher.mjs`). Un push eșuat se reîncearcă singur; `PUBLISH=0` oprește publicarea.
+- **Panoul online** se sincronizează cu baza locală la 15 minute (`SYNC_SECONDS`):
+  - ce modifici local ajunge în panoul online;
+  - ce s-a schimbat în panoul online vine local și se publică pe site.
 
-  Dacă baza s-a modificat în ambele locuri în același timp, rămâne varianta locală. Cea online e salvată în `data/backup/`, iar panoul afișează o bandă de avertizare.
-- **Imaginile noi** din `data/media` se copiază în `public/media` și pleacă pe Vercel odată cu codul.
+  Dacă baza s-a modificat în ambele locuri, rămâne varianta locală, iar cea online se salvează în `data/backup/`. Cât timp store-ul e blocat, serverul reîncearcă o dată pe oră și afișează un singur mesaj.
 
-Cheia Blob vine local cu `npx vercel env pull .env.local` (fișierul nu intră în git). Fără ea, baza rămâne doar locală. Ultima stare sincronizată stă în `data/.blob-sync.json`.
+Cheia Blob vine local cu `npx vercel env pull .env.local` (fișierul nu intră în git). Fără ea, baza rămâne doar locală, iar site-ul se publică oricum.
 
 **Indexarea e oprită.** Cât timp purapa.ro e încă site-ul vechi, site-ul nou nu trebuie să apară în Google și nici să concureze cu el:
 
-- antetul `X-Robots-Tag: noindex, nofollow` vine pe orice răspuns, inclusiv imagini și fișiere, de două ori: din aplicație și din `vercel.json`;
+- antetul `X-Robots-Tag: noindex, nofollow` vine pe orice răspuns, inclusiv imagini și fișiere, din `vercel.json`, iar pentru funcție și pentru serverul local și din aplicație;
 - fiecare pagină are `<meta name="robots" content="noindex, nofollow">` și nu are `canonical`;
 - `robots.txt` lasă crawlerele să intre, ca să vadă „noindex”. Un `Disallow: /` ar ascunde „noindex”, iar adresele ar putea fi indexate din linkuri;
 - nu există `sitemap.xml`.
 
 **În ziua lansării** pe purapa.ro:
 
-1. adaugă `SITE_INDEX=1` în Vercel (Settings → Environment Variables, Production);
+1. adaugă `SITE_INDEX=1` în `.env.local`, pentru că paginile statice se generează local, și în Vercel (Settings → Environment Variables, Production);
 2. scoate antetul `x-robots-tag` din `vercel.json`;
-3. publică. Paginile primesc atunci `canonical`, iar `robots.txt` și `sitemap.xml` trimit spre `https://purapa.ro`.
+3. repornește `npm start`: paginile se regenerează cu `canonical`, iar `robots.txt` trimite spre `https://purapa.ro/sitemap.xml`, și se publică singure.
 
 **Adresele:** `purapa.vercel.app` e un proiect al altcuiva. Adresa noastră publică e `purapa-six.vercel.app`, iar `purapa-dwf3.vercel.app` cere login Vercel.
 
