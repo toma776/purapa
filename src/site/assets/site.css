@@ -134,6 +134,15 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
   .nav a.btn:hover { color: var(--white); background: var(--blue-hover); }
 }
 @media (min-width: 1181px) { .nav .btn { display: none; } }
+/* Pe desktop, șapte linkuri și două butoane intră pe un rând: spații mai strânse, fără rupere de text. */
+@media (min-width: 1181px) {
+  .site-header .bar { gap: 1.5rem; }
+  .nav { gap: .125rem; }
+  .nav a { padding-inline: .6rem; white-space: nowrap; }
+  .nav a[aria-current="page"]::after { left: .6rem; right: .6rem; }
+  .site-header .btn { white-space: nowrap; }
+  .site-header .bar .header-cta + .header-cta { margin-left: -.75rem; }
+}
 
 /* Cifrele-cheie din hero */
 .facts { display: flex; flex-wrap: wrap; gap: 0; margin: 2.75rem 0 0; padding: 0; list-style: none; }

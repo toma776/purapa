@@ -324,7 +324,7 @@ export function seed(store, {user = SYSTEM} = {}) {
   // Blogul (nou, nu exista pe site-ul vechi): pagina cu lista articolelor. Rămâne nepublicată până apar primele articole.
   const blogList = c('sectiuni', {kind: 'articole', kicker: 'Blog Purapa', title: 'Despre *apa* din casa ta',
     text: '<p>Ghiduri practice despre apa de la robinet și din fântână: ce conține, cum o testezi și ce soluție i se potrivește.</p>'});
-  ids.blog = c('pagini', {title: 'Blog', slug: 'blog', menu_label: 'Blog', footer: 'firma',
+  ids.blog = c('pagini', {title: 'Blog', slug: 'blog', menu_label: 'Blog', menu_order: 5, footer: 'firma',
     seo_title: 'Blog Purapa – ghiduri despre apa de acasă',
     seo_description: 'Ghiduri despre apa de la robinet și din fântână: testare, duritate, clor, filtre și dedurizatoare.',
     sections: [blogList]}, undefined, false);
