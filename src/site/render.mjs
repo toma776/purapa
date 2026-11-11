@@ -7,6 +7,7 @@ import {esc} from '../core/content.mjs';
 import {byKey, publicPath} from '../registry/entities.mjs';
 import {icon} from './icons.mjs';
 import {SCENES} from './scenes.mjs';
+import {TUTORIAL_SCENES, DEFS, sceneSeconds} from './tutorial.mjs';
 
 const ASSETS = new URL('./assets/', import.meta.url);
 const ASSET_V = createHash('sha1').update(readFileSync(new URL('site.css', ASSETS))).update(readFileSync(new URL('site.js', ASSETS))).digest('hex').slice(0, 10);
@@ -334,6 +335,37 @@ const SECTIONS = {
       <aside class="note-card" data-reveal style="--i:2"><span class="icon">${icon('shield')}</span><p>${ctx.text(s.note)}</p></aside></div>`)
     : wrap(s, `<div class="prose" data-reveal>${s.kicker ? `<p class="eyebrow">${ctx.text(s.kicker)}</p>` : ''}
     ${s.title ? `<h2 id="s-${s.id}">${title(ctx, s.title)}</h2>` : ''}${s.text ? ctx.rich(s.text) : ''}${buttons(ctx, s)}</div>`),
+
+  // Tutorialul animat: un player de scene ilustrate (src/site/tutorial.mjs), cu narațiunea pașilor ca subtitrare.
+  // Fără JavaScript, scenele stau una sub alta, ca o listă de pași cu ilustrații; site.js le face player.
+  tutorial: (ctx, s) => {
+    const steps = ctx.within(ctx.component, 'Pașii tutorialului', () => ctx.related('sectiuni', s.id, 'steps'));
+    const secs = steps.map(p => sceneSeconds(p.text));
+    const clock = n => `${Math.floor(n / 60)}:${String(Math.round(n % 60)).padStart(2, '0')}`;
+    const btn = (cls, label, svgPath) => `<button class="${cls}" type="button" aria-label="${label}"><svg viewBox="0 0 24 24" aria-hidden="true">${svgPath}</svg></button>`;
+    const PLAY = '<path class="i-play" d="M8 5.5v13l11-6.5z"/><path class="i-pause" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/>';
+    return wrap(s, `${rhead(ctx, s, {center: true})}
+      <div class="tut" data-tutorial data-reveal>${DEFS}
+        <div class="tut-main">
+          <ol class="tut-scenes">${steps.map((p, i) => `<li class="tut-scene" data-dur="${secs[i]}" style="--T:${secs[i]}s"><figure>
+            <div class="tut-art">${(TUTORIAL_SCENES[p.scene] ?? TUTORIAL_SCENES.intro)(esc(plainTitle(p.title)))}</div>
+            <figcaption><p class="tut-count">Pasul ${i + 1} din ${steps.length}</p><h3>${ctx.text(p.title)}</h3>${ctx.rich(p.text ?? '')}</figcaption></figure></li>`).join('')}</ol>
+          <div class="tut-over" hidden>
+            <button class="tut-big" type="button" aria-label="Pornește tutorialul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+              <span>Pornește tutorialul <small>${clock(secs.reduce((a, b) => a + b, 0))} min</small></span></button>
+            <div class="tut-bar">
+              ${btn('tut-play', 'Pornește', PLAY)}${btn('tut-prev', 'Pasul anterior', '<path d="M6 5h2.5v14H6zM19 5.5v13L9.5 12z"/>')}${btn('tut-next', 'Pasul următor', '<path d="M15.5 5H18v14h-2.5zM5 5.5v13L14.5 12z"/>')}
+              <div class="tut-segs">${secs.map((n, i) => `<button type="button" data-go="${i}" style="flex-grow:${n}" aria-label="Pasul ${i + 1}: ${esc(plainTitle(steps[i].title))}"><i></i></button>`).join('')}</div>
+              <span class="tut-n" aria-hidden="true">1 / ${steps.length}</span>
+              ${btn('tut-full', 'Ecran complet', '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>')}
+            </div>
+          </div>
+        </div>
+        <ol class="tut-chapters" hidden aria-label="Pașii tutorialului">${steps.map((p, i) => `<li><button type="button" data-go="${i}">
+          <span class="n">${i + 1}</span><span class="t">${ctx.text(p.title)}</span><span class="d">${clock(secs.slice(0, i).reduce((a, b) => a + b, 0))}</span></button></li>`).join('')}</ol>
+      </div>
+      ${s.video ? `<p class="tut-orig" data-reveal><a href="https://www.youtube.com/watch?v=${esc(s.video)}" target="_blank" rel="noopener">Vezi și filmarea originală, pe YouTube</a></p>` : ''}`, ' tut-section');
+  },
 
   // Îndemnul final: pe toată lățimea, cu valuri.
   cta: (ctx, s) => {
