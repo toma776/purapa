@@ -120,7 +120,7 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
 .menu-toggle { display: none; margin-left: auto; width: 48px; height: 48px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--white); color: var(--navy); cursor: pointer; }
 .menu-toggle svg { width: 22px; height: 22px; margin: auto; grid-area: 1 / 1; }
 .menu-toggle[aria-expanded="true"] .i-menu, .menu-toggle[aria-expanded="false"] .i-close { display: none; }
-@media (max-width: 960px) {
+@media (max-width: 1180px) {
   .site-header .bar { gap: 1rem; }
   .menu-toggle { display: grid; place-items: center; }
   .site-header .header-cta { display: none; }
@@ -133,7 +133,7 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
   .nav a.btn { margin-top: 1rem; padding: .7rem 1.1rem; border: 2px solid var(--b); border-radius: var(--r-sm); color: var(--white); font-size: 1rem; }
   .nav a.btn:hover { color: var(--white); background: var(--blue-hover); }
 }
-@media (min-width: 961px) { .nav .btn { display: none; } }
+@media (min-width: 1181px) { .nav .btn { display: none; } }
 
 /* Cifrele-cheie din hero */
 .facts { display: flex; flex-wrap: wrap; gap: 0; margin: 2.75rem 0 0; padding: 0; list-style: none; }
@@ -903,6 +903,8 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 /* Antetul: paginile cu aspect „buton” (de pildă „Trimite testul”) stau lângă butonul spre retailer. */
 .site-header .header-cta + .header-cta { margin-left: -1.25rem; }
 .site-header .btn.ghost.header-cta { background: rgb(255 255 255 / .6); }
+.nav a.btn[aria-current="page"]::after { display: none; }
+.site-header .btn[aria-current="page"] { background: var(--soft); }
 @media (max-width: 960px) {
   .nav a.btn.ghost { color: var(--blue); background: transparent; }
   .nav a.btn.ghost:hover { color: var(--blue); background: var(--soft); }
@@ -928,7 +930,8 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .tr-legend:not(:first-child) { margin-top: .75rem; }
 .tr-legend h3 { margin: 0; font-size: 1.0625rem; letter-spacing: -.01em; }
 .tr-legend > span { color: var(--muted); font-size: .8125rem; }
-.tr-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; }
+.tr-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; align-items: start; }
+.tr .form label { align-content: start; }
 .tr .form label small { font-weight: 400; color: var(--muted); font-size: .8125rem; line-height: 1.4; }
 .tr .req { color: #c2410c; }
 .tr .form input[aria-invalid="true"] { border-color: #c2410c; }
@@ -1019,9 +1022,9 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .tr-param.red .bar { background: #e5604f; }
 .tr-param .name strong { display: block; color: var(--navy); font-size: .9688rem; line-height: 1.3; }
 .tr-param .name small { color: var(--muted); font-size: .75rem; }
-.tr-param .val { text-align: right; line-height: 1.2; }
+.tr-param .val { display: grid; justify-items: end; gap: .25rem; max-width: 14rem; text-align: right; line-height: 1.2; }
 .tr-param .val b { display: block; color: var(--navy); font-size: 1.0625rem; font-variant-numeric: tabular-nums; }
-.tr-status { display: inline-block; margin-top: .25rem; padding: .1rem .5rem; border-radius: 999px; font-size: .6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.tr-status { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .tr-param .more { padding: 0 1.1rem 1.1rem 2.1rem; color: var(--ink); font-size: .9375rem; line-height: 1.6; }
 .tr-param .more p { margin: 0; }
 .tr-param .more p + p { margin-top: .5rem; color: var(--muted); font-size: .8125rem; }
@@ -1049,8 +1052,11 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
   .tr-row { grid-template-columns: 1fr; }
   .tr-progress li { padding-right: .75rem; font-size: .8125rem; }
   .tr-card { border-radius: var(--r-lg); }
+  .tr-done { flex-direction: column; align-items: flex-start; gap: .75rem; }
   .tr-actions .btn { width: 100%; }
-  .tr-param summary { grid-template-columns: .3rem minmax(0, 1fr) auto; }
+  .tr-param summary { grid-template-columns: .3rem minmax(0, 1fr) minmax(0, 46%); }
+  .tr-param .val { max-width: none; }
+  .tr-status { font-size: .625rem; line-height: 1.35; padding: .15rem .45rem; }
   .tr-param summary::after { display: none; }
   .tr-param .more { padding-left: 1.1rem; }
 }

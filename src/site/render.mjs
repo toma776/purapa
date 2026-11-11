@@ -8,6 +8,7 @@ import {byKey, publicPath} from '../registry/entities.mjs';
 import {icon} from './icons.mjs';
 import {SCENES} from './scenes.mjs';
 import {TUTORIAL_SCENES, DEFS, sceneSeconds} from './tutorial.mjs';
+import {ANALYSIS, TEST_PARAMS} from './testrapid.mjs';
 
 const ASSETS = new URL('./assets/', import.meta.url);
 const ASSET_V = createHash('sha1').update(readFileSync(new URL('site.css', ASSETS))).update(readFileSync(new URL('site.js', ASSETS))).digest('hex').slice(0, 10);
@@ -488,6 +489,95 @@ const SECTIONS = {
       ${s.text ? `<div class="lead">${ctx.rich(s.text)}</div>` : ''}${buttons(ctx, s, true)}</div></section>`;
   },
 
+  // Trimiterea testului rapid: datele de contact, fotografia benzii, apoi rezultatul. Totul se petrece în browser (site.js),
+  // direct cu serviciul de analiză al aplicației vechi (testrapid.mjs), deci merge și pe site-ul static.
+  // Pașii secțiunii sunt instrucțiunile pentru fotografie; nota e avertismentul despre cât de precis e testul.
+  'trimite-test': (ctx, s) => {
+    const tips = ctx.within(ctx.component, 'Instrucțiunile pentru fotografie', () => ctx.related('sectiuni', s.id, 'steps'));
+    const privacy = ctx.within(ctx.component, 'Politica de confidențialitate', () => ctx.query('pagini', {
+      fields: ['slug', 'footer'], as: 'link', where: p => p.footer === 'legal' && /confiden/.test(p.slug ?? '')}))[0];
+    const privacyHref = privacy ? ctx.within(ctx.component, 'Politica de confidențialitate', () => ctx.link(`pagini:${privacy.id}`)) : null;
+    const note = s.note ? `<p class="tr-disclaimer">${icon('info')}<span>${ctx.text(s.note)}</span></p>` : '';
+    const check = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const cam = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1.6 2.4H20a1.6 1.6 0 0 1 1.6 1.6v10.4A1.6 1.6 0 0 1 20 20H4a1.6 1.6 0 0 1-1.6-1.6V8A1.6 1.6 0 0 1 4 6.4h3.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+    const gallery = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="9" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M21 15.5l-4.5-4.5L6 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+    const field = (id, label, attrs, hint = '') => `<label for="tr-${id}"><span>${label} <span class="req" aria-hidden="true">*</span></span>
+      <input id="tr-${id}" name="${id}" required ${attrs}>${hint ? `<small>${hint}</small>` : ''}</label>`;
+    return wrap(s, `${rhead(ctx, s)}
+      <div class="tr" data-testrapid data-api='${esc(JSON.stringify(ANALYSIS))}'>
+        <ol class="tr-progress" aria-label="Pașii trimiterii">
+          <li class="on" aria-current="step"><span>1</span>Datele tale</li><li><span>2</span>Fotografia testului</li><li><span>3</span>Rezultatul</li>
+        </ol>
+        <div class="tr-grid">
+          <div class="tr-card" data-reveal>
+            <form class="form tr-step" data-step="1" novalidate>
+              <div class="tr-legend"><h3>Date de contact</h3><span>Toate câmpurile sunt obligatorii</span></div>
+              ${field('name', 'Nume complet', 'autocomplete="name" placeholder="ex: Andrei Popescu"')}
+              <div class="tr-row">
+                ${field('email', 'Email', 'type="email" autocomplete="email" placeholder="adresa.ta@exemplu.ro"', 'Aici primești raportul complet, în PDF.')}
+                ${field('phone', 'Telefon', 'type="tel" autocomplete="tel" placeholder="07xx xxx xxx"', 'Te sunăm doar dacă rezultatele au nevoie de clarificări.')}
+              </div>
+              ${field('location', 'Locația prelevării probei', 'autocomplete="address-level2" placeholder="ex: Brașov, jud. Brașov"')}
+              <div class="tr-legend"><h3>Acorduri</h3></div>
+              <label class="tr-check"><input type="checkbox" name="gdpr" required><i>${check}</i><span>Sunt de acord cu prelucrarea datelor conform ${privacyHref
+                ? `<a href="${esc(privacyHref)}" target="_blank">Politicii de confidențialitate</a>` : 'Politicii de confidențialitate'}. <span class="req" aria-hidden="true">*</span></span></label>
+              <label class="tr-check soft"><input type="checkbox" name="consentContact"><i>${check}</i><span>Sunt de acord să fiu contactat(ă) de experții Purapa pentru interpretarea rezultatelor și recomandări de filtrare a apei.</span></label>
+              <p class="tr-fine">Nu trimitem newslettere sau mesaje comerciale nesolicitate. Te contactăm doar în legătură cu acest test de apă.</p>
+              <div class="tr-actions"><button class="btn" type="submit">Continuă: încarcă fotografia${icon('arrow')}</button><span class="tr-time">Durează sub un minut</span></div>
+            </form>
+
+            <div class="tr-step" data-step="2" hidden>
+              <div class="tr-legend"><h3>Fotografia testului</h3><button type="button" class="tr-back" data-back>Înapoi la date</button></div>
+              <div class="tr-drop" data-drop>
+                <input type="file" accept="image/jpeg,image/png,.heic,.heif" data-file hidden>
+                <input type="file" accept="image/*" capture="environment" data-camera hidden>
+                <div class="tr-pick">
+                  <p class="tr-drop-title">Încarcă fotografia benzii, lângă scala de culori</p>
+                  <div class="tr-buttons">
+                    <button type="button" class="btn" data-pick="camera">${cam}Fă o poză</button>
+                    <button type="button" class="btn ghost" data-pick="file">${gallery}Alege din galerie</button>
+                  </div>
+                  <p class="tr-formats">Sau trage fotografia aici. Formate acceptate: JPG, PNG, HEIC (nu DNG/RAW).</p>
+                </div>
+                <figure class="tr-preview" hidden><img alt="Fotografia aleasă"><figcaption><strong data-fname></strong><button type="button" class="tr-back" data-clear>Alege alta</button></figcaption></figure>
+              </div>
+              <label class="tr-optional" hidden>Observație sau etichetă (opțional) <input name="note" maxlength="100" placeholder="ex: bucătărie, baie, proba 1"></label>
+              <div class="tr-actions"><button class="btn" type="button" data-send disabled>Trimite pentru analiză${icon('arrow')}</button></div>
+              <div class="tr-busy" hidden role="status" aria-live="polite">
+                <div class="tr-busy-drop" aria-hidden="true"><i></i><i></i><i></i></div>
+                <p class="tr-busy-msg" data-msg>Se încarcă fotografia...</p>
+                <ul class="tr-busy-list" aria-hidden="true">${TEST_PARAMS.map((p, i) => `<li style="--i:${i}">${esc(p.name.replace(/\s*\(.*\)$/, ''))}</li>`).join('')}</ul>
+                <p class="tr-fine">Durează câteva secunde. Nu închide pagina.</p>
+              </div>
+            </div>
+
+            <div class="tr-step tr-result" data-step="3" hidden tabindex="-1">
+              <div class="tr-done"><span class="tr-done-icon">${check}</span><div><h3>Analiză finalizată</h3><p>Mai jos găsești interpretarea fiecărui parametru și recomandarea noastră.</p></div></div>
+              <div class="tr-summary" data-summary></div>
+              <div class="tr-box" data-conclusion hidden><h4>Concluzie</h4><p></p></div>
+              <h4 class="tr-params-title">Parametrii analizați</h4>
+              <ul class="tr-params" data-params></ul>
+              <div class="tr-box accent" data-reco hidden><h4>Recomandare</h4><p></p></div>
+              <div class="tr-mail">${icon('mail')}<p><strong>Raportul complet, în PDF, vine pe email.</strong> Dacă nu îl găsești în câteva minute, verifică și folderul Spam.</p></div>
+              <div class="tr-actions"><button class="btn ghost" type="button" data-again>Fă un nou test</button></div>
+            </div>
+
+            <div class="tr-step tr-result" data-step="pending" hidden tabindex="-1">
+              <div class="tr-done"><span class="tr-done-icon">${check}</span><div><h3>Am primit fotografia</h3><p>Analiza se face în scurt timp, iar raportul complet îl primești pe email.</p></div></div>
+              <div class="tr-actions"><button class="btn ghost" type="button" data-again>Trimite alt test</button></div>
+            </div>
+            <div class="tr-error" role="alert" hidden></div>
+            <noscript><p class="tr-error">Pentru analiza fotografiei e nevoie de JavaScript. Activează-l în browser sau scrie-ne la ${ctx.text('{email}')}.</p></noscript>
+          </div>
+          <aside class="tr-aside" data-reveal style="--i:1">
+            ${tips.length ? `<h3>Cum faci fotografia</h3><ol class="tr-tips">${tips.map((p, i) => `<li><span>${i + 1}</span><div>${p.title ? `<strong>${ctx.text(p.title)}</strong>` : ''}${p.text ? ctx.rich(p.text) : ''}</div></li>`).join('')}</ol>` : ''}
+            ${note}
+          </aside>
+        </div>
+        <script type="application/json" data-params-info>${JSON.stringify(TEST_PARAMS).replace(/</g, '\\u003c')}</script>
+      </div>`, ' tr-section');
+  },
+
   contact: (ctx, s) => wrap(s, `${rhead(ctx, s)}<div class="contact-grid">
     <ul class="contact-data" data-stagger>
       <li data-reveal><span>Telefon</span><a href="${ctx.text('{telefon_link}')}">${ctx.text('{telefon}')}</a><br>${ctx.text('{program}')}</li>
@@ -526,18 +616,21 @@ function header(ctx, path) {
   return ctx.layout('Antet', () => {
     const f = ctx.within('Antet', 'Brandul', () => ctx.one('firma'));
     const menu = ctx.within('Antet', 'Meniul principal', () => ctx.query('pagini', {
-      fields: ['menu_order'], as: 'link', where: p => p.menu_order != null, sort: (a, b) => a.menu_order - b.menu_order}));
+      fields: ['menu_order', 'menu_style'], as: 'link', where: p => p.menu_order != null, sort: (a, b) => a.menu_order - b.menu_order}));
     // Vânzarea e la retailer: butonul spune unde duce („Comandă pe Portalia”): comanda se face acolo, nu pe site.
     const shop = ctx.within('Antet', 'Butonul spre retailer', () => ctx.query('retaileri', {fields: ['search_url', 'name']}))[0];
     const cta = shop?.search_url ? (cls) => `<a class="btn small ${cls}" href="${esc(shop.search_url)}" target="_blank" rel="noopener">Comandă pe ${esc(shop.name)}${icon('external')}<span class="sr-only"> (se deschide într-o fereastră nouă)</span></a>` : () => '';
-    const links = menu.map(p => {
+    const link = (p, cls = '') => {
       const href = ctx.within('Antet', 'Meniul principal', () => ctx.link(`pagini:${p.id}`));
-      return href ? `<a href="${esc(href)}"${href === path ? ' aria-current="page"' : ''}>${esc(p.menu_label || p.title)}</a>` : '';
-    }).join('');
+      return href ? `<a${cls ? ` class="${cls}"` : ''} href="${esc(href)}"${href === path ? ' aria-current="page"' : ''}>${esc(p.menu_label || p.title)}</a>` : '';
+    };
+    // Paginile cu aspect „buton” stau lângă butonul spre retailer, ca buton cu contur (pe mobil, în meniu, deasupra lui).
+    const links = menu.filter(p => p.menu_style !== 'buton').map(p => link(p)).join('');
+    const extra = cls => menu.filter(p => p.menu_style === 'buton').map(p => link(p, `btn small ghost ${cls}`)).join('');
     return `<header class="site-header"><div class="container bar">
       <a class="logo" href="/" aria-label="${esc(f?.brand)} — prima pagină">${logo(ctx, f)}</a>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Deschide meniul">${icon('menu', 'i-menu')}${icon('close', 'i-close')}</button>
-      <nav class="nav" id="nav" aria-label="Meniul principal">${links}${cta('')}</nav>${cta('header-cta')}
+      <nav class="nav" id="nav" aria-label="Meniul principal">${links}${extra('')}${cta('')}</nav>${extra('header-cta')}${cta('header-cta')}
     </div></header>`;
   });
 }

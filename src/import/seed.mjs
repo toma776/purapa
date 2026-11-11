@@ -306,5 +306,20 @@ export function seed(store, {user = SYSTEM} = {}) {
   store.setLinks(user, 'pagini', ids.ambassadors, 'sections', Object.values(amb));
   sec(ids.contact, [{kind: 'contact', title: 'Contact'}], src('/contact/'));
 
+  // Trimiterea testului rapid (aplicația de la /test-rapid/ de pe site-ul vechi): aceeași adresă, buton în meniu.
+  const photoTips = [
+    ['Lumină bună, fără umbre', 'Fotografiază banda în lumină naturală sau albă, fără umbre peste ea.'],
+    ['Imagine clară', 'Asigură-te că fotografia e în focus și că fundalul e neutru.'],
+    ['Banda lângă scală', 'Așază banda perfect paralel, lângă scala de culori de pe ambalaj.'],
+    ['Toate pătrățelele vizibile', 'Toți cei 16 indicatori colorați trebuie să se vadă și să fie aliniați.']
+  ].map(([t, x]) => step(t, `<p>${x}</p>`, src('/test-rapid/', 'Instrucțiuni foto')));
+  ids['test-rapid'] = page({title: 'Trimite testul', slug: 'test-rapid', menu_label: 'Trimite testul', menu_order: 8, menu_style: 'buton',
+    seo_title: 'Trimite testul rapid Purapa – analiza digitală a apei',
+    seo_description: 'Încarcă fotografia benzii de testare și primești pe loc interpretarea celor 16 parametri, plus raportul complet pe email.'},
+  [{kind: 'trimite-test', theme: 'deschis', kicker: 'Test rapid Purapa', title: 'Trimite *testul* pentru analiză',
+    text: '<p>Completează datele de contact, apoi încarcă fotografia benzii. Vezi rezultatul pe loc, iar raportul detaliat îl primești pe email.</p>',
+    note: 'Testul oferă o evaluare orientativă a calității apei, pe baza unui screening chimic rapid, și nu detectează bacterii sau alte microorganisme. Valorile sunt calculate automat din fotografie, așa că lumina, unghiul sau camera pot da rezultate ușor diferite față de ce se vede pe bandă. Pentru confirmare și rezultate oficiale, recomandăm un laborator acreditat.',
+    steps: photoTips}], src('/test-rapid/'));
+
   return ids;
 }

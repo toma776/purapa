@@ -63,7 +63,7 @@ document.documentElement.classList.add('js');
   toggle.addEventListener('click', () => set(toggle.getAttribute('aria-expanded') !== 'true'));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('open')) { set(false); toggle.focus(); } });
   document.addEventListener('click', e => { if (nav.classList.contains('open') && !header.contains(e.target)) set(false); });
-  window.matchMedia('(min-width: 961px)').addEventListener('change', e => { if (e.matches) set(false); });
+  window.matchMedia('(min-width: 1181px)').addEventListener('change', e => { if (e.matches) set(false); });
 })();
 
 // Tutorialul animat: o scenă pe rând, în ritmul narațiunii (data-dur, în secunde). Pornește doar la cerere,

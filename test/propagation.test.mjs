@@ -9,7 +9,7 @@ import {renderPath, calc} from '../src/site/render.mjs';
 import {seed} from '../src/import/seed.mjs';
 
 const ALL = ['/', '/ambassadors/', '/contact/', '/despre-noi/', '/politica-de-confidentialitate/', '/politica-de-cookie/',
-  '/produse/', '/termeni-si-conditii/', '/testare-apa/'];
+  '/produse/', '/termeni-si-conditii/', '/test-rapid/', '/testare-apa/'];
 
 function setup(opts = {}) {
   const db = openDb();

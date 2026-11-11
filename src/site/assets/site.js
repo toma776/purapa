@@ -63,7 +63,7 @@ document.documentElement.classList.add('js');
   toggle.addEventListener('click', () => set(toggle.getAttribute('aria-expanded') !== 'true'));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('open')) { set(false); toggle.focus(); } });
   document.addEventListener('click', e => { if (nav.classList.contains('open') && !header.contains(e.target)) set(false); });
-  window.matchMedia('(min-width: 961px)').addEventListener('change', e => { if (e.matches) set(false); });
+  window.matchMedia('(min-width: 1181px)').addEventListener('change', e => { if (e.matches) set(false); });
 })();
 
 // Tutorialul animat: o scenă pe rând, în ritmul narațiunii (data-dur, în secunde). Pornește doar la cerere,
@@ -187,6 +187,193 @@ document.querySelectorAll('.reviews-list').forEach(list => {
     list.querySelector('.review.more')?.querySelector('h3, blockquote')?.setAttribute('tabindex', '-1');
     list.querySelector('.review.more h3, .review.more blockquote')?.focus({preventScroll: true});
   });
+});
+
+// Trimite testul: datele de contact, fotografia benzii, apoi rezultatul. Fotografia se încarcă direct la serviciul de
+// analiză (același ca în aplicația veche, render.mjs → data-api), care întoarce valorile și trimite raportul PDF pe email.
+document.querySelectorAll('[data-testrapid]').forEach(root => {
+  const api = JSON.parse(root.dataset.api);
+  const info = JSON.parse(root.querySelector('[data-params-info]').textContent);
+  const $ = s => root.querySelector(s);
+  const form = $('form[data-step="1"]');
+  const steps = [...root.querySelectorAll('.tr-step')];
+  const dots = [...root.querySelectorAll('.tr-progress li')];
+  const err = $('.tr-error[role="alert"]');
+  const drop = $('[data-drop]'), preview = $('.tr-preview'), pick = $('.tr-pick'), send = $('[data-send]'), busy = $('.tr-busy');
+  const optional = $('.tr-optional');
+  let photo = null, previewUrl = null;
+
+  const fail = msg => { err.textContent = msg; err.hidden = !msg; if (msg) err.scrollIntoView({block: 'nearest', behavior: 'smooth'}); };
+  const show = step => {
+    steps.forEach(s => { s.hidden = s.dataset.step !== String(step); });
+    const n = step === 'pending' ? 3 : step;
+    dots.forEach((d, i) => {
+      d.classList.toggle('on', i + 1 === n); d.classList.toggle('done', i + 1 < n);
+      if (i + 1 === n) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
+    });
+    fail('');
+    const top = root.getBoundingClientRect().top + scrollY - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72) - 24;
+    if (Math.abs(scrollY - top) > 40) scrollTo({top, behavior: 'smooth'});
+    const target = steps.find(s => !s.hidden);
+    (target.classList.contains('tr-result') ? target : target.querySelector('input:not([hidden]), button.btn, [tabindex]') ?? target)?.focus?.({preventScroll: true});
+  };
+
+  // Pasul 1: aceleași reguli ca în aplicația veche (telefon românesc de mobil, email valid, acordul obligatoriu).
+  const lead = () => Object.fromEntries(['name', 'email', 'phone', 'location'].map(k => [k, form.elements[k].value.trim()]));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const d = lead(), bad = [];
+    const mark = (el, wrong) => { el.setAttribute('aria-invalid', String(!!wrong)); if (wrong) bad.push(el); };
+    ['name', 'location'].forEach(k => mark(form.elements[k], !d[k]));
+    mark(form.elements.email, !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email));
+    mark(form.elements.phone, !/^(07\d{8}|\+407\d{8})$/.test(d.phone.replace(/[\s\-.]/g, '')));
+    mark(form.elements.gdpr, !form.elements.gdpr.checked);
+    if (bad.length) {
+      const msgs = [];
+      if (bad.some(el => ['name', 'location'].includes(el.name))) msgs.push('Completează toate câmpurile obligatorii.');
+      if (bad.includes(form.elements.email)) msgs.push('Adresa de email nu pare corectă.');
+      if (bad.includes(form.elements.phone)) msgs.push('Numărul de telefon nu pare corect (de exemplu 0722 123 456).');
+      if (bad.includes(form.elements.gdpr)) msgs.push('Pentru analiză avem nevoie de acordul pentru prelucrarea datelor.');
+      fail(msgs.join('\n'));
+      bad[0].focus();
+      return;
+    }
+    show(2);
+  });
+  form.addEventListener('input', e => { if (e.target.getAttribute('aria-invalid') === 'true') e.target.setAttribute('aria-invalid', 'false'); });
+
+  // Pasul 2: fotografia. HEIC (iPhone) se convertește în JPEG în browser; peste 10 MB se micșorează până sub 5 MB.
+  const OK_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'], OK_EXT = /\.(jpe?g|png|heic|heif)$/i;
+  const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.append(s); });
+  const shrink = (file, maxMb) => new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onerror = () => rej(new Error('img'));
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.naturalWidth, h = img.naturalHeight, q = .95, n = 0;
+      const c = document.createElement('canvas'), g = c.getContext('2d');
+      const round = () => {
+        n++; c.width = w; c.height = h; g.drawImage(img, 0, 0, w, h);
+        c.toBlob(b => {
+          if (!b) return rej(new Error('blob'));
+          if (b.size / 1048576 <= maxMb || n >= 20 || q <= .3) return res(new File([b], file.name.replace(/\.\w+$/, '.jpg'), {type: 'image/jpeg'}));
+          if (q > .5) q -= .1; else { w *= .85; h *= .85; q = .9; }
+          round();
+        }, 'image/jpeg', q);
+      };
+      round();
+    };
+    img.src = url;
+  });
+  const choose = async file => {
+    if (!file) return;
+    fail('');
+    if (/\.dng$/i.test(file.name) || /dng/i.test(file.type) || !(OK_TYPES.includes(file.type.toLowerCase()) || OK_EXT.test(file.name))) {
+      fail('Format incompatibil. Încarcă o imagine JPG, PNG sau HEIC (nu DNG/RAW).');
+      return;
+    }
+    send.disabled = true;
+    try {
+      let f = file;
+      if (/\.(heic|heif)$/i.test(f.name) || /hei[cf]/i.test(f.type)) {
+        send.textContent = 'Se convertește imaginea (HEIC)...';
+        if (!window.heic2any) await loadScript('https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js');
+        const out = await window.heic2any({blob: f, toType: 'image/jpeg', quality: .8});
+        f = new File([Array.isArray(out) ? out[0] : out], f.name.replace(/\.(heic|heif)$/i, '.jpg'), {type: 'image/jpeg'});
+      }
+      if (f.size / 1048576 > 10) f = await shrink(f, 5);
+      photo = f;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(f);
+      preview.querySelector('img').src = previewUrl;
+      preview.querySelector('[data-fname]').textContent = file.name;
+      preview.hidden = false; pick.hidden = true; optional.hidden = false;
+      drop.classList.add('has');
+    } catch {
+      fail('Nu am putut citi imaginea. Încearcă din nou sau alege altă fotografie.');
+    } finally {
+      send.innerHTML = send.dataset.label;
+      send.disabled = !photo;
+    }
+  };
+  send.dataset.label = send.innerHTML;
+  const clear = () => {
+    photo = null; preview.hidden = true; pick.hidden = false; optional.hidden = true; drop.classList.remove('has'); send.disabled = true;
+    root.querySelectorAll('input[type=file]').forEach(i => { i.value = ''; });
+  };
+  root.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => $(b.dataset.pick === 'camera' ? '[data-camera]' : '[data-file]').click()));
+  root.querySelectorAll('input[type=file]').forEach(i => i.addEventListener('change', () => choose(i.files[0])));
+  $('[data-clear]').addEventListener('click', clear);
+  $('[data-back]').addEventListener('click', () => show(1));
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => choose(e.dataTransfer.files[0]));
+
+  // Interpretarea unei valori: pragul parametrului (testrapid.mjs) sau, dacă nu-l găsim, culoarea după eticheta primită.
+  const details = name => info.find(p => p.name === name) ?? info.find(p => p.name.startsWith(name) || p.name.includes(`(${name})`));
+  const colorOf = status => {
+    const s = String(status ?? '').toLowerCase();
+    if (!s) return 'green';
+    if (s.includes('sub') || s.includes('ușor') || s.includes('la limită') || s.includes('urmărit') || s === 'ridicat' || s.includes('prezenți')) return 'orange';
+    if (s.includes('peste') || s.includes('foarte ridicat') || s.includes('problematic') || s.includes('valori mari') || s.includes('critic')) return 'red';
+    return 'green';
+  };
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'})[c]);
+  const result = data => {
+    const params = (Array.isArray(data.parameters) ? data.parameters : []).map(p => {
+      const d = details(p.name), raw = p.estimated_value ?? p.value ?? '';
+      const v = parseFloat(String(raw).replace(',', '.').replace('~', '').trim());
+      const tier = d && !isNaN(v) ? d.tiers.find(t => t.max == null || v <= t.max) ?? d.tiers.at(-1) : null;
+      return {name: (d?.name ?? p.name).replace(/\s*\((?!.*\().*\)$/, ''), unit: p.unit ?? d?.units?.replace(/\s*\(.*\)$/, ''), range: d?.units,
+        value: raw, status: tier?.label ?? p.status, color: tier?.color ?? p.statusColor ?? colorOf(p.status),
+        text: tier?.text ?? p.interpretation ?? '', short: p.interpretationShort ?? ''};
+    });
+    const count = c => params.filter(p => p.color === c).length;
+    $('[data-summary]').innerHTML = [['green', 'în limite'], ['orange', 'de urmărit'], ['red', 'peste limite']]
+      .filter(([c]) => count(c)).map(([c, l]) => `<span class="${c}">${count(c)} ${l}</span>`).join('');
+    const box = (sel, text) => { const b = $(sel); b.hidden = !text; b.querySelector('p').textContent = text ?? ''; };
+    box('[data-conclusion]', data.summary || data.overall_conclusion || '');
+    box('[data-reco]', data.general_recommendation || (Array.isArray(data.recommendations) ? data.recommendations.join('\n') : ''));
+    $('[data-params]').innerHTML = params.map(p => `<li class="tr-param ${p.color}"><details><summary>
+      <span class="bar" aria-hidden="true"></span><span class="name"><strong>${esc(p.name)}</strong><small>${esc(p.unit)}</small></span>
+      <span class="val"><b>${esc(p.value)}</b>${p.status ? `<span class="tr-status">${esc(p.status)}</span>` : ''}</span></summary>
+      <div class="more"><p>${esc(p.text || p.short || 'Nu există informații detaliate pentru acest parametru.')}</p>${p.range ? `<p>Domeniul testului: ${esc(p.range)}</p>` : ''}</div></details></li>`).join('');
+    show(3);
+  };
+
+  send.addEventListener('click', async () => {
+    if (!photo) return;
+    fail('');
+    const msg = $('[data-msg]');
+    busy.hidden = false; busy.classList.remove('analyzing'); msg.textContent = 'Se încarcă fotografia...';
+    const auth = {apikey: api.key, Authorization: `Bearer ${api.key}`};
+    try {
+      const path = `inputs/${crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`}.jpg`;
+      const body = new FormData();
+      body.append('cacheControl', '3600');
+      body.append('', photo);
+      const up = await fetch(`${api.url}/storage/v1/object/${api.bucket}/${path}`, {method: 'POST', headers: {...auth, 'x-upsert': 'false'}, body});
+      if (!up.ok) throw new Error('Nu am putut încărca fotografia. Încearcă din nou.');
+      msg.textContent = 'Analizăm cei 16 parametri...'; busy.classList.add('analyzing');
+      const r = await fetch(`${api.url}/functions/v1/${api.fn}`, {method: 'POST', headers: {...auth, 'Content-Type': 'application/json'},
+        body: JSON.stringify({imagePath: path, lead: {...lead(), note: (optional.querySelector('input').value || '').trim(),
+          gdpr: form.elements.gdpr.checked, consentContact: form.elements.consentContact.checked}})});
+      if (!(r.headers.get('content-type') ?? '').includes('application/json')) throw new Error('Eroare de server. Încearcă din nou peste câteva momente.');
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'A apărut o eroare la analiză. Încearcă din nou.');
+      if (data.pendingRetry) { clear(); show('pending'); return; }
+      if (data.imageQualityIssue) {
+        clear();
+        throw new Error(typeof data.error === 'string' && data.error ? data.error : 'Nu am putut analiza fotografia. Încearcă din nou cu o imagine mai clară:\n• banda trebuie să fie vizibilă și în focus;\n• fotografia, făcută în lumină bună;\n• toți cei 16 indicatori, vizibili;\n• banda, paralelă cu scala de culori.');
+      }
+      result(data);
+    } catch (e) {
+      fail(e instanceof TypeError ? 'Nu s-a putut trimite fotografia. Verifică conexiunea și încearcă din nou.' : e.message);
+    } finally {
+      busy.hidden = true;
+    }
+  });
+  root.querySelectorAll('[data-again]').forEach(b => b.addEventListener('click', () => { clear(); show(2); }));
 });
 
 // Mișcarea paginii. Fără biblioteci: IntersectionObserver, un singur ascultător de derulare,

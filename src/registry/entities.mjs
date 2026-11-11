@@ -175,7 +175,7 @@ export const ENTITIES = [
     anchor: r => `#s-${r.id}`,
     fields: [
       {key: 'kind', label: 'Tip', type: 'select', required: true,
-       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'recenzii', 'text', 'tutorial', 'contact', 'cta']},
+       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'recenzii', 'text', 'tutorial', 'contact', 'trimite-test', 'cta']},
       {key: 'theme', label: 'Fundal', type: 'select', options: ['alb', 'deschis', 'inchis']},
       {key: 'kicker', label: 'Supratitlu', type: 'text', max: 60},
       {key: 'title', label: 'Titlu (*cuvinte* = evidențiate)', type: 'text'},
@@ -186,7 +186,7 @@ export const ENTITIES = [
       {key: 'cta2_link', label: 'Destinație buton secundar', type: 'text'},
       {key: 'image_id', label: 'Imagine', type: 'image'},
       {key: 'video', label: 'Video YouTube', type: 'youtube', kinds: ['text', 'tutorial']},
-      {key: 'note', label: 'Notă evidențiată (lângă text)', type: 'textarea', kinds: ['text']},
+      {key: 'note', label: 'Notă evidențiată (lângă text)', type: 'textarea', kinds: ['text', 'trimite-test']},
       {key: 'facts', label: 'Cifre-cheie (câte una pe linie: valoare | etichetă)', type: 'textarea', kinds: ['hero']},
       // Semnul mărcii (lebăda din logo), văzut prin apa picăturii 3D; doar pe hero fără imagine.
       {key: 'drop_mark', label: 'În picătura din hero', type: 'select', options: ['lebada'], kinds: ['hero']},
@@ -194,7 +194,7 @@ export const ENTITIES = [
       {key: 'category_id', label: 'Categorie afișată', type: 'ref', target: 'categorii', rel: 'afișează categoria', inverseLabel: 'Secțiuni', kinds: ['produse']},
       {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero', 'calculator', 'recenzii']},
       {key: 'benefits', label: 'Beneficii', type: 'refs', target: 'beneficii', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['beneficii']},
-      {key: 'steps', label: 'Pași', type: 'refs', target: 'pasi', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['pasi', 'tutorial']},
+      {key: 'steps', label: 'Pași', type: 'refs', target: 'pasi', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['pasi', 'tutorial', 'trimite-test']},
       {key: 'faqs', label: 'Întrebări', type: 'refs', target: 'intrebari', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['intrebari']},
       {key: 'stages', label: 'Etape', type: 'refs', target: 'etape', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['tehnologie']},
       {key: 'parameters', label: 'Parametri', type: 'refs', target: 'parametri', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['test']}
@@ -210,6 +210,8 @@ export const ENTITIES = [
       {key: 'slug', label: 'Adresă', type: 'slug', from: 'title', allowEmpty: true},
       {key: 'menu_label', label: 'Etichetă în meniu', type: 'text'},
       {key: 'menu_order', label: 'Poziție în meniu', type: 'int'},
+      // „buton”: în antet apare ca buton (contur), lângă butonul spre retailer, nu ca link simplu.
+      {key: 'menu_style', label: 'Aspect în meniu', type: 'select', options: ['buton']},
       {key: 'footer', label: 'În subsol', type: 'select', options: ['firma', 'legal']},
       {key: 'seo_title', label: 'Titlu SEO', type: 'text', max: 70},
       {key: 'seo_description', label: 'Descriere SEO', type: 'textarea', max: 170},
