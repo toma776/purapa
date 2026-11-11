@@ -192,8 +192,8 @@ document.documentElement.classList.add('js');
   // Scenele din felii: peticul de sub fiecare felie ascunde figura din imaginea de bază. Culoarea lui vine din imagine:
   // pornind de la marginea peticului, culorile fundalului se întind lin spre interior (medie cu vecinii, repetată),
   // pe o copie de patru ori mai mică. Până e gata, sau dacă nu reușește, rămân peticele simple puse de server.
-  $('.fx-scene').forEach(async svg => {
-    const group = svg.querySelector('.fx-patches'), polys = $('polygon', group);
+  $$('.fx-scene').forEach(async svg => {
+    const group = svg.querySelector('.fx-patches'), polys = $$('polygon', group);
     if (!polys.length) return;
     const [, , W, H] = svg.getAttribute('viewBox').split(/\s+/).map(Number), k = 4, w = Math.ceil(W / k), h = Math.ceil(H / k);
     const img = new Image();
