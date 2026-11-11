@@ -516,12 +516,31 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 @media (max-width: 640px) { .fx-flow-tag { top: auto; bottom: 8px; translate: none; font-size: .75rem; padding: .35rem .7rem; } }
 @media (max-height: 660px) { .is-live .fx-flow-band { height: 26vh; min-height: 130px; } .is-live .fx-flow h2 { font-size: 1.75rem; } .is-live .fx-flow-steps .text { font-size: .9375rem; line-height: 1.5; } }
 
-/* Beneficii cu imagine: fundal de culoarea apei, iar imaginea se mișcă ușor în rama ei */
+/* Beneficii cu imagine: fundal de culoarea apei; imaginea e întreagă, la proporțiile ei (fără decupare) */
 .fx-impact { background: linear-gradient(#d3e6f2 0, #dcebf5 55%, var(--white) 100%); }
 .fx-impact-grid { display: grid; grid-template-columns: .95fr 1.05fr; gap: clamp(2rem, 1rem + 5vw, 5.5rem); align-items: center; }
 .fx-impact-media { border-radius: var(--r-xl); overflow: hidden; }
-.fx-impact-media > div { scale: 1.14; }
-.fx-impact-media img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: 50% 20%; }
+.fx-impact-media.tall { max-width: 27rem; margin-inline: auto; }
+.fx-impact-media img, .fx-scene { display: block; width: 100%; height: auto; }
+
+/* Scena din felii (render.mjs → picture, scenes.mjs): figurile interacționează într-o buclă de 9 secunde.
+   Întâi strângerea de mână, cu capetele aplecate unul spre altul; apoi cel din picioare se apleacă și îl bate pe umăr
+   pe cel așezat, iar ceilalți doi ridică privirea spre el. În repaus, feliile stau exact peste imagine. */
+.fx-part { transform-box: view-box; }
+@keyframes fx-sc-hands { 0%, 6%, 38%, 100% { transform: none; } 11% { transform: translateY(-8px) rotate(-1.2deg); } 17% { transform: translateY(6px) rotate(.8deg); }
+  23% { transform: translateY(-7px) rotate(-1deg); } 29% { transform: translateY(5px) rotate(.6deg); } }
+@keyframes fx-sc-woman { 0%, 4%, 96%, 100% { transform: none; } 12% { transform: rotate(3.5deg); } 19% { transform: rotate(1.5deg); } 26% { transform: rotate(3.5deg); }
+  42% { transform: rotate(0deg); } 58%, 80% { transform: rotate(-3deg); } }
+@keyframes fx-sc-seated { 0%, 4%, 96%, 100% { transform: none; } 12% { transform: rotate(-3.5deg); } 19% { transform: rotate(-1.5deg); } 26% { transform: rotate(-3.5deg); }
+  42% { transform: rotate(0deg); } 60%, 80% { transform: rotate(3deg); } }
+@keyframes fx-sc-standing { 0%, 96%, 100% { transform: none; } 14%, 34% { transform: rotate(-1.5deg); } 52%, 80% { transform: rotate(-5deg); } }
+@keyframes fx-sc-pat { 0%, 50%, 58%, 66%, 74%, 100% { transform: none; } 54%, 62%, 70% { transform: translateY(-8px) rotate(3deg); } }
+.fx-js:not(.fx-still) .in .fx-part { animation: 9s ease-in-out infinite; }
+.fx-js:not(.fx-still) .in .fx-part-hands { animation-name: fx-sc-hands; }
+.fx-js:not(.fx-still) .in .fx-part-woman { animation-name: fx-sc-woman; }
+.fx-js:not(.fx-still) .in .fx-part-seated { animation-name: fx-sc-seated; }
+.fx-js:not(.fx-still) .in .fx-part-standing { animation-name: fx-sc-standing; }
+.fx-js:not(.fx-still) .in .fx-part-pat { animation-name: fx-sc-pat; }
 .fx-impact .head { margin-bottom: 0; }
 .fx-impact-list { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1rem; }
 .fx-impact-list li { display: grid; grid-template-columns: 52px 1fr; gap: 1.1rem; align-items: start; padding: 1.1rem 1.25rem; border-radius: var(--r-md);
