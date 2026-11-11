@@ -527,20 +527,22 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
    Întâi strângerea de mână, cu capetele aplecate unul spre altul; apoi cel din picioare se apleacă și îl bate pe umăr
    pe cel așezat, iar ceilalți doi ridică privirea spre el. În repaus, feliile stau exact peste imagine. */
 .fx-part { transform-box: view-box; }
-@keyframes fx-sc-hands { 0%, 6%, 38%, 100% { transform: none; } 11% { transform: translateY(-8px) rotate(-1.2deg); } 17% { transform: translateY(6px) rotate(.8deg); }
-  23% { transform: translateY(-7px) rotate(-1deg); } 29% { transform: translateY(5px) rotate(.6deg); } }
-@keyframes fx-sc-woman { 0%, 4%, 96%, 100% { transform: none; } 12% { transform: rotate(3.5deg); } 19% { transform: rotate(1.5deg); } 26% { transform: rotate(3.5deg); }
-  42% { transform: rotate(0deg); } 58%, 80% { transform: rotate(-3deg); } }
-@keyframes fx-sc-seated { 0%, 4%, 96%, 100% { transform: none; } 12% { transform: rotate(-3.5deg); } 19% { transform: rotate(-1.5deg); } 26% { transform: rotate(-3.5deg); }
-  42% { transform: rotate(0deg); } 60%, 80% { transform: rotate(3deg); } }
-@keyframes fx-sc-standing { 0%, 96%, 100% { transform: none; } 14%, 34% { transform: rotate(-1.5deg); } 52%, 80% { transform: rotate(-5deg); } }
-@keyframes fx-sc-pat { 0%, 50%, 58%, 66%, 74%, 100% { transform: none; } 54%, 62%, 70% { transform: translateY(-8px) rotate(3deg); } }
-.fx-js:not(.fx-still) .in .fx-part { animation: 9s ease-in-out infinite; }
-.fx-js:not(.fx-still) .in .fx-part-hands { animation-name: fx-sc-hands; }
+@keyframes fx-sc-hands { 0%, 6%, 38%, 100% { transform: none; } 11% { transform: translateY(-5px) rotate(-1deg); } 17% { transform: translateY(4px) rotate(.7deg); }
+  23% { transform: translateY(-5px) rotate(-1deg); } 29% { transform: translateY(3px) rotate(.5deg); } }
+@keyframes fx-sc-woman { 0%, 4%, 96%, 100% { transform: none; } 12% { transform: rotate(2.6deg); } 19% { transform: rotate(1deg); } 26% { transform: rotate(2.6deg); }
+  42% { transform: rotate(0deg); } 58%, 80% { transform: rotate(-2.2deg); } }
+@keyframes fx-sc-seated { 0%, 4%, 96%, 100% { transform: none; } 12% { transform: rotate(-2.6deg); } 19% { transform: rotate(-1deg); } 26% { transform: rotate(-2.6deg); }
+  42% { transform: rotate(0deg); } 60%, 80% { transform: rotate(2.2deg); } }
+@keyframes fx-sc-standing { 0%, 96%, 100% { transform: none; } 14%, 34% { transform: rotate(-1deg); } 52%, 80% { transform: rotate(-3.4deg); } }
+@keyframes fx-sc-pat { 0%, 50%, 58%, 66%, 74%, 100% { transform: none; } 54%, 62%, 70% { transform: translateY(-6px) rotate(2deg); } }
+/* Cât se mișcă, feliile sunt cu câteva procente mai mari, ca imaginea de dedesubt să nu se vadă pe lângă ele. */
+.fx-part { transition: scale 1.2s var(--ease); }
+.fx-js:not(.fx-still) .in .fx-part { animation: 9s ease-in-out infinite; scale: 1.045; }
+.fx-js:not(.fx-still) .in .fx-part-hands { animation-name: fx-sc-hands; scale: 1.07; }
 .fx-js:not(.fx-still) .in .fx-part-woman { animation-name: fx-sc-woman; }
 .fx-js:not(.fx-still) .in .fx-part-seated { animation-name: fx-sc-seated; }
-.fx-js:not(.fx-still) .in .fx-part-standing { animation-name: fx-sc-standing; }
-.fx-js:not(.fx-still) .in .fx-part-pat { animation-name: fx-sc-pat; }
+.fx-js:not(.fx-still) .in .fx-part-standing { animation-name: fx-sc-standing; scale: 1.05; }
+.fx-js:not(.fx-still) .in .fx-part-pat { animation-name: fx-sc-pat; scale: 1.08; }
 .fx-impact .head { margin-bottom: 0; }
 .fx-impact-list { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1rem; }
 .fx-impact-list li { display: grid; grid-template-columns: 52px 1fr; gap: 1.1rem; align-items: start; padding: 1.1rem 1.25rem; border-radius: var(--r-md);
