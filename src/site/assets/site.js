@@ -33,6 +33,17 @@ document.querySelectorAll('form[data-calc]').forEach(form => {
   }));
 });
 
+// Formularul de contact pe site-ul static: nu există server care să primească mesajul, așa că la trimitere se deschide
+// aplicația de email a vizitatorului, cu subiectul și mesajul gata completate.
+document.querySelectorAll('form[data-mailto]').forEach(form => form.addEventListener('submit', e => {
+  e.preventDefault();
+  const v = n => form.elements[n]?.value.trim() ?? '';
+  const body = [`Nume: ${v('name')}`, `Email: ${v('email')}`, ...(v('phone') ? [`Telefon: ${v('phone')}`] : []), '', v('message')].join('\n');
+  window.location.href = `mailto:${form.dataset.mailto}?subject=${encodeURIComponent(v('subject'))}&body=${encodeURIComponent(body)}`;
+  const note = form.querySelector('.form-note');
+  if (note) note.hidden = false;
+}));
+
 // Antetul: umbră la derulare și meniul de pe mobil (aria-expanded, Escape, clic în afară).
 document.documentElement.classList.add('js');
 (() => {

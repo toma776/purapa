@@ -408,18 +408,19 @@ const SECTIONS = {
       <li data-reveal><span>Email</span><a href="mailto:${ctx.text('{email}')}">${ctx.text('{email}')}</a><br>Răspundem în ${ctx.text('{raspuns}')}.</li>
       <li data-reveal><span>Sediu</span>${ctx.text('{adresa_completa}')}</li>
     </ul>
-    ${ctx.staticSite
-      // Site static (fără server): mesajul pleacă din aplicația de email a vizitatorului, nu printr-un formular care n-ar trimite nimic.
-      ? `<div class="contact-mail" data-reveal style="--i:2"><h3>Scrie-ne un mesaj</h3><p>Îți răspundem în ${ctx.text('{raspuns}')}.</p>
-        <p><a class="btn" href="mailto:${ctx.text('{email}')}?subject=${encodeURIComponent('Întrebare de pe site')}">Trimite un email${icon('arrow')}</a></p></div>`
-      : `<form method="post" action="/api/public/contact" class="form" data-reveal style="--i:2">
+    <form method="post" class="form" data-reveal style="--i:2" ${ctx.staticSite
+      // Site static (fără server care să primească mesajul): același formular, dar la trimitere mesajul completat se deschide
+      // în aplicația de email a vizitatorului (site.js îl așază frumos; fără JavaScript, browserul face același lucru, mai brut).
+      ? `action="mailto:${ctx.text('{email}')}" enctype="text/plain" data-mailto="${ctx.text('{email}')}"`
+      : 'action="/api/public/contact"'}>
       <label>Nume complet <input name="name" required autocomplete="name"></label>
       <label>Email <input name="email" type="email" required autocomplete="email"></label>
       <label>Telefon (opțional) <input name="phone" type="tel" autocomplete="tel"></label>
       <label>Subiect <input name="subject" required></label>
       <label>Mesaj <textarea name="message" minlength="20" required></textarea></label>
       <div><button class="btn">Trimite mesajul${icon('arrow')}</button></div>
-    </form>`}</div>`)
+      ${ctx.staticSite ? '<p class="form-note" role="status" hidden>Mesajul tău s-a deschis în aplicația de email. Apasă „Trimite” acolo și îl primim.</p>' : ''}
+    </form></div>`)
 };
 
 function renderSection(ctx, s, i) {
