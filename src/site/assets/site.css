@@ -1068,3 +1068,36 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
   .tr-busy-drop i, .tr-busy-drop::after { animation: none; }
   .tr-busy.analyzing .tr-busy-list li { animation-duration: .01s; }
 }
+
+/* Blog: lista articolelor (carduri cu imagine, dată, titlu, rezumat) și pagina unui articol. */
+.posts { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
+.posts-empty { color: var(--muted); }
+.post-card > a { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; background: var(--white);
+  border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; transition: box-shadow .25s, border-color .25s; }
+.post-card > a:hover { border-color: #c6d3ea; box-shadow: var(--shadow-lg); }
+.post-card .media { aspect-ratio: 16 / 9; overflow: hidden; background: var(--soft); }
+.post-card .media img { width: 100%; height: 100%; object-fit: cover; }
+.post-card .body { display: flex; flex-direction: column; gap: .5rem; padding: 1.5rem; flex: 1; }
+.post-card h3 { margin: 0; font-size: 1.1875rem; line-height: 1.3; color: var(--navy); }
+.post-card .body p { margin: 0; color: var(--muted); }
+.post-card .more { margin-top: auto; padding-top: .5rem; display: inline-flex; align-items: center; gap: .35rem; font-weight: 600; color: var(--blue, #254a99); }
+.post-card .more svg { width: 1em; height: 1em; }
+.meta { margin: 0; color: var(--muted); font-size: .875rem; font-weight: 500; }
+.post .container { max-width: 50rem; }
+.post-head { margin-bottom: 2rem; }
+.post-head h1 { margin: .5rem 0 1rem; }
+.post-head .lead { margin-top: 1.25rem; }
+.crumbs a { font-size: .875rem; font-weight: 600; color: var(--muted); text-decoration: none; }
+.crumbs a::before { content: "← "; }
+.crumbs a:hover { color: var(--navy); }
+.post-cover { margin: 0 0 2.5rem; border-radius: var(--r-xl); overflow: hidden; background: var(--mist); }
+.post-cover img { display: block; width: 100%; height: auto; max-height: 30rem; object-fit: contain; }
+.post-body { max-width: none; font-size: 1.0625rem; }
+.post-body img { max-width: 100%; height: auto; border-radius: var(--r-md); }
+.post-faq { margin-top: 3rem; }
+.post-faq h2 { font-size: 1.5rem; margin: 0 0 1rem; }
+.post-cta { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: start; margin-top: 3rem; padding: clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
+  border-radius: var(--r-xl); background: linear-gradient(160deg, var(--mist), var(--soft)); border: 1px solid var(--line); }
+.post-cta .icon { background: var(--white); }
+.post-cta h2 { margin: 0 0 .5rem; font-size: 1.375rem; }
+.post-cta p { margin: 0 0 1.25rem; }

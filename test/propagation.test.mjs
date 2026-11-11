@@ -223,3 +223,32 @@ test('protecția la ștergere, blocarea optimistă și tranzacția anulată', ()
   assert.throws(() => store.setLinks(SYSTEM, 'produse', ids.kit, 'cartridges', [ids.termos]), {status: 400}, 'filtrul only: doar cartușe');
   assert.equal(db.prepare('SELECT COUNT(*) n FROM change_events').get().n, n);
 });
+
+test('blogul: un articol publicat are pagina lui și apare în lista de pe /blog/', () => {
+  const {store, ids, sync, propagate, html} = setup();
+  // Pagina Blog vine nepublicată din seed: nu e pe site până nu o publică cineva.
+  assert.equal(sync.get('/blog/').status, 404);
+  propagate(() => store.publish(SYSTEM, 'pagini', ids.blog));
+  assert.match(html('/blog/'), /Primele articole apar în curând/);
+
+  const {paths, result} = propagate(() => store.create(SYSTEM, 'articole', {title: 'Este bună de băut apa de la robinet?',
+    published_on: '2026-11-12', author: 'Echipa Purapa', excerpt: 'Ce spune legea și ce poți verifica singur.',
+    body: '<p>Apa pleacă potabilă de la furnizor.</p>', keyword: 'apa de la robinet e bună de băut',
+    products: [ids.test]}, {publish: true}));
+  assert.ok(paths.includes('/blog/'), 'lista de pe /blog/ se reface');
+  const path = '/blog/este-buna-de-baut-apa-de-la-robinet/';
+  assert.ok(paths.includes(path), 'pagina articolului se randează');
+  assert.match(html('/blog/'), new RegExp(`href="${path}"`));
+  const page = html(path);
+  assert.match(page, /<h1[^>]*>Este bună de băut apa de la robinet\?<\/h1>/);
+  assert.match(page, /12 noiembrie 2026/);
+  assert.match(page, /Produse recomandate/);
+  assert.match(page, /"@type":"Article"/);
+  // Cuvântul cheie e doar pentru redactare.
+  assert.doesNotMatch(page, /apa de la robinet e bună de băut/);
+
+  // Un preț schimbat la produsul recomandat reface și articolul.
+  const again = propagate(() => store.update(SYSTEM, 'produse', ids.test, {price: 95}, {publish: true})).paths;
+  assert.ok(again.includes(path));
+  assert.ok(result.id);
+});

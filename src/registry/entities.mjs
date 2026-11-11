@@ -158,6 +158,30 @@ export const ENTITIES = [
     ]
   },
   {
+    // Articolele de blog: fiecare are pagina lui, /blog/<adresă>/. Lista lor o arată secțiunea „articole”
+    // (pe pagina Blog). Cuvintele cheie sunt pentru redactare și nu apar pe site.
+    key: 'articole', table: 'articles', label: 'Articole', one: 'Articol',
+    category: 'blog', color: '#c0703a', thumb: 'image_id', title: 'title',
+    public: {path: r => r.slug ? `/blog/${r.slug}/` : null},
+    linkFields: ['title', 'slug'],
+    fields: [
+      {key: 'title', label: 'Titlu', type: 'text', required: true, max: 160, list: true},
+      {key: 'slug', label: 'Adresă', type: 'slug', from: 'title'},
+      {key: 'published_on', label: 'Data publicării (AAAA-LL-ZZ)', type: 'text', max: 10, list: true},
+      {key: 'author', label: 'Autor', type: 'text', max: 80},
+      {key: 'excerpt', label: 'Rezumat (în lista articolelor)', type: 'textarea', max: 300},
+      {key: 'image_id', label: 'Imagine principală', type: 'image'},
+      {key: 'body', label: 'Conținut', type: 'richtext', required: true},
+      {key: 'seo_title', label: 'Titlu SEO', type: 'text', max: 70},
+      {key: 'seo_description', label: 'Descriere SEO', type: 'textarea', max: 170},
+      {key: 'keyword', label: 'Cuvânt cheie principal', type: 'text', intern: true},
+      {key: 'keywords', label: 'Cuvinte cheie secundare', type: 'textarea', intern: true},
+      {key: 'faqs', label: 'Întrebări frecvente', type: 'refs', target: 'intrebari', ordered: true, rel: 'răspunde la', inverseLabel: 'Articole'},
+      {key: 'products', label: 'Produse recomandate', type: 'refs', target: 'produse', ordered: true, rel: 'recomandă', inverseLabel: 'Articole'},
+      {key: 'related', label: 'Articole recomandate', type: 'refs', target: 'articole', ordered: true, rel: 'trimite la', inverseLabel: 'Articole care trimit aici'}
+    ]
+  },
+  {
     key: 'media', table: 'media', label: 'Media', one: 'Fișier',
     category: 'media', color: '#999999', title: 'alt', noStatus: true,
     fields: [
@@ -175,7 +199,7 @@ export const ENTITIES = [
     anchor: r => `#s-${r.id}`,
     fields: [
       {key: 'kind', label: 'Tip', type: 'select', required: true,
-       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'recenzii', 'text', 'tutorial', 'contact', 'trimite-test', 'cta']},
+       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'recenzii', 'text', 'tutorial', 'contact', 'trimite-test', 'articole', 'cta']},
       {key: 'theme', label: 'Fundal', type: 'select', options: ['alb', 'deschis', 'inchis']},
       {key: 'kicker', label: 'Supratitlu', type: 'text', max: 60},
       {key: 'title', label: 'Titlu (*cuvinte* = evidențiate)', type: 'text'},

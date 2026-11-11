@@ -321,5 +321,13 @@ export function seed(store, {user = SYSTEM} = {}) {
     note: 'Testul oferă o evaluare orientativă a calității apei, pe baza unui screening chimic rapid, și nu detectează bacterii sau alte microorganisme. Valorile sunt calculate automat din fotografie, așa că lumina, unghiul sau camera pot da rezultate ușor diferite față de ce se vede pe bandă. Pentru confirmare și rezultate oficiale, recomandăm un laborator acreditat.',
     steps: photoTips}], src('/test-rapid/'));
 
+  // Blogul (nou, nu exista pe site-ul vechi): pagina cu lista articolelor. Rămâne nepublicată până apar primele articole.
+  const blogList = c('sectiuni', {kind: 'articole', kicker: 'Blog Purapa', title: 'Despre *apa* din casa ta',
+    text: '<p>Ghiduri practice despre apa de la robinet și din fântână: ce conține, cum o testezi și ce soluție i se potrivește.</p>'});
+  ids.blog = c('pagini', {title: 'Blog', slug: 'blog', menu_label: 'Blog', footer: 'firma',
+    seo_title: 'Blog Purapa – ghiduri despre apa de acasă',
+    seo_description: 'Ghiduri despre apa de la robinet și din fântână: testare, duritate, clor, filtre și dedurizatoare.',
+    sections: [blogList]}, undefined, false);
+
   return ids;
 }

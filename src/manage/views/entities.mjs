@@ -4,7 +4,7 @@ import {page, esc, badge, impact, fmtDate, json, empty} from './ui.mjs';
 import {can} from '../../core/store.mjs';
 import {ENTITIES, byKey, titleOf, publicPath, relFields, RELATION_TYPES, JSON_TYPES} from '../../registry/entities.mjs';
 
-const CATEGORY = {firma: 'Firmă', catalog: 'Catalog', tehnologie: 'Tehnologie', continut: 'Conținut', site: 'Site', media: 'Media', operational: 'Date de lucru'};
+const CATEGORY = {firma: 'Firmă', catalog: 'Catalog', tehnologie: 'Tehnologie', continut: 'Conținut', blog: 'Blog', site: 'Site', media: 'Media', operational: 'Date de lucru'};
 const TABS = [['prezentare', 'Prezentare'], ['detalii', 'Detalii'], ['relatii', 'Relații'], ['surse', 'Surse'], ['unde-apare', 'Unde apare'], ['istoric', 'Istoric']];
 const base = (key, id) => `/manage/entitati/${key}/${id}/`;
 const publishPerm = d => d.approval ? 'content.approve' : 'content.publish';

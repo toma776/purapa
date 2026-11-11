@@ -45,8 +45,18 @@ export function calc({liters, cost, yearly, kit, bottle}) {
 }
 
 export function publicPaths(store) {
-  return store.list('pagini').filter(p => p.status === 'published').map(p => publicPath(byKey.pagini, p)).filter(Boolean);
+  return ['pagini', 'articole'].flatMap(key => store.list(key).filter(p => p.status === 'published').map(p => publicPath(byKey[key], p))).filter(Boolean);
 }
+
+function findArticle(store, path, preview) {
+  return store.list('articole').find(a => (a.status === 'published' || (preview && a.status === 'draft'))
+    && publicPath(byKey.articole, preview && a.draft ? {...a, ...a.draft} : a) === path);
+}
+
+// Data unui articol, „AAAA-LL-ZZ” → „11 noiembrie 2026” (citită ca UTC, ca să nu se mute cu o zi).
+const postDate = d => /^\d{4}-\d{2}-\d{2}$/.test(d ?? '')
+  ? new Intl.DateTimeFormat('ro-RO', {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'}).format(new Date(`${d}T00:00:00Z`)) : '';
+const newestFirst = (a, b) => String(b.published_on ?? '').localeCompare(String(a.published_on ?? '')) || b.id - a.id;
 
 function findPage(store, path, preview) {
   return store.list('pagini').find(p => (p.status === 'published' || (preview && p.status === 'draft'))
@@ -484,6 +494,14 @@ const SECTIONS = {
       ${s.video ? `<p class="tut-orig" data-reveal><a href="https://www.youtube.com/watch?v=${esc(s.video)}" target="_blank" rel="noopener">Vezi și filmarea originală, pe YouTube</a></p>` : ''}`, ' tut-section');
   },
 
+  // Lista articolelor de blog publicate, cele mai noi primele (pe pagina Blog).
+  articole: (ctx, s) => {
+    const posts = ctx.within(ctx.component, 'Articolele de blog', () => ctx.query('articole', {
+      fields: ['title', 'slug', 'published_on', 'excerpt', 'image_id'], sort: newestFirst}));
+    return wrap(s, `${rhead(ctx, s)}${posts.length ? `<div class="posts" data-stagger>${posts.map(a => postCard(ctx, a)).join('')}</div>`
+      : '<p class="posts-empty" data-reveal>Primele articole apar în curând.</p>'}`);
+  },
+
   // Îndemnul final: pe toată lățimea, cu valuri.
   cta: (ctx, s) => {
     const wave = '<svg viewBox="0 0 2400 100" preserveAspectRatio="none"><path d="M0 60C200 20 400 20 600 60S1000 100 1200 60 1600 20 1800 60 2200 100 2400 60V100H0Z"/></svg>';
@@ -683,7 +701,59 @@ ${!indexable() ? '<meta name="robots" content="noindex, nofollow">' : path ? `<l
 ${header(ctx, path)}<main id="continut" tabindex="-1">${body}</main>${footer(ctx)}</body></html>`;
 }
 
+// Cardul unui articol în lista blogului: imaginea, data, titlul și rezumatul, tot cardul e linkul.
+function postCard(ctx, a) {
+  const date = postDate(a.published_on);
+  return `<article class="post-card" data-reveal data-spot><a href="${esc(publicPath(byKey.articole, a))}">
+    ${a.image_id ? `<div class="media">${image(ctx, a.image_id, {sizes: '(max-width: 700px) 92vw, 360px'})}</div>` : ''}
+    <div class="body">${date ? `<p class="meta"><time datetime="${esc(a.published_on)}">${date}</time></p>` : ''}<h3>${esc(a.title)}</h3>
+      ${a.excerpt ? `<p>${ctx.text(a.excerpt)}</p>` : ''}<span class="more">Citește articolul${icon('arrow')}</span></div></a></article>`;
+}
+
+// Pagina unui articol: titlul, data și autorul, imaginea, conținutul, întrebările frecvente, produsele recomandate,
+// articolele recomandate și trimiterea spre testarea apei. Datele structurate (Article, FAQPage) ajută căutarea.
+function renderArticle(ctx, store, path, found) {
+  const a = ctx.page('articole', found.id);
+  const blog = ctx.within('Articol', 'Pagina blogului', () => ctx.bySlug('pagini', 'blog'));
+  const testing = ctx.within('Articol', 'Trimiterea spre testare', () => ctx.bySlug('pagini', 'testare-apa'));
+  const faqs = ctx.within('Articol', 'Întrebările articolului', () => ctx.related('articole', a.id, 'faqs'));
+  const products = ctx.within('Articol', 'Produsele recomandate', () => ctx.related('articole', a.id, 'products'));
+  const related = ctx.within('Articol', 'Articolele recomandate', () => ctx.related('articole', a.id, 'related'));
+  const retailers = products.length ? ctx.within('Articol', 'Retailerul produselor', () => ctx.query('retaileri', {fields: ['name']})) : [];
+  const retailerOf = p => retailers.find(r => r.id === p.retailer_id) ?? (retailers.length === 1 ? retailers[0] : null);
+  const date = postDate(a.published_on);
+  const cover = ctx.within('Articol', 'Imaginea articolului', () => ctx.media(a.image_id));
+  const plain = html => String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const ld = [{'@context': 'https://schema.org', '@type': 'Article', headline: a.title, description: a.seo_description || a.excerpt || undefined,
+    datePublished: a.published_on || undefined, author: a.author ? {'@type': 'Person', name: a.author} : undefined,
+    image: cover ? `${SITE_URL}${cover.src}` : undefined, mainEntityOfPage: `${SITE_URL}${path}`},
+  ...(faqs.length ? [{'@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map(q => ({'@type': 'Question', name: q.question,
+    acceptedAnswer: {'@type': 'Answer', text: plain(ctx.rich(q.answer))}}))}] : [])];
+  const body = `<article class="section fx-top post" aria-labelledby="post-title"><div class="container">
+    <header class="post-head">${blog ? `<nav class="crumbs" aria-label="Unde ești"><a href="/blog/">Blog</a></nav>` : ''}
+      <h1 id="post-title" data-split>${esc(a.title)}</h1>
+      ${date || a.author ? `<p class="meta">${date ? `<time datetime="${esc(a.published_on)}">${date}</time>` : ''}${date && a.author ? ' · ' : ''}${a.author ? esc(a.author) : ''}</p>` : ''}
+      ${a.excerpt ? `<p class="lead">${ctx.text(a.excerpt)}</p>` : ''}</header>
+    ${cover ? `<figure class="post-cover">${image(ctx, a.image_id, {eager: true, sizes: '(max-width: 820px) 92vw, 760px'})}</figure>` : ''}
+    <div class="prose post-body">${ctx.rich(a.body)}</div>
+    ${faqs.length ? `<section class="post-faq" aria-labelledby="post-faq"><h2 id="post-faq">Întrebări frecvente</h2><div class="accordion">${faqs.map(q =>
+      `<details><summary>${ctx.text(q.question)}<span class="plus" aria-hidden="true"></span></summary><div class="answer">${ctx.rich(q.answer)}</div></details>`).join('')}</div></section>` : ''}
+    ${testing ? `<aside class="post-cta"><span class="icon">${icon('shield')}</span><div><h2>Află ce ai în apă</h2>
+      <p>Testul rapid Purapa verifică 16 parametri acasă, în câteva minute, și îți spune ce soluție se potrivește apei tale.</p>
+      <a class="btn" href="/testare-apa/">Vezi cum testezi apa${icon('arrow')}</a></div></aside>` : ''}
+  </div></article>
+  ${products.length ? `<section class="section deschis" aria-labelledby="post-products"><div class="container"><div class="head"><h2 id="post-products">Produse recomandate</h2></div>
+    <div class="products" data-stagger>${products.map(p => productCard(ctx, p, [], retailerOf(p))).join('')}</div></div></section>` : ''}
+  ${related.length ? `<section class="section" aria-labelledby="post-related"><div class="container"><div class="head"><h2 id="post-related">Citește și</h2></div>
+    <div class="posts" data-stagger>${related.map(r => postCard(ctx, r)).join('')}</div></div></section>` : ''}
+  <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`;
+  return {status: 200, title: a.title, owner: ['articole', a.id],
+    html: shell(ctx, {path, title: a.seo_title || a.title, description: a.seo_description || a.excerpt}, body)};
+}
+
 export function renderPath(ctx, store, path) {
+  const article = !findPage(store, path, ctx.preview) && findArticle(store, path, ctx.preview);
+  if (article) return renderArticle(ctx, store, path, article);
   const found = findPage(store, path, ctx.preview);
   if (!found) {
     return {status: 404, title: 'Pagina nu există',
