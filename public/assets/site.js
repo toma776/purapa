@@ -141,7 +141,7 @@ document.documentElement.classList.add('js');
   window.addEventListener('resize', queue);
 
   // Axa pașilor: se umple până la linia de citire, iar punctele trecute se aprind.
-  $('.timeline[data-progress]').forEach(list => {
+  $$('.timeline[data-progress]').forEach(list => {
     const items = [...list.children];
     onScrollFns.push(vh => {
       const r = list.getBoundingClientRect(), line = vh * .62;
