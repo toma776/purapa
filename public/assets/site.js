@@ -55,6 +55,99 @@ document.documentElement.classList.add('js');
   window.matchMedia('(min-width: 961px)').addEventListener('change', e => { if (e.matches) set(false); });
 })();
 
+// Tutorialul animat: o scenă pe rând, în ritmul narațiunii (data-dur, în secunde). Pornește doar la cerere,
+// se oprește singur când iese din ecran și reia când revine. Merge și cu „mișcare redusă”: scenele apar direct în starea finală.
+document.querySelectorAll('[data-tutorial]').forEach(root => {
+  const scenes = [...root.querySelectorAll('.tut-scene')];
+  if (!scenes.length) return;
+  const $ = s => root.querySelector(s);
+  const main = $('.tut-main'), list = $('.tut-chapters'), playBtn = $('.tut-play'), counter = $('.tut-n');
+  const segs = [...root.querySelectorAll('.tut-segs i')], chapters = [...list.children];
+  const durs = scenes.map(s => (parseFloat(s.dataset.dur) || 6) * 1000);
+  let i = 0, t = 0, playing = false, last = 0, raf = 0, idle = 0, autoPaused = false;
+
+  root.classList.add('is-player');
+  $('.tut-over').hidden = false;
+  list.hidden = false;
+
+  const paint = () => segs.forEach((s, k) => s.style.setProperty('--p', k < i ? 1 : k > i ? 0 : Math.min(1, t / durs[i])));
+  function show(n, animate = true) {
+    i = Math.max(0, Math.min(scenes.length - 1, n));
+    t = 0;
+    scenes.forEach((s, k) => { s.classList.toggle('cur', k === i); s.classList.remove('on'); });
+    // Clasa `on` pornește mișcarea scenei; scoasă și pusă la loc, o ia de la capăt.
+    if (animate) { void scenes[i].offsetWidth; scenes[i].classList.add('on'); }
+    chapters.forEach((c, k) => {
+      c.classList.toggle('on', k === i); c.classList.toggle('done', k < i);
+      const b = c.querySelector('button');
+      if (k === i) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    });
+    if (counter) counter.textContent = `${i + 1} / ${scenes.length}`;
+    // Pasul curent rămâne vizibil în listă, fără să miște pagina.
+    const c = chapters[i];
+    list.scrollTo({top: c.offsetTop - list.clientHeight / 2 + c.offsetHeight / 2, left: c.offsetLeft - list.clientWidth / 2 + c.offsetWidth / 2, behavior: 'smooth'});
+    paint();
+  }
+  function tick(now) {
+    t += now - last; last = now;
+    if (t >= durs[i]) {
+      if (i < scenes.length - 1) show(i + 1);
+      else { t = durs[i]; paint(); root.classList.add('ended'); return setPlaying(false); }
+    }
+    paint();
+    raf = requestAnimationFrame(tick);
+  }
+  function setPlaying(p) {
+    playing = p;
+    root.classList.toggle('playing', p);
+    root.classList.toggle('paused', !p);
+    playBtn.setAttribute('aria-label', p ? 'Pauză' : root.classList.contains('ended') ? 'Reia de la început' : 'Pornește');
+    cancelAnimationFrame(raf);
+    if (p) { last = performance.now(); raf = requestAnimationFrame(tick); wake(); }
+  }
+  function play() {
+    if (!root.classList.contains('started') || root.classList.contains('ended')) { root.classList.add('started'); root.classList.remove('ended'); show(0); }
+    setPlaying(true);
+  }
+  const go = n => { root.classList.add('started'); root.classList.remove('ended'); show(n); setPlaying(true); };
+  // Bara de control se retrage cât rulează și nimeni nu mișcă mouse-ul; revine la orice atingere.
+  function wake() { root.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => { if (playing && !main.querySelector('.tut-bar:focus-within')) root.classList.add('idle'); }, 2600); }
+
+  $('.tut-big').addEventListener('click', () => { play(); playBtn.focus({preventScroll: true}); });
+  playBtn.addEventListener('click', () => playing ? setPlaying(false) : play());
+  $('.tut-prev').addEventListener('click', () => go(t > 1500 ? i : i - 1));
+  $('.tut-next').addEventListener('click', () => go(i + 1));
+  root.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => go(Number(b.dataset.go))));
+  root.querySelectorAll('.tut-art').forEach(a => a.addEventListener('click', () => root.classList.contains('started') && (playing ? setPlaying(false) : play())));
+  main.addEventListener('pointermove', wake);
+  main.addEventListener('focusin', wake);
+  root.addEventListener('keydown', e => {
+    if (e.target.closest('.tut-chapters, .tut-segs') && (e.key === ' ' || e.key === 'Enter')) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); go(i + 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); go(i - 1); }
+    else if ((e.key === 'k' || e.key === ' ') && e.target.tagName !== 'BUTTON') { e.preventDefault(); playing ? setPlaying(false) : play(); }
+  });
+
+  const full = $('.tut-full');
+  const request = main.requestFullscreen ?? main.webkitRequestFullscreen;
+  if (!request) full.hidden = true;
+  else full.addEventListener('click', () => document.fullscreenElement ? document.exitFullscreen() : request.call(main));
+
+  // Lista pașilor are înălțimea player-ului.
+  new ResizeObserver(() => root.style.setProperty('--tut-h', `${main.offsetHeight}px`)).observe(main);
+  new IntersectionObserver(([e]) => {
+    if (!e.isIntersecting && playing) { autoPaused = true; setPlaying(false); }
+    else if (e.isIntersecting && autoPaused) { autoPaused = false; setPlaying(true); }
+  }, {threshold: .25}).observe(main);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && playing) { autoPaused = true; setPlaying(false); }
+    else if (!document.hidden && autoPaused) { autoPaused = false; setPlaying(true); }
+  });
+
+  show(0, false);
+  root.classList.remove('paused');
+});
+
 // Mișcarea paginii. Fără biblioteci: IntersectionObserver, un singur ascultător de derulare,
 // WebGL pentru picătura din hero și canvas 2D pentru drumul apei. Cu „mișcare redusă” nu pornește nimic din toate astea.
 (() => {
