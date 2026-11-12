@@ -1183,3 +1183,4 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 @media (max-width: 560px) { .amb-row { grid-template-columns: 1fr; } }
 .amb-jump { display: none; }
 @media (max-width: 960px) { .amb-jump { display: inline-flex; margin-top: 1.5rem; } }
+.amb-form[hidden], .amb-done [hidden] { display: none; }

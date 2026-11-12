@@ -59,7 +59,7 @@ document.querySelectorAll('form[data-ambasador]').forEach(form => {
   const done = saved => {
     form.hidden = true; box.hidden = false;
     box.querySelectorAll('[data-mail-msg]').forEach(el => { el.hidden = saved; });
-    box.querySelector('[data-saved-msg]').hidden = !saved;
+    box.querySelectorAll('[data-saved-msg]').forEach(el => { el.hidden = !saved; });
     box.focus({preventScroll: true}); box.scrollIntoView({block: 'center', behavior: 'smooth'});
   };
   if (/[?&]trimis=1/.test(location.search)) done(true);
