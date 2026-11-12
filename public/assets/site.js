@@ -35,7 +35,7 @@ document.querySelectorAll('form[data-calc]').forEach(form => {
 
 // Formularul de contact pe site-ul static: nu există server care să primească mesajul, așa că la trimitere se deschide
 // aplicația de email a vizitatorului, cu subiectul și mesajul gata completate.
-document.querySelectorAll('form[data-mailto]').forEach(form => form.addEventListener('submit', e => {
+document.querySelectorAll('form[data-mailto]:not([data-ambasador])').forEach(form => form.addEventListener('submit', e => {
   e.preventDefault();
   const v = n => form.elements[n]?.value.trim() ?? '';
   const body = [`Nume: ${v('name')}`, `Email: ${v('email')}`, ...(v('phone') ? [`Telefon: ${v('phone')}`] : []), '', v('message')].join('\n');
@@ -43,6 +43,52 @@ document.querySelectorAll('form[data-mailto]').forEach(form => form.addEventList
   const note = form.querySelector('.form-note');
   if (note) note.hidden = false;
 }));
+
+// Înscrierea în Purapa Ambassadors. Pe site-ul static (data-mailto) înscrierea se deschide completată în aplicația de email;
+// dacă aplicația nu pornește, vizitatorul o poate copia. Pe serverul local se trimite direct și ajunge în Brain, la mesaje.
+document.querySelectorAll('form[data-ambasador]').forEach(form => {
+  const box = form.nextElementSibling, phone = form.elements.phone;
+  const v = n => form.elements[n]?.value?.trim?.() ?? '';
+  const picked = n => [...form.querySelectorAll(`input[name="${n}"]:checked`)].map(i => i.value);
+  // Telefon românesc: 07xx xxx xxx sau +40 7xx xxx xxx (spațiile, punctele și liniuțele nu contează).
+  const phoneOk = () => /^(07\d{8}|\+407\d{8}|00407\d{8})$/.test(phone.value.replace(/[\s.-]/g, ''));
+  phone.addEventListener('input', () => phone.setCustomValidity(''));
+  let text = '';
+  const done = saved => {
+    form.hidden = true; box.hidden = false;
+    box.querySelectorAll('[data-mail-msg]').forEach(el => { el.hidden = saved; });
+    box.querySelector('[data-saved-msg]').hidden = !saved;
+    box.focus({preventScroll: true}); box.scrollIntoView({block: 'center', behavior: 'smooth'});
+  };
+  if (/[?&]trimis=1/.test(location.search)) done(true);
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    phone.setCustomValidity(phoneOk() ? '' : 'Scrie un număr de telefon valid, de exemplu 0722 123 456.');
+    if (!form.reportValidity()) return;
+    const data = {name: v('name'), email: v('email'), phone: v('phone'), city: v('city'), profile: picked('profile')[0] ?? '',
+      channels: picked('channels'), link: v('link'), motivation: v('motivation'), gdpr: form.elements.gdpr.checked};
+    text = ['Înscriere în programul Purapa Ambassadors', '', `Nume: ${data.name}`, `Email: ${data.email}`, `Telefon: ${data.phone}`,
+      `Oraș: ${data.city}`, `Ce mă descrie: ${data.profile}`, `Unde aș recomanda Purapa: ${data.channels.join(', ') || '—'}`,
+      `Profil online: ${data.link || '—'}`, '', `De ce mă atrage programul: ${data.motivation || '—'}`, '',
+      'Sunt de acord cu prelucrarea datelor conform Politicii de confidențialitate.'].join('\n');
+    if (form.dataset.mailto) {
+      window.location.href = `mailto:${form.dataset.mailto}?subject=${encodeURIComponent(`Înscriere Purapa Ambassadors: ${data.name}`)}&body=${encodeURIComponent(text)}`;
+      return done(false);
+    }
+    const btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+    try {
+      const r = await fetch(form.action, {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(data)});
+      if (!r.ok) throw new Error(await r.text());
+      done(true);
+    } catch { btn.disabled = false; alert('Înscrierea nu a putut fi trimisă. Încearcă din nou sau scrie-ne pe email.'); }
+  });
+  box.querySelector('[data-copy]')?.addEventListener('click', async ev => {
+    const b = ev.currentTarget;
+    try { await navigator.clipboard.writeText(text); b.textContent = 'Copiat! Lipește-l într-un email'; }
+    catch { b.textContent = 'Selectează și copiază textul de mai jos'; const pre = document.createElement('pre'); pre.className = 'amb-text'; pre.textContent = text; b.after(pre); }
+  });
+});
 
 // Antetul: umbră la derulare și meniul de pe mobil (aria-expanded, Escape, clic în afară).
 document.documentElement.classList.add('js');
