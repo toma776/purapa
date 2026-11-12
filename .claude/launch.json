@@ -31,17 +31,6 @@
       ],
       "port": 3102,
       "autoPort": false
-    },
-    {
-      "name": "purapa-incercare",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--input-type=module",
-        "-e",
-        "process.env.PORT='3103';process.env.DB='data/incercare.db';await import('./src/server.mjs')"
-      ],
-      "port": 3103,
-      "autoPort": false
     }
   ]
 }

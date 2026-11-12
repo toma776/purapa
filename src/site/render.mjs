@@ -527,12 +527,12 @@ const SECTIONS = {
       <legend>${legend}${opt ? ' <small>(poți alege mai multe)</small>' : ` ${req}`}</legend>
       <div>${options.map(o => `<label><input type="${type}" name="${name}" value="${esc(o)}"${type === 'radio' ? ' required' : ''}><span>${esc(o)}</span></label>`).join('')}</div></fieldset>`;
     return wrap(s, `<div class="amb">
-      <div class="amb-pitch" data-reveal>${flush(head(ctx, s, {h1: true}))}
+      <div class="amb-pitch">${flush(head(ctx, s, {h1: true}))}
         <a class="btn amb-jump" href="#inscriere">Înscrie-te acum${icon('arrow')}</a>
         ${perks.length ? `<ul class="amb-perks">${perks.map(b => `<li><span class="icon">${icon(b.icon)}</span><div><h3>${ctx.text(b.title)}</h3>${b.text ? `<p>${ctx.text(b.text)}</p>` : ''}</div></li>`).join('')}</ul>` : ''}
         ${next.length ? `<div class="amb-next"><h2>Ce urmează după înscriere</h2><ol>${next.map(p => `<li><strong>${ctx.text(p.title)}</strong>${p.text ? ctx.rich(p.text) : ''}</li>`).join('')}</ol></div>` : ''}
       </div>
-      <div class="amb-card" data-reveal style="--i:2" id="inscriere">
+      <div class="amb-card" id="inscriere">
         <form method="post" class="form amb-form" data-ambasador ${ctx.staticSite
           ? `action="mailto:${mail}" enctype="text/plain" data-mailto="${mail}"` : 'action="/api/public/ambasador"'}>
           <div class="amb-form-head"><h2>Înscrie-te în program</h2><p>Durează două minute și nu te obligă la nimic.</p></div>
@@ -553,7 +553,7 @@ const SECTIONS = {
         </form>
         <div class="amb-done" role="status" hidden tabindex="-1">
           <span class="amb-done-icon">${check}</span>
-          <h2>Aproape gata!</h2>
+          <h2 data-mail-msg>Aproape gata!</h2><h2 data-saved-msg hidden>Mulțumim, te-ai înscris!</h2>
           <p data-mail-msg>Înscrierea ta s-a deschis completată în aplicația de email. Apasă „Trimite” acolo și o primim.</p>
           <p data-saved-msg hidden>Am primit înscrierea ta. Te contactăm în ${ctx.text('{raspuns}')}.</p>
           <div class="amb-fallback" data-mail-msg><p>Nu s-a deschis nimic? Copiază înscrierea și trimite-o la <a href="mailto:${mail}">${mail}</a>.</p>
