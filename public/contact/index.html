@@ -2,9 +2,9 @@
 <title>Contact | Purapa</title><meta name="description" content="Ai întrebări despre filtrele de apă sau vrei să programezi un test? Contactează echipa PurApa telefonic, prin email sau formular. Răspuns rapid.">
 <meta name="robots" content="noindex, nofollow"><meta name="theme-color" content="#254a99">
 <link rel="preload" href="/assets/fonts/montserrat-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/site.css?v=5d39483c3c">
+<link rel="stylesheet" href="/assets/site.css?v=11efc417cc">
 <script>document.documentElement.classList.add('fx-js');setTimeout(function(){if(!window.__fx)document.documentElement.classList.add('fx-still')},4000)</script>
-<script src="/assets/site.js?v=5d39483c3c" defer></script></head>
+<script src="/assets/site.js?v=11efc417cc" defer></script></head>
 <body><a class="skip" href="#continut">Sari la conținut</a><div class="fx-progress" aria-hidden="true"></div>
 <header class="site-header"><div class="container bar">
       <a class="logo" href="/" aria-label="Purapa — prima pagină"><img src="/assets/baked/6ba2fb40301790b73d5edb93581deffb84830665-w160.webp" alt="Purapa" width="160" height="104"></a>
@@ -18,12 +18,13 @@
       <li data-reveal><span>Sediu</span>Str. Răsăritului nr. 90, hala C2, Buftea, jud. Ilfov</li>
     </ul>
     <div class="contact-form"><h2 data-reveal style="--i:1">Întreabă-ne despre <em class="accent">Purapa</em></h2>
-    <form method="post" class="form" data-reveal style="--i:2" action="mailto:contact@purapa.ro" enctype="text/plain" data-mailto="contact@purapa.ro">
-      <label>Nume complet <input name="name" required autocomplete="name"></label>
-      <label>Email <input name="email" type="email" required autocomplete="email"></label>
-      <label>Telefon (opțional) <input name="phone" type="tel" autocomplete="tel"></label>
-      <label>Subiect <input name="subject" required></label>
-      <label>Mesaj <textarea name="message" minlength="20" required></textarea></label>
+    <form method="post" class="form" data-reveal style="--i:2" toolname="trimite_mesaj_purapa"
+      tooldescription="Trimite un mesaj echipei Purapa (întrebări despre filtre, testarea apei, comenzi sau programul de ambasadori). Cere nume, email, subiect și mesaj; telefonul e opțional. Trimiterea o confirmă vizitatorul." action="mailto:contact@purapa.ro" enctype="text/plain" data-mailto="contact@purapa.ro">
+      <label>Nume complet <input name="name" required autocomplete="name" toolparamdescription="Numele complet al persoanei care scrie"></label>
+      <label>Email <input name="email" type="email" required autocomplete="email" toolparamdescription="Adresa de email la care Purapa răspunde"></label>
+      <label>Telefon (opțional) <input name="phone" type="tel" autocomplete="tel" toolparamdescription="Număr de telefon, opțional"></label>
+      <label>Subiect <input name="subject" required toolparamdescription="Subiectul mesajului, în câteva cuvinte"></label>
+      <label>Mesaj <textarea name="message" minlength="20" required toolparamdescription="Mesajul sau întrebarea, cel puțin 20 de caractere"></textarea></label>
       <div><button class="btn">Trimite mesajul<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
       <p class="form-note" role="status" hidden>Mesajul tău s-a deschis în aplicația de email. Apasă „Trimite” acolo și îl primim.</p>
     </form></div></div></div></section></main><footer class="site-footer"><div class="container">
