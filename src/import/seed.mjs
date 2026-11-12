@@ -292,7 +292,8 @@ export function seed(store, {user = SYSTEM} = {}) {
       cta_label: 'Devino ambasador', cta_link: `ref:pagini:${ids.contact}`,
       facts: '3 pași | ca să începi\ncomision | la fiecare achiziție\nzero | obiective impuse'},
     about: {kind: 'text', kicker: 'Despre program', title: 'Un mod simplu și natural de a contribui la *binele celor din jur*',
-      text: '<p>Programul Purapa Ambassadors reunește studenți, creatori și oameni activi în comunitățile lor, care aleg să împărtășească beneficiile apei filtrate celor dragi.</p><p>Prin recomandările tale, autentice și bazate pe experiență, familiile pot descoperi o soluție sigură și sustenabilă pentru apa de zi cu zi. Pentru fiecare achiziție făcută prin codul tău primești un comision, conform condițiilor programului.</p>',
+      text: '<p>Programul Purapa Ambassadors reunește oameni care aleg să împărtășească beneficiile apei filtrate celor dragi.</p>',
+      facts: 'Cine participă | Studenți, creatori și oameni activi în comunitățile lor.\nCe faci | Recomanzi autentic, din experiența ta, iar familiile descoperă o soluție sigură și sustenabilă pentru apa de zi cu zi.\nCe primești | Un comision pentru fiecare achiziție făcută prin codul tău, conform condițiilor programului.',
       note: 'Fără presiune, fără obiective impuse, fără obligații.'},
     steps: {kind: 'pasi', theme: 'deschis', kicker: 'Cum funcționează', title: 'Trei pași, de la înscriere la *recompensă*', steps: ambSteps},
     // Ilustrația comunității vine din import, pe secțiunea cu acest titlu (ca pe site-ul vechi).

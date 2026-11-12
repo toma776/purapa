@@ -285,7 +285,20 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
   border-radius: var(--r-xl); background: linear-gradient(160deg, var(--mist), var(--soft)); border: 1px solid var(--line); }
 .note-card .icon { background: var(--white); }
 .note-card p { margin: 0; color: var(--ink); font-size: 1rem; }
-@media (max-width: 880px) { .intro-split { grid-template-columns: 1fr; } }
+/* Text cu puncte-cheie: introducerea în stânga, punctele numerotate într-un card, nota ca încheiere. */
+.intro-split.top { grid-template-columns: 1fr 1fr; align-items: start; }
+.points-card { padding: clamp(.5rem, .25rem + 1vw, 1rem) clamp(1.5rem, 1rem + 1.5vw, 2.25rem) clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
+  border-radius: var(--r-xl); background: linear-gradient(160deg, var(--mist), var(--soft)); border: 1px solid var(--line); }
+.points { margin: 0; padding: 0; list-style: none; }
+.points li { display: grid; grid-template-columns: 2.75rem 1fr; gap: 1rem; padding: 1.35rem 0; border-bottom: 1px solid var(--line); }
+.points .n { font-size: .8125rem; font-weight: 800; letter-spacing: .08em; color: var(--blue); padding-top: .2rem; }
+.points h3 { margin: 0 0 .3rem; font-size: 1.125rem; color: var(--navy); }
+.points p { margin: 0; color: var(--muted); font-size: 1rem; line-height: 1.55; }
+.points-note { display: flex; align-items: center; gap: .75rem; margin: 1.35rem 0 0; padding: .85rem 1.1rem; border-radius: 999px;
+  background: var(--white); color: var(--navy); font-weight: 600; font-size: .9375rem; line-height: 1.4; }
+.points-note svg { flex: none; width: 22px; height: 22px; color: var(--blue); }
+.points-card:not(:has(.points-note)) li:last-child { border-bottom: 0; padding-bottom: 0; }
+@media (max-width: 880px) { .intro-split, .intro-split.top { grid-template-columns: 1fr; } .points-note { border-radius: var(--r-lg, 18px); } }
 
 /* În antetul unei secțiuni, o listă din text devine un șir de etichete. */
 .head .lead ul { list-style: none; padding: 0; margin: 1.25rem 0; display: flex; flex-wrap: wrap; gap: .5rem; }

@@ -163,6 +163,10 @@ function productFacts(ctx, p) {
   ].filter(Boolean);
 }
 
+// Liniile „titlu | text” ale unei secțiuni (cifrele din hero, punctele din text), cu jetoane.
+const factLines = (ctx, s) => String(s.facts ?? '').split('\n').map(l => l.split('|').map(x => x.trim())).filter(([v]) => v)
+  .map(([v, l = '']) => ({value: ctx.text(v), label: ctx.text(l)}));
+
 // Culorile padurilor de pe banda de test (decorative).
 const PADS = ['#f6d76b', '#f2b65c', '#ee8f6b', '#e86f8a', '#d96bb0', '#b56fd0', '#8b78dd', '#6b8fe6', '#58a9e8', '#4fc3e0', '#4fd0bf', '#62d39a', '#8fd67a', '#bfd866', '#e3d062', '#f0c36a'];
 const ripples = '<span class="fx-ripples" aria-hidden="true"><i></i><i></i><i></i></span>';
@@ -209,7 +213,7 @@ const SECTIONS = {
   hero: (ctx, s, i) => {
     const product = ctx.within(ctx.component, 'Produsul din hero', () => ctx.related('sectiuni', s.id, 'products'))[0];
     // Cifrele-cheie: cele scrise în secțiune („valoare | etichetă”, cu jetoane), altfel cele calculate din produs.
-    const facts = s.facts ? String(s.facts).split('\n').map(l => l.split('|').map(x => x.trim())).filter(([v]) => v).map(([v, l = '']) => ({value: ctx.text(v), label: ctx.text(l)}))
+    const facts = s.facts ? factLines(ctx, s)
       : product ? productFacts(ctx, product).map(f => ({value: esc(f.value), label: esc(f.label)})) : [];
     // Imaginea secțiunii, dacă are o scenă cu decupaj, intră în picătură fără fundal, cu figurile în mișcare.
     const cut = cutout(ctx, s.image_id, `hc${s.id}`);
@@ -455,9 +459,13 @@ const SECTIONS = {
         <div class="answer">${ctx.rich(q.answer)}</div></details>`).join('')}</div></div>`);
   },
 
-  // Cu video, secțiunea e o prezentare centrată (antet + video); cu notă, textul are alături un card cu precizarea;
-  // altfel e text de citit.
+  // Cu video, secțiunea e o prezentare centrată (antet + video); cu puncte-cheie, introducerea stă în stânga, iar punctele,
+  // numerotate, în dreapta, cu nota ca încheiere; doar cu notă, textul are alături un card cu precizarea; altfel e text de citit.
   text: (ctx, s) => s.video ? wrap(s, `${rhead(ctx, s, {center: true})}${ractions(buttons(ctx, s))}${video(s).replace('class="video"', 'class="video" data-reveal')}`)
+    : s.facts ? wrap(s, `<div class="intro-split top"><div data-reveal>${flush(head(ctx, s))}${buttons(ctx, s)}</div>
+      <div class="points-card" data-reveal style="--i:1"><ol class="points" data-stagger>${factLines(ctx, s).map((f, k) =>
+        `<li data-reveal><span class="n" aria-hidden="true">${String(k + 1).padStart(2, '0')}</span><div><h3>${f.value}</h3>${f.label ? `<p>${f.label}</p>` : ''}</div></li>`).join('')}</ol>
+        ${s.note ? `<p class="points-note">${icon('shield')}<span>${ctx.text(s.note)}</span></p>` : ''}</div></div>`)
     : s.note ? wrap(s, `<div class="intro-split"><div data-reveal>${flush(head(ctx, s))}${buttons(ctx, s)}</div>
       <aside class="note-card" data-reveal style="--i:2"><span class="icon">${icon('shield')}</span><p>${ctx.text(s.note)}</p></aside></div>`)
     : wrap(s, `<div class="prose" data-reveal>${s.kicker ? `<p class="eyebrow">${ctx.text(s.kicker)}</p>` : ''}

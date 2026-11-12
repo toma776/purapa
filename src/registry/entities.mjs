@@ -211,7 +211,7 @@ export const ENTITIES = [
       {key: 'image_id', label: 'Imagine', type: 'image'},
       {key: 'video', label: 'Video YouTube', type: 'youtube', kinds: ['text', 'tutorial']},
       {key: 'note', label: 'Notă evidențiată (lângă text)', type: 'textarea', kinds: ['text', 'trimite-test']},
-      {key: 'facts', label: 'Cifre-cheie (câte una pe linie: valoare | etichetă)', type: 'textarea', kinds: ['hero']},
+      {key: 'facts', label: 'Cifre-cheie în hero, puncte-cheie lângă text (câte una pe linie: titlu | text)', type: 'textarea', kinds: ['hero', 'text']},
       // Semnul mărcii (lebăda din logo), văzut prin apa picăturii 3D; doar pe hero fără imagine.
       {key: 'drop_mark', label: 'În picătura din hero', type: 'select', options: ['lebada'], kinds: ['hero']},
       {key: 'params', label: 'Ipotezele calculatorului', type: 'json', kinds: ['calculator']},
