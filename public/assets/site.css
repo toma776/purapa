@@ -38,7 +38,7 @@
   --fs-small: .9375rem;
   /* Spațiere, forme, umbre */
   --gutter: clamp(1rem, .6rem + 2vw, 2rem);
-  --section: clamp(4.5rem, 3rem + 6vw, 7.5rem);
+  --section: clamp(3rem, 2rem + 3.5vw, 4.75rem); /* spațiul de sus și de jos al unei secțiuni: 48 px pe telefon, 76 px pe desktop */
   --container: 1180px;
   --r-sm: 8px; --r-md: 16px; --r-lg: 24px; --r-xl: 32px;
   --shadow-sm: 0 1px 2px rgb(22 38 84 / .06), 0 2px 8px rgb(22 38 84 / .04);
@@ -395,7 +395,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 
 /* Hero */
 .fx-hero { position: relative; overflow: hidden; display: grid; align-items: center; min-height: calc(100svh - var(--header-h));
-  padding-block: clamp(2rem, 1rem + 3vw, 4rem) clamp(3.5rem, 2rem + 5vw, 6rem);
+  padding-block: clamp(1.5rem, .75rem + 2vw, 3rem) clamp(2.5rem, 1.5rem + 3.5vw, 4rem);
   background: radial-gradient(64rem 38rem at 86% 6%, rgb(11 187 239 / .14), transparent 62%), radial-gradient(48rem 30rem at -6% 104%, var(--soft), transparent 70%),
     linear-gradient(var(--white), #f4f8fd); }
 .fx-hero-grid { display: grid; grid-template-columns: 1.02fr .98fr; gap: clamp(2rem, 1rem + 4vw, 4.5rem); align-items: center; }
@@ -600,7 +600,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 @media (max-width: 880px) { .fx-impact-grid { grid-template-columns: 1fr; } .fx-impact-media { max-width: 420px; margin-inline: auto; } }
 
 /* Finalul: valuri */
-.fx-cta { position: relative; margin-top: clamp(5rem, 4rem + 4vw, 8rem); padding-block: clamp(3rem, 2rem + 4vw, 5.5rem) clamp(4.5rem, 3rem + 6vw, 8rem); text-align: center;
+.fx-cta { position: relative; margin-top: clamp(3rem, 2.5rem + 2.5vw, 5rem); padding-block: clamp(2.25rem, 1.5rem + 3vw, 3.75rem) clamp(3rem, 2rem + 4vw, 5rem); text-align: center;
   color: #d0dbf2; background: radial-gradient(50rem 24rem at 50% 110%, rgb(11 187 239 / .3), transparent 70%), var(--navy); }
 .fx-cta h2 { color: var(--white); font-size: clamp(2.125rem, 1.4rem + 3vw, 3.75rem); max-width: 18ch; margin-inline: auto; }
 .fx-cta .eyebrow { color: var(--sky); justify-content: center; }
@@ -632,7 +632,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .btn:hover svg { translate: 3px 0; }
 
 /* Hero fără imagine (paginile interioare): mai scund, cu picătura goală alături */
-.fx-hero.solo { min-height: 0; padding-block: clamp(3rem, 2rem + 4vw, 5.5rem); }
+.fx-hero.solo { min-height: 0; padding-block: clamp(2.25rem, 1.5rem + 3vw, 3.75rem); }
 .fx-hero.solo .fx-hero-grid { grid-template-columns: 1.3fr .7fr; justify-items: stretch; text-align: left; }
 .fx-hero.solo .fx-stage { width: min(100%, 400px); justify-self: center; }
 .fx-hero.solo h1, .fx-hero.solo h2 { font-size: clamp(2.4rem, 1.3rem + 3.8vw, 4.25rem); }
@@ -642,7 +642,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 }
 
 /* Începutul unei pagini fără hero (Produse, Contact, textele legale) */
-.section.fx-top { padding-top: clamp(3.5rem, 2rem + 5vw, 6rem);
+.section.fx-top { padding-top: clamp(2.5rem, 1.5rem + 3.5vw, 4.25rem);
   background: radial-gradient(60rem 30rem at 88% -10%, rgb(11 187 239 / .15), transparent 62%), radial-gradient(40rem 24rem at 0% 0%, var(--soft), transparent 70%), var(--white); }
 .fx-top [data-split] { font-size: clamp(2.25rem, 1.4rem + 3.4vw, 3.75rem); letter-spacing: -.035em; line-height: 1.06; margin-top: 0; }
 .fx-404-n { margin: 0 0 1rem; font-size: clamp(6rem, 3rem + 16vw, 14rem); font-weight: 800; line-height: .9; letter-spacing: -.06em;
