@@ -53,6 +53,8 @@ document.querySelectorAll('form[data-ambasador]').forEach(form => {
   // Telefon românesc: 07xx xxx xxx sau +40 7xx xxx xxx (spațiile, punctele și liniuțele nu contează).
   const phoneOk = () => /^(07\d{8}|\+407\d{8}|00407\d{8})$/.test(phone.value.replace(/[\s.-]/g, ''));
   phone.addEventListener('input', () => phone.setCustomValidity(''));
+  // Validarea o face scriptul, la fiecare trimitere (și după completarea automată din browser); fără JavaScript, rămâne a browserului.
+  form.noValidate = true;
   let text = '';
   const done = saved => {
     form.hidden = true; box.hidden = false;
