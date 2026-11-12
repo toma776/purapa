@@ -759,3 +759,56 @@ void main(){
 
   onScroll();
 })();
+
+// WebMCP: uneltele pe care pagina le pune la dispoziția agenților AI din browser (standard propus, deocamdată doar în Chrome
+// experimental). Browserele fără WebMCP sar peste tot blocul. Formularele de contact și de ambasadori își declară acțiunea
+// direct în HTML (toolname, în render.mjs); aici sunt cele două acțiuni pe care un formular nu le poate exprima. Ambele doar
+// citesc: iau datele din paginile site-ului (lista de produse, calculatorul), ca să nu existe o a doua sursă.
+(() => {
+  const mc = navigator.modelContext ?? document.modelContext;
+  if (!mc?.registerTool) return;
+  const page = async path => new DOMParser().parseFromString(await (await fetch(path)).text(), 'text/html');
+  const reply = (text, data) => ({content: [{type: 'text', text}], structuredContent: data});
+  const plain = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const txt = (el, sel) => el.querySelector(sel)?.textContent.replace(/\s+/g, ' ').trim() ?? '';
+  const tools = [{
+    name: 'cauta_produse_purapa',
+    description: 'Caută în produsele Purapa (filtre de apă, cartușe, teste de apă, dedurizatoare, dozatoare). Întoarce numele, categoria, descrierea scurtă, prețul în lei, disponibilitatea și linkul de comandă de la retailerul autorizat. Fără cuvânt de căutare, întoarce toate produsele.',
+    inputSchema: {type: 'object', properties: {query: {type: 'string', description: 'Cuvânt sau expresie de căutat în nume, categorie și descriere, de exemplu „cartuș” sau „test”. Opțional.'}}},
+    annotations: {readOnlyHint: true},
+    execute: async ({query = ''} = {}) => {
+      const doc = await page('/produse/'), words = plain(query).split(/\s+/).filter(Boolean);
+      const products = [...doc.querySelectorAll('article.product')].map(el => ({
+        nume: txt(el, 'h3'), categorie: txt(el, '.cat'), descriere: txt(el, '.body > p:not(.cat):not(.price)'),
+        pret: txt(el, '.price .now').replace(/^Preț:\s*/, ''), disponibilitate: txt(el, '.stock'),
+        nota: txt(el, '.rating strong'), link_comanda: el.querySelector('a.btn')?.href ?? ''
+      })).filter(p => words.every(w => plain(`${p.nume} ${p.categorie} ${p.descriere}`).includes(w)));
+      return reply(products.length ? products.map(p => `${p.nume}${p.pret ? ` – ${p.pret}` : ''}${p.disponibilitate ? ` (${p.disponibilitate})` : ''}${p.link_comanda ? `: ${p.link_comanda}` : ''}`).join('\n')
+        : 'Niciun produs Purapa nu se potrivește căutării.', {produse: products});
+    }
+  }, {
+    name: 'calculeaza_economia_apa',
+    description: 'Calculează cât economisește o familie care trece de la apă îmbuteliată la filtrul de apă Purapa: economia pe an și pe lună, sticlele de plastic evitate pe an și în câte luni se amortizează kitul. Folosește prețurile actuale ale kitului și cartușelor.',
+    inputSchema: {type: 'object', properties: {
+      persoane: {type: 'integer', minimum: 1, maximum: 15, description: 'Numărul de persoane din casă'},
+      litri_pe_luna: {type: 'number', minimum: 1, description: 'Litri de apă îmbuteliată cumpărați pe lună. Opțional: implicit se calculează din numărul de persoane.'},
+      cost_pe_litru: {type: 'number', minimum: 0.1, description: 'Prețul apei îmbuteliate, în lei pe litru. Opțional: implicit valoarea din calculatorul de pe site.'}
+    }, required: ['persoane']},
+    annotations: {readOnlyHint: true},
+    execute: async ({persoane, litri_pe_luna, cost_pe_litru} = {}) => {
+      const form = document.querySelector('form[data-calc]') ?? (await page('/')).querySelector('form[data-calc]');
+      if (!form) return reply('Calculatorul de economii nu e disponibil acum.', {});
+      const d = JSON.parse(form.dataset.calc), n = Math.min(15, Math.max(1, Math.round(Number(persoane) || 1)));
+      const liters = Number(litri_pe_luna) > 0 ? Number(litri_pe_luna) : n * d.perPersonMonth;
+      const cost = Number(cost_pe_litru) > 0 ? Number(cost_pe_litru) : Number(form.querySelector('[name="cost"]')?.getAttribute('value')) || 0;
+      // Aceeași formulă ca în calculatorul din pagină (începutul acestui fișier) și ca la server (render.mjs → calc).
+      const monthly = liters * cost - d.yearly / 12, loss = monthly <= 0, months = !loss && d.kit ? Math.ceil(d.kit / monthly) : null;
+      const data = {persoane: n, litri_pe_luna: liters, cost_pe_litru: cost, economie_pe_an_lei: loss ? 0 : Math.round(monthly * 12),
+        economie_pe_luna_lei: loss ? 0 : Math.round(monthly), sticle_evitate_pe_an: Math.round(liters * 12 / d.bottle),
+        amortizare_kit_luni: months, cost_cartuse_pe_an_lei: d.yearly, pret_kit_lei: d.kit ?? null};
+      return reply(loss ? 'La acest consum, cartușele costă mai mult decât apa îmbuteliată.'
+        : `Economie de circa ${data.economie_pe_an_lei} lei pe an (${data.economie_pe_luna_lei} lei pe lună) și ${data.sticle_evitate_pe_an} sticle evitate pe an${months ? `; kitul se amortizează în ${months > 60 ? 'peste 5 ani' : `${months} luni`}` : ''}.`, data);
+    }
+  }];
+  for (const tool of tools) { try { mc.registerTool(tool); } catch { /* unealtă deja înregistrată sau API schimbat */ } }
+})();
