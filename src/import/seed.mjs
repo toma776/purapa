@@ -212,7 +212,7 @@ export function seed(store, {user = SYSTEM} = {}) {
   const home = {};
   for (const [key, data] of Object.entries({
     hero: {kind: 'hero', kicker: 'Filtru de apă pentru bucătărie', title: 'Redescoperă gustul *apei pure*.',
-      text: '<p>Sistemele de filtrare Purapa transformă apa de la robinet într-o experiență pură și sigură. Performanță ridicată, design compact și cost redus. E normal să-ți fie sete!</p>',
+      text: '<p>Sistemele de filtrare Purapa transformă apa de la robinet într-o experiență pură și sigură. Performanță ridicată, design compact și cost redus.</p><p><strong>E normal să-ți fie sete!</strong></p>',
       products: [ids.kit], cta2_label: 'Testează-ți apa', cta2_link: `ref:pagini:${ids.testare}`},
     why: {kind: 'beneficii', kicker: 'De ce Purapa', title: 'De ce să alegi *Purapa*?',
       text: '<p>Filtrare în două etape, direct la robinetul din bucătărie, fără bidoane și fără instalații complicate.</p>',
