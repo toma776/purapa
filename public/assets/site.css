@@ -1130,3 +1130,56 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .post-body thead th { background: var(--mist); color: var(--navy); font-weight: 700; border-bottom: 2px solid #c6d3ea; }
 .post-body tbody tr:hover { background: var(--mist); }
 @media (max-width: 700px) { .post-body table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; } .post-body th, .post-body td { min-width: 9rem; } }
+
+/* Înscrierea în Purapa Ambassadors: argumentele în stânga, formularul în dreapta (rămâne în vedere la derulare). */
+.amb { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); gap: clamp(2rem, 1rem + 4vw, 4.5rem); align-items: start; }
+.amb-pitch .head h1 { font-size: clamp(2.25rem, 1.4rem + 3.4vw, 3.75rem); line-height: 1.05; letter-spacing: -.03em; margin: 0 0 1.25rem; }
+.amb-perks { list-style: none; padding: 0; margin: 2.25rem 0 0; display: grid; gap: 1.25rem; }
+.amb-perks li { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: start; }
+.amb-perks .icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 14px; background: var(--soft); color: var(--blue); }
+.amb-perks .icon svg { width: 1.35rem; height: 1.35rem; }
+.amb-perks h3 { margin: .1rem 0 .25rem; font-size: 1.0625rem; color: var(--navy); }
+.amb-perks p { margin: 0; color: var(--muted); }
+.amb-next { margin-top: 2.5rem; padding: 1.5rem 1.75rem; border-radius: var(--r-lg); background: var(--mist); border: 1px solid var(--line); }
+.amb-next h2 { margin: 0 0 1rem; font-size: 1.125rem; }
+.amb-next ol { margin: 0; padding: 0; list-style: none; counter-reset: n; display: grid; gap: .85rem; }
+.amb-next li { counter-increment: n; display: grid; grid-template-columns: 2rem 1fr; column-gap: .75rem; }
+.amb-next li::before { content: counter(n); grid-row: span 2; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+  background: var(--blue); color: var(--white); font-weight: 700; font-size: .875rem; }
+.amb-next li strong { color: var(--navy); }
+.amb-next li p { margin: .15rem 0 0; color: var(--muted); font-size: .9375rem; }
+.amb-card { position: sticky; top: calc(var(--header-h) + 1.25rem); padding: clamp(1.5rem, 3vw, 2.25rem); background: var(--white);
+  border: 1px solid var(--line); border-radius: var(--r-xl); box-shadow: var(--shadow-md); scroll-margin-top: calc(var(--header-h) + 1rem); }
+.amb-form { gap: 1.05rem; }
+.amb-form-head h2 { margin: 0 0 .35rem; font-size: 1.5rem; }
+.amb-form-head p { margin: 0; color: var(--muted); }
+.amb-form label { align-content: start; }
+.amb-form label small, .amb-pills legend small { font-weight: 400; color: var(--muted); font-size: .8125rem; }
+.amb-form .req { color: #c2410c; }
+.amb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+.amb-form textarea { min-height: 5.5rem; }
+.amb-pills { margin: 0; padding: 0; border: 0; min-width: 0; }
+.amb-pills legend { padding: 0; margin-bottom: .55rem; font-weight: 600; font-size: .9375rem; color: var(--navy); }
+.amb-pills > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.amb-form .amb-pills label { position: relative; display: inline-flex; font-weight: 500; cursor: pointer; }
+.amb-pills input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.amb-pills span { padding: .5rem .95rem; border: 1.5px solid #c9d3e6; border-radius: 999px; background: var(--white); font-size: .9063rem; color: var(--ink);
+  transition: background .15s, border-color .15s, color .15s; }
+.amb-pills label:hover span { border-color: var(--blue); }
+.amb-pills input:checked + span { background: var(--blue); border-color: var(--blue); color: var(--white); }
+.amb-pills input:focus-visible + span { outline: 3px solid rgb(37 74 153 / .3); outline-offset: 2px; }
+.amb-submit { display: grid; gap: .6rem; }
+.amb-submit .btn { justify-content: center; width: 100%; }
+.amb-submit p { margin: 0; text-align: center; color: var(--muted); font-size: .875rem; }
+.amb-done { text-align: center; padding: 1rem 0; outline: none; }
+.amb-done-icon { display: inline-grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: #e3f5ec; color: var(--ok); margin-bottom: 1rem; }
+.amb-done-icon svg { width: 1.6rem; height: 1.6rem; }
+.amb-done h2 { margin: 0 0 .5rem; }
+.amb-done p { color: var(--muted); }
+.amb-fallback { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+.amb-fallback p { font-size: .9375rem; }
+.amb-text { text-align: left; white-space: pre-wrap; font-size: .8125rem; background: var(--mist); padding: 1rem; border-radius: var(--r-sm); user-select: all; }
+@media (max-width: 960px) { .amb { grid-template-columns: 1fr; } .amb-card { position: static; } }
+@media (max-width: 560px) { .amb-row { grid-template-columns: 1fr; } }
+.amb-jump { display: none; }
+@media (max-width: 960px) { .amb-jump { display: inline-flex; margin-top: 1.5rem; } }
