@@ -510,6 +510,58 @@ const SECTIONS = {
       : '<p class="posts-empty" data-reveal>Primele articole apar în curând.</p>'}`);
   },
 
+  // Înscrierea în programul Purapa Ambassadors: în stânga, de ce merită (beneficiile secțiunii) și ce urmează după înscriere
+  // (pașii secțiunii); în dreapta, formularul. Pe site-ul static nu există server care să primească înscrierea: la trimitere,
+  // site.js o deschide completată în aplicația de email a vizitatorului și oferă copierea ei, dacă aplicația nu pornește.
+  ambasador: (ctx, s) => {
+    const perks = ctx.within(ctx.component, 'Beneficiile programului', () => ctx.related('sectiuni', s.id, 'benefits'));
+    const next = ctx.within(ctx.component, 'Ce urmează după înscriere', () => ctx.related('sectiuni', s.id, 'steps'));
+    const privacy = ctx.within(ctx.component, 'Politica de confidențialitate', () => ctx.query('pagini', {
+      fields: ['slug', 'footer'], as: 'link', where: p => p.footer === 'legal' && /confiden/.test(p.slug ?? '')}))[0];
+    const privacyHref = privacy ? ctx.within(ctx.component, 'Politica de confidențialitate', () => ctx.link(`pagini:${privacy.id}`)) : null;
+    const mail = ctx.text('{email}');
+    const check = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const req = '<span class="req" aria-hidden="true">*</span>';
+    const input = (name, label, attrs, hint = '') => `<label><span>${label} ${req}</span><input name="${name}" required ${attrs}>${hint ? `<small>${hint}</small>` : ''}</label>`;
+    const pills = (name, type, legend, options, opt = false) => `<fieldset class="amb-pills"${type === 'radio' ? ' data-required' : ''}>
+      <legend>${legend}${opt ? ' <small>(poți alege mai multe)</small>' : ` ${req}`}</legend>
+      <div>${options.map(o => `<label><input type="${type}" name="${name}" value="${esc(o)}"${type === 'radio' ? ' required' : ''}><span>${esc(o)}</span></label>`).join('')}</div></fieldset>`;
+    return wrap(s, `<div class="amb">
+      <div class="amb-pitch" data-reveal>${flush(head(ctx, s, {h1: true}))}
+        <a class="btn amb-jump" href="#inscriere">Înscrie-te acum${icon('arrow')}</a>
+        ${perks.length ? `<ul class="amb-perks">${perks.map(b => `<li><span class="icon">${icon(b.icon)}</span><div><h3>${ctx.text(b.title)}</h3>${b.text ? `<p>${ctx.text(b.text)}</p>` : ''}</div></li>`).join('')}</ul>` : ''}
+        ${next.length ? `<div class="amb-next"><h2>Ce urmează după înscriere</h2><ol>${next.map(p => `<li><strong>${ctx.text(p.title)}</strong>${p.text ? ctx.rich(p.text) : ''}</li>`).join('')}</ol></div>` : ''}
+      </div>
+      <div class="amb-card" data-reveal style="--i:2" id="inscriere">
+        <form method="post" class="form amb-form" data-ambasador ${ctx.staticSite
+          ? `action="mailto:${mail}" enctype="text/plain" data-mailto="${mail}"` : 'action="/api/public/ambasador"'}>
+          <div class="amb-form-head"><h2>Înscrie-te în program</h2><p>Durează două minute și nu te obligă la nimic.</p></div>
+          ${input('name', 'Nume complet', 'autocomplete="name" placeholder="ex: Andreea Popescu"')}
+          <div class="amb-row">
+            ${input('email', 'Email', 'type="email" autocomplete="email" placeholder="adresa.ta@exemplu.ro"')}
+            ${input('phone', 'Telefon', 'type="tel" autocomplete="tel" placeholder="07xx xxx xxx"')}
+          </div>
+          ${input('city', 'Orașul în care locuiești', 'autocomplete="address-level2" placeholder="ex: Cluj-Napoca"')}
+          ${pills('profile', 'radio', 'Ce te descrie cel mai bine?', ['Student', 'Tânăr profesionist', 'Creator de conținut', 'Activ în comunitatea mea', 'Altceva'])}
+          ${pills('channels', 'checkbox', 'Unde ai recomanda Purapa?', ['Prieteni și familie', 'Colegi', 'Comunitatea locală', 'Instagram', 'TikTok', 'Facebook', 'YouTube'], true)}
+          <label><span>Link spre profilul tău <small>(opțional)</small></span><input name="link" type="url" inputmode="url" placeholder="https://instagram.com/…"></label>
+          <label><span>De ce te atrage programul? <small>(opțional)</small></span><textarea name="motivation" rows="3" placeholder="Câteva cuvinte despre tine și despre cum ai recomanda Purapa"></textarea></label>
+          <label class="tr-check"><input type="checkbox" name="gdpr" required><i>${check}</i><span>Sunt de acord cu prelucrarea datelor conform ${privacyHref
+            ? `<a href="${esc(privacyHref)}" target="_blank">Politicii de confidențialitate</a>` : 'Politicii de confidențialitate'}. ${req}</span></label>
+          <div class="amb-submit"><button class="btn" type="submit">Vreau să devin ambasador${icon('arrow')}</button>
+            ${s.note ? `<p>${ctx.text(s.note)}</p>` : ''}</div>
+        </form>
+        <div class="amb-done" role="status" hidden tabindex="-1">
+          <span class="amb-done-icon">${check}</span>
+          <h2>Aproape gata!</h2>
+          <p data-mail-msg>Înscrierea ta s-a deschis completată în aplicația de email. Apasă „Trimite” acolo și o primim.</p>
+          <p data-saved-msg hidden>Am primit înscrierea ta. Te contactăm în ${ctx.text('{raspuns}')}.</p>
+          <div class="amb-fallback" data-mail-msg><p>Nu s-a deschis nimic? Copiază înscrierea și trimite-o la <a href="mailto:${mail}">${mail}</a>.</p>
+            <button class="btn ghost small" type="button" data-copy>Copiază înscrierea</button></div>
+        </div>
+      </div></div>`);
+  },
+
   // Îndemnul final: pe toată lățimea, cu valuri.
   cta: (ctx, s) => {
     const wave = '<svg viewBox="0 0 2400 100" preserveAspectRatio="none"><path d="M0 60C200 20 400 20 600 60S1000 100 1200 60 1600 20 1800 60 2200 100 2400 60V100H0Z"/></svg>';

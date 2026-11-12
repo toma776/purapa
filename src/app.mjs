@@ -137,6 +137,19 @@ export function createApp({file = 'data/purapa.db', mediaDir = 'data/media', cro
         return send(res, 303, '', 'text/plain', {location: '/contact/?trimis=1'});
       }
 
+      // Înscrierea în Purapa Ambassadors (doar pe serverul local; pe site-ul static pleacă prin email): devine un mesaj în Brain.
+      if (path === '/api/public/ambasador' && req.method === 'POST') {
+        const b = await readBody(req);
+        const list = v => (Array.isArray(v) ? v : [v]).filter(Boolean).join(', ');
+        if (!b.name || !b.email || !b.phone || !b.gdpr) throw new HttpError(400, 'Completează numele, emailul, telefonul și acordul');
+        const message = [`Oraș: ${b.city ?? ''}`, `Profil: ${b.profile ?? ''}`, `Unde ar recomanda: ${list(b.channels) || '—'}`,
+          `Profil online: ${b.link || '—'}`, '', b.motivation || '(fără mesaj)'].join('\n');
+        store.create({...SYSTEM, name: 'Formular ambasadori'}, 'cereri', {name: b.name, email: b.email, phone: b.phone,
+          subject: 'Înscriere Purapa Ambassadors', message});
+        if ((req.headers['content-type'] ?? '').includes('application/json')) return send(res, 200, {ok: true});
+        return send(res, 303, '', 'text/plain', {location: '/devino-ambasador/?trimis=1#inscriere'});
+      }
+
       if (path.startsWith('/media/')) {
         const rel = normalize(path.slice('/media/'.length));
         if (rel.startsWith('..')) throw new HttpError(404, 'Nu există');

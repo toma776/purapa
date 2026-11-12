@@ -199,7 +199,7 @@ export const ENTITIES = [
     anchor: r => `#s-${r.id}`,
     fields: [
       {key: 'kind', label: 'Tip', type: 'select', required: true,
-       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'recenzii', 'text', 'tutorial', 'contact', 'trimite-test', 'articole', 'cta']},
+       options: ['hero', 'beneficii', 'produse', 'calculator', 'test', 'tehnologie', 'pasi', 'intrebari', 'recenzii', 'text', 'tutorial', 'contact', 'trimite-test', 'articole', 'ambasador', 'cta']},
       {key: 'theme', label: 'Fundal', type: 'select', options: ['alb', 'deschis', 'inchis']},
       {key: 'kicker', label: 'Supratitlu', type: 'text', max: 60},
       {key: 'title', label: 'Titlu (*cuvinte* = evidențiate)', type: 'text'},
@@ -210,15 +210,15 @@ export const ENTITIES = [
       {key: 'cta2_link', label: 'Destinație buton secundar', type: 'text'},
       {key: 'image_id', label: 'Imagine', type: 'image'},
       {key: 'video', label: 'Video YouTube', type: 'youtube', kinds: ['text', 'tutorial']},
-      {key: 'note', label: 'Notă evidențiată (lângă text); la contact, titlul de deasupra formularului', type: 'textarea', kinds: ['text', 'trimite-test', 'contact']},
+      {key: 'note', label: 'Notă evidențiată (lângă text); la contact, titlul de deasupra formularului; la ambasador, textul de sub butonul formularului', type: 'textarea', kinds: ['text', 'trimite-test', 'contact', 'ambasador']},
       {key: 'facts', label: 'Cifre-cheie în hero, puncte-cheie lângă text (câte una pe linie: titlu | text)', type: 'textarea', kinds: ['hero', 'text']},
       // Semnul mărcii (lebăda din logo), văzut prin apa picăturii 3D; doar pe hero fără imagine.
       {key: 'drop_mark', label: 'În picătura din hero', type: 'select', options: ['lebada'], kinds: ['hero']},
       {key: 'params', label: 'Ipotezele calculatorului', type: 'json', kinds: ['calculator']},
       {key: 'category_id', label: 'Categorie afișată', type: 'ref', target: 'categorii', rel: 'afișează categoria', inverseLabel: 'Secțiuni', kinds: ['produse']},
       {key: 'products', label: 'Produse', type: 'refs', target: 'produse', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['produse', 'hero', 'calculator', 'recenzii']},
-      {key: 'benefits', label: 'Beneficii', type: 'refs', target: 'beneficii', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['beneficii']},
-      {key: 'steps', label: 'Pași', type: 'refs', target: 'pasi', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['pasi', 'tutorial', 'trimite-test']},
+      {key: 'benefits', label: 'Beneficii', type: 'refs', target: 'beneficii', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['beneficii', 'ambasador']},
+      {key: 'steps', label: 'Pași', type: 'refs', target: 'pasi', ordered: true, owned: true, rel: 'conține', inverseLabel: 'Secțiuni', kinds: ['pasi', 'tutorial', 'trimite-test', 'ambasador']},
       {key: 'faqs', label: 'Întrebări', type: 'refs', target: 'intrebari', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['intrebari']},
       {key: 'stages', label: 'Etape', type: 'refs', target: 'etape', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['tehnologie']},
       {key: 'parameters', label: 'Parametri', type: 'refs', target: 'parametri', ordered: true, rel: 'afișează', inverseLabel: 'Secțiuni', kinds: ['test']}
