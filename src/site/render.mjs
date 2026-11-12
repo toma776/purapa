@@ -773,8 +773,11 @@ function postCard(ctx, a) {
       ${a.excerpt ? `<p>${ctx.text(a.excerpt)}</p>` : ''}<span class="more">Citește articolul${icon('arrow')}</span></div></a></article>`;
 }
 
-// Pagina unui articol: titlul, data și autorul, imaginea, conținutul, întrebările frecvente, produsele recomandate,
-// articolele recomandate și trimiterea spre testarea apei. Datele structurate (Article, FAQPage) ajută căutarea.
+// Pagina unui articol: titlul, data și autorul, imaginea, conținutul, întrebările frecvente și trimiterea spre testarea apei;
+// produsele și articolele recomandate stau într-o bandă în dreapta, care rămâne în ecran cât timp citești (pe ecrane înguste
+// coboară sub articol). Datele structurate (Article, FAQPage) ajută căutarea.
+const sideItem = (ctx, {href, external, imageId, title, extra = '', more}) => `<li>${imageId ? `<span class="thumb">${image(ctx, imageId, {sizes: '88px'})}</span>` : ''}
+  <div><h3><a href="${esc(href)}"${external ? ' target="_blank" rel="noopener"' : ''}>${esc(title)}${external ? '<span class="sr-only"> (se deschide într-o fereastră nouă)</span>' : ''}</a></h3>${extra}${more ? `<span class="more">${more}</span>` : ''}</div></li>`;
 function renderArticle(ctx, store, path, found) {
   const a = ctx.page('articole', found.id);
   const blog = ctx.within('Articol', 'Pagina blogului', () => ctx.bySlug('pagini', 'blog'));
@@ -792,7 +795,8 @@ function renderArticle(ctx, store, path, found) {
     image: cover ? `${SITE_URL}${cover.src}` : undefined, mainEntityOfPage: `${SITE_URL}${path}`},
   ...(faqs.length ? [{'@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map(q => ({'@type': 'Question', name: q.question,
     acceptedAnswer: {'@type': 'Answer', text: plain(ctx.rich(q.answer))}}))}] : [])];
-  const body = `<article class="section fx-top post" aria-labelledby="post-title"><div class="container">
+  const side = products.length || related.length;
+  const body = `<article class="section fx-top post${side ? ' has-aside' : ''}" aria-labelledby="post-title"><div class="container"><div class="post-main">
     <header class="post-head">${blog ? `<nav class="crumbs" aria-label="Unde ești"><a href="/blog/">Blog</a></nav>` : ''}
       <h1 id="post-title" data-split>${esc(a.title)}</h1>
       ${date || a.author ? `<p class="meta">${date ? `<time datetime="${esc(a.published_on)}">${date}</time>` : ''}${date && a.author ? ' · ' : ''}${a.author ? esc(a.author) : ''}</p>` : ''}
@@ -804,11 +808,13 @@ function renderArticle(ctx, store, path, found) {
     ${testing ? `<aside class="post-cta"><span class="icon">${icon('shield')}</span><div><h2>Află ce ai în apă</h2>
       <p>Testul rapid Purapa verifică 16 parametri acasă, în câteva minute, și îți spune ce soluție se potrivește apei tale.</p>
       <a class="btn" href="/testare-apa/">Vezi cum testezi apa${icon('arrow')}</a></div></aside>` : ''}
-  </div></article>
-  ${products.length ? `<section class="section deschis" aria-labelledby="post-products"><div class="container"><div class="head"><h2 id="post-products">Produse recomandate</h2></div>
-    <div class="products" data-stagger>${products.map(p => productCard(ctx, p, [], retailerOf(p))).join('')}</div></div></section>` : ''}
-  ${related.length ? `<section class="section" aria-labelledby="post-related"><div class="container"><div class="head"><h2 id="post-related">Citește și</h2></div>
-    <div class="posts" data-stagger>${related.map(r => postCard(ctx, r)).join('')}</div></div></section>` : ''}
+  </div>${side ? `<aside class="post-aside" aria-label="Recomandări">
+    ${products.length ? `<section aria-labelledby="post-products"><h2 id="post-products">Produse recomandate</h2><ul class="side-list">${products.map(p => sideItem(ctx, {
+      href: p.buy_url || '/produse/', external: !!p.buy_url, imageId: p.image_id, title: shortProduct(p.name), extra: priceBlock(p),
+      more: p.buy_url ? `Comandă pe ${esc(retailerOf(p)?.name ?? 'site-ul retailerului')}${icon('external')}` : `Vezi produsele${icon('arrow')}`})).join('')}</ul></section>` : ''}
+    ${related.length ? `<section aria-labelledby="post-related"><h2 id="post-related">Citește și</h2><ul class="side-list">${related.map(r => sideItem(ctx, {
+      href: publicPath(byKey.articole, r), imageId: r.image_id, title: r.title})).join('')}</ul></section>` : ''}
+  </aside>` : ''}</div></article>
   <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`;
   return {status: 200, title: a.title, owner: ['articole', a.id],
     html: shell(ctx, {path, title: a.seo_title || a.title, description: a.seo_description || a.excerpt}, body)};
