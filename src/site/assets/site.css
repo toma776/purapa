@@ -363,16 +363,16 @@ body { overflow-x: clip; }
 .fx-center { justify-content: center; margin-top: 2.5rem; }
 
 /* Apariții la derulare */
-.fx-js:not(.fx-still) [data-reveal] { opacity: 0; translate: 0 28px; transition: opacity .9s var(--ease), translate .9s var(--ease);
-  transition-delay: calc(var(--i, 0) * 90ms); }
+.fx-js:not(.fx-still) [data-reveal] { opacity: 0; translate: 0 12px; transition: opacity .55s var(--ease), translate .55s var(--ease);
+  transition-delay: calc(var(--i, 0) * 50ms); }
 .fx-js:not(.fx-still) [data-reveal].in { opacity: 1; translate: none; }
 /* În hero, textul e vizibil de la prima randare (de el depinde LCP): urcă doar puțin, din CSS, fără să aștepte JavaScript-ul. */
-.fx-js:not(.fx-still) .fx-hero [data-reveal] { opacity: 1; translate: none; transition: none; animation: fx-rise .9s var(--ease) calc(var(--i, 0) * 90ms) both; }
-@keyframes fx-rise { from { translate: 0 18px; } }
+.fx-js:not(.fx-still) .fx-hero [data-reveal] { opacity: 1; translate: none; transition: none; animation: fx-rise .55s var(--ease) calc(var(--i, 0) * 50ms) both; }
+@keyframes fx-rise { from { translate: 0 8px; } }
 .fx-js:not(.fx-still) [data-split] { visibility: hidden; }
 .fx-js:not(.fx-still) [data-split].ready { visibility: visible; }
 .fx-w { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: .14em; margin-bottom: -.14em; }
-.fx-w > span { display: inline-block; transform: translateY(115%); transition: transform 1.1s var(--ease) calc(var(--i) * 80ms); }
+.fx-w > span { display: inline-block; transform: translateY(115%); transition: transform .7s var(--ease) calc(var(--i) * 40ms); }
 .ready.in .fx-w > span, .fx-still .fx-w > span { transform: none; }
 
 /* Plutire și înclinare după cursor (variabilele --mx, --my le pune site.js pe zona [data-zone]). */
@@ -453,7 +453,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
   background: radial-gradient(18rem circle at var(--x, 50%) var(--y, 0%), rgb(11 187 239 / .16), transparent 65%); }
 .fx-card:hover { border-color: #b9cdf0; box-shadow: var(--shadow-md); }
 .fx-card:hover::before { opacity: 1; }
-@media (prefers-reduced-motion: no-preference) { .fx-card:hover { translate: 0 -4px; } }
+@media (prefers-reduced-motion: no-preference) { .fx-card:hover { translate: 0 -2px; } }
 .fx-card > * { position: relative; }
 .fx-card .n { position: absolute; top: 1.4rem; right: 1.5rem; font-size: 2.5rem; font-weight: 800; letter-spacing: -.04em; line-height: 1; color: var(--soft); }
 .fx-card .icon { transition: background .3s, color .3s; }
@@ -539,8 +539,8 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .is-live .fx-flow-band { display: block; }
 .is-live .head { margin-bottom: 0; }
 .is-live .fx-flow-steps { display: grid; grid-template-columns: 1fr; max-width: 46rem; margin-inline: auto; }
-.is-live .fx-flow-steps li { grid-area: 1 / 1; padding: 0; border: 0; background: none; opacity: 0; transform: translateY(18px); visibility: hidden;
-  transition: opacity .5s var(--ease), transform .5s var(--ease), visibility 0s .5s; }
+.is-live .fx-flow-steps li { grid-area: 1 / 1; padding: 0; border: 0; background: none; opacity: 0; transform: translateY(8px); visibility: hidden;
+  transition: opacity .35s var(--ease), transform .35s var(--ease), visibility 0s .35s; }
 .is-live .fx-flow-steps li.is-on { opacity: 1; transform: none; visibility: visible; transition-delay: .12s, .12s, 0s; }
 .is-live .fx-flow-rail { display: block; max-width: 46rem; height: 3px; margin: clamp(1rem, 3vh, 1.75rem) auto 0; border-radius: 3px; background: rgb(255 255 255 / .14); overflow: hidden; }
 .is-live .fx-flow-rail i { display: block; height: 100%; background: var(--cyan); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
@@ -620,10 +620,10 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 /* Treceri line între pagini (browserele care știu View Transitions; celelalte încarcă pagina ca de obicei). */
 @view-transition { navigation: auto; }
 @keyframes fx-page-out { to { opacity: 0; } }
-@keyframes fx-page-in { from { opacity: 0; transform: translateY(14px); } }
+@keyframes fx-page-in { from { opacity: 0; transform: translateY(6px); } }
 @media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(root) { animation: fx-page-out .22s ease both; }
-  ::view-transition-new(root) { animation: fx-page-in .5s var(--ease) both; }
+  ::view-transition-old(root) { animation: fx-page-out .15s ease both; }
+  ::view-transition-new(root) { animation: fx-page-in .3s var(--ease) both; }
 }
 .site-header { view-transition-name: site-header; }
 
@@ -658,12 +658,12 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 /* Grila de produse */
 .product { transition: box-shadow .3s, border-color .3s, translate .3s var(--ease); }
 .product .media { position: relative; overflow: hidden; background: linear-gradient(160deg, var(--mist), var(--soft)); }
-.product .media img { transition: scale .6s var(--ease), rotate .6s var(--ease); }
+.product .media img { transition: scale .4s var(--ease); }
 .product .badge { position: absolute; z-index: 1; top: .9rem; left: .9rem; padding: .3rem .75rem; border-radius: 999px; background: var(--navy); color: var(--white); font-size: .75rem; font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) {
-  .product:hover { translate: 0 -6px; }
-  .product:hover .media img { scale: 1.07; rotate: -2deg; }
-  .steps li:hover, .param-group:hover { translate: 0 -4px; }
+  .product:hover { translate: 0 -3px; }
+  .product:hover .media img { scale: 1.03; }
+  .steps li:hover, .param-group:hover { translate: 0 -2px; }
 }
 .steps li, .param-group { transition: border-color .3s, box-shadow .3s, translate .3s var(--ease); }
 .steps li:hover, .param-group:hover { border-color: #b9cdf0; box-shadow: var(--shadow-md); }
@@ -680,7 +680,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 /* Întrebările se deschid lin */
 @supports (interpolate-size: allow-keywords) {
   .accordion details { interpolate-size: allow-keywords; }
-  .accordion details::details-content { block-size: 0; overflow: clip; transition: block-size .45s var(--ease), content-visibility .45s allow-discrete; }
+  .accordion details::details-content { block-size: 0; overflow: clip; transition: block-size .3s var(--ease), content-visibility .3s allow-discrete; }
   .accordion details[open]::details-content { block-size: auto; }
 }
 
