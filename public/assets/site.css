@@ -1163,7 +1163,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .amb-pills > div { display: flex; flex-wrap: wrap; gap: .5rem; }
 .amb-form .amb-pills label { position: relative; display: inline-flex; font-weight: 500; cursor: pointer; }
 .amb-pills input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.amb-pills span { padding: .5rem .95rem; border: 1.5px solid #c9d3e6; border-radius: 999px; background: var(--white); font-size: .9063rem; color: var(--ink);
+.amb-pills label span { padding: .5rem .95rem; border: 1.5px solid #c9d3e6; border-radius: 999px; background: var(--white); font-size: .9063rem; color: var(--ink);
   transition: background .15s, border-color .15s, color .15s; }
 .amb-pills label:hover span { border-color: var(--blue); }
 .amb-pills input:checked + span { background: var(--blue); border-color: var(--blue); color: var(--white); }
