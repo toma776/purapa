@@ -533,19 +533,20 @@ const SECTIONS = {
         ${next.length ? `<div class="amb-next"><h2>Ce urmează după înscriere</h2><ol>${next.map(p => `<li><strong>${ctx.text(p.title)}</strong>${p.text ? ctx.rich(p.text) : ''}</li>`).join('')}</ol></div>` : ''}
       </div>
       <div class="amb-card" id="inscriere">
-        <form method="post" class="form amb-form" data-ambasador ${ctx.staticSite
+        <form method="post" class="form amb-form" data-ambasador toolname="inscriere_ambasador_purapa"
+          tooldescription="Trimite o cerere de înscriere în programul Purapa Ambassadors: nume, email, telefon, oraș, profil și unde ar recomanda Purapa. Acordul pentru prelucrarea datelor și trimiterea le confirmă vizitatorul." ${ctx.staticSite
           ? `action="mailto:${mail}" enctype="text/plain" data-mailto="${mail}"` : 'action="/api/public/ambasador"'}>
           <div class="amb-form-head"><h2>Înscrie-te în program</h2><p>Durează două minute și nu te obligă la nimic.</p></div>
-          ${input('name', 'Nume complet', 'autocomplete="name" placeholder="ex: Andreea Popescu"')}
+          ${input('name', 'Nume complet', 'autocomplete="name" placeholder="ex: Andreea Popescu" toolparamdescription="Numele complet al persoanei care se înscrie"')}
           <div class="amb-row">
-            ${input('email', 'Email', 'type="email" autocomplete="email" placeholder="nume@exemplu.ro"')}
-            ${input('phone', 'Telefon', 'type="tel" autocomplete="tel" placeholder="07xx xxx xxx"')}
+            ${input('email', 'Email', 'type="email" autocomplete="email" placeholder="nume@exemplu.ro" toolparamdescription="Adresa de email la care Purapa trimite pașii următori"')}
+            ${input('phone', 'Telefon', 'type="tel" autocomplete="tel" placeholder="07xx xxx xxx" toolparamdescription="Număr de telefon"')}
           </div>
-          ${input('city', 'Orașul în care locuiești', 'autocomplete="address-level2" placeholder="ex: Cluj-Napoca"')}
+          ${input('city', 'Orașul în care locuiești', 'autocomplete="address-level2" placeholder="ex: Cluj-Napoca" toolparamdescription="Orașul în care locuiește"')}
           ${pills('profile', 'radio', 'Ce te descrie cel mai bine?', ['Student', 'Tânăr profesionist', 'Creator de conținut', 'Activ în comunitatea mea', 'Altceva'])}
           ${pills('channels', 'checkbox', 'Unde ai recomanda Purapa?', ['Prieteni și familie', 'Colegi', 'Comunitatea locală', 'Instagram', 'TikTok', 'Facebook', 'YouTube'], true)}
-          <label><span>Link spre profilul tău <small>(opțional)</small></span><input name="link" type="url" inputmode="url" placeholder="https://instagram.com/…"></label>
-          <label><span>De ce te atrage programul? <small>(opțional)</small></span><textarea name="motivation" rows="3" placeholder="Câteva cuvinte despre tine și despre cum ai recomanda Purapa"></textarea></label>
+          <label><span>Link spre profilul tău <small>(opțional)</small></span><input name="link" type="url" inputmode="url" placeholder="https://instagram.com/…" toolparamdescription="Link spre profilul de pe rețelele sociale, opțional"></label>
+          <label><span>De ce te atrage programul? <small>(opțional)</small></span><textarea name="motivation" rows="3" placeholder="Câteva cuvinte despre tine și despre cum ai recomanda Purapa" toolparamdescription="De ce îl atrage programul, opțional"></textarea></label>
           <label class="tr-check"><input type="checkbox" name="gdpr" required><i>${check}</i><span>Sunt de acord cu prelucrarea datelor conform ${privacyHref
             ? `<a href="${esc(privacyHref)}" target="_blank">Politicii de confidențialitate</a>` : 'Politicii de confidențialitate'}. ${req}</span></label>
           <div class="amb-submit"><button class="btn" type="submit">Vreau să devin ambasador${icon('arrow')}</button>
@@ -666,16 +667,17 @@ const SECTIONS = {
       <li data-reveal><span>Sediu</span>${ctx.text('{adresa_completa}')}</li>
     </ul>
     <div class="contact-form">${s.note ? `<h2 data-reveal style="--i:1">${title(ctx, s.note)}</h2>` : ''}
-    <form method="post" class="form" data-reveal style="--i:2" ${ctx.staticSite
+    <form method="post" class="form" data-reveal style="--i:2" toolname="trimite_mesaj_purapa"
+      tooldescription="Trimite un mesaj echipei Purapa (întrebări despre filtre, testarea apei, comenzi sau programul de ambasadori). Cere nume, email, subiect și mesaj; telefonul e opțional. Trimiterea o confirmă vizitatorul." ${ctx.staticSite
       // Site static (fără server care să primească mesajul): același formular, dar la trimitere mesajul completat se deschide
       // în aplicația de email a vizitatorului (site.js îl așază frumos; fără JavaScript, browserul face același lucru, mai brut).
       ? `action="mailto:${ctx.text('{email}')}" enctype="text/plain" data-mailto="${ctx.text('{email}')}"`
       : 'action="/api/public/contact"'}>
-      <label>Nume complet <input name="name" required autocomplete="name"></label>
-      <label>Email <input name="email" type="email" required autocomplete="email"></label>
-      <label>Telefon (opțional) <input name="phone" type="tel" autocomplete="tel"></label>
-      <label>Subiect <input name="subject" required></label>
-      <label>Mesaj <textarea name="message" minlength="20" required></textarea></label>
+      <label>Nume complet <input name="name" required autocomplete="name" toolparamdescription="Numele complet al persoanei care scrie"></label>
+      <label>Email <input name="email" type="email" required autocomplete="email" toolparamdescription="Adresa de email la care Purapa răspunde"></label>
+      <label>Telefon (opțional) <input name="phone" type="tel" autocomplete="tel" toolparamdescription="Număr de telefon, opțional"></label>
+      <label>Subiect <input name="subject" required toolparamdescription="Subiectul mesajului, în câteva cuvinte"></label>
+      <label>Mesaj <textarea name="message" minlength="20" required toolparamdescription="Mesajul sau întrebarea, cel puțin 20 de caractere"></textarea></label>
       <div><button class="btn">Trimite mesajul${icon('arrow')}</button></div>
       ${ctx.staticSite ? '<p class="form-note" role="status" hidden>Mesajul tău s-a deschis în aplicația de email. Apasă „Trimite” acolo și îl primim.</p>' : ''}
     </form></div></div>`)
