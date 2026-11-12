@@ -104,6 +104,9 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
 .btn.small { min-height: 44px; padding: .55rem 1.1rem; font-size: .9375rem; }
 @media (prefers-reduced-motion: no-preference) { .btn:hover { transform: translateY(-1px); } }
 .actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+/* Când butoanele nu încap pe un rând și ajung unul sub altul (clasa o pune site.js), au toate lățimea celui mai lat. */
+.actions.stacked { display: grid; grid-template-columns: minmax(0, max-content); }
+.actions.stacked .btn { width: 100%; }
 
 /* Antet */
 .site-header { position: sticky; top: 0; z-index: 50; background: rgb(255 255 255 / .86); backdrop-filter: saturate(1.6) blur(14px);
