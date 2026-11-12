@@ -405,8 +405,6 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .fx-hero-grid { display: grid; grid-template-columns: 1.02fr .98fr; gap: clamp(2rem, 1rem + 4vw, 4.5rem); align-items: center; }
 .fx-hero h1 { font-size: clamp(2.6rem, 1.3rem + 4.6vw, 5rem); line-height: 1.02; }
 .fx-hero .lead { max-width: 34rem; margin-top: 1.5rem; }
-.fx-hero .lead p + p { margin-top: .6rem; }
-.fx-hero .lead strong { display: inline-block; margin-top: .25rem; color: var(--blue); font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.9rem); font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
 .fx-hero .actions { margin-top: 2.25rem; }
 .fx-hero.solo .fx-hero-grid { grid-template-columns: 1fr; justify-items: center; text-align: center; }
 .fx-stage { position: relative; justify-self: center; width: min(100%, 580px); aspect-ratio: 1; }
