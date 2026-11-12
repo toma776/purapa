@@ -812,3 +812,20 @@ void main(){
   }];
   for (const tool of tools) { try { mc.registerTool(tool); } catch { /* unealtă deja înregistrată sau API schimbat */ } }
 })();
+
+// Butoanele unui grup care nu încap pe un rând stau unul sub altul: atunci primesc aceeași lățime (clasa „stacked”, în site.css).
+// Măsurarea se face fără clasă, ca grupul să revină pe un rând când are iar loc.
+(() => {
+  const groups = [...document.querySelectorAll('.actions')].filter(g => g.querySelectorAll(':scope > .btn').length > 1);
+  if (!groups.length) return;
+  const fit = g => {
+    g.classList.remove('stacked');
+    const tops = new Set([...g.querySelectorAll(':scope > .btn')].map(b => b.offsetTop));
+    g.classList.toggle('stacked', tops.size > 1);
+  };
+  const all = () => groups.forEach(fit);
+  all();
+  let width = innerWidth;
+  addEventListener('resize', () => { if (innerWidth !== width) { width = innerWidth; all(); } });
+  document.fonts?.ready.then(all);
+})();
