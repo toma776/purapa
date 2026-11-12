@@ -327,7 +327,9 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
 .contact-form h2 { margin: 0 0 1.75rem; font-size: clamp(1.875rem, 1.3rem + 2.2vw, 2.75rem); line-height: 1.1; letter-spacing: -.02em; }
 .form { display: grid; gap: 1rem; }
 .form label { display: grid; gap: .4rem; font-weight: 600; font-size: .9375rem; color: var(--navy); }
-.form input, .form textarea { font: inherit; padding: .85rem 1rem; border: 1.5px solid #c9d3e6; border-radius: var(--r-sm); background: var(--white); color: var(--ink); }
+.form input, .form textarea { font: inherit; font-weight: 400; padding: .85rem 1rem; border: 1.5px solid #c9d3e6; border-radius: var(--r-sm); background: var(--white); color: var(--ink); }
+/* Exemplul din câmp e mai deschis și subțire, ca să nu pară un câmp deja completat (contrast 4,7:1 pe alb). */
+.form input::placeholder, .form textarea::placeholder { color: #6b7487; font-weight: 400; opacity: 1; }
 .form input:focus, .form textarea:focus { border-color: var(--blue); outline: 3px solid rgb(37 74 153 / .2); outline-offset: 0; }
 .form textarea { min-height: 9rem; resize: vertical; }
 .form-note { margin: 0; padding: .75rem 1rem; border-radius: var(--r-sm); background: #e3f5ec; color: var(--ok); font-size: .9375rem; font-weight: 600; }
