@@ -8,7 +8,7 @@ import {createContext} from '../src/site/context.mjs';
 import {renderPath, calc} from '../src/site/render.mjs';
 import {seed} from '../src/import/seed.mjs';
 
-const ALL = ['/', '/ambassadors/', '/contact/', '/despre-noi/', '/politica-de-confidentialitate/', '/politica-de-cookie/',
+const ALL = ['/', '/ambassadors/', '/contact/', '/despre-noi/', '/devino-ambasador/', '/politica-de-confidentialitate/', '/politica-de-cookie/',
   '/produse/', '/termeni-si-conditii/', '/test-rapid/', '/testare-apa/'];
 
 function setup(opts = {}) {
@@ -251,4 +251,17 @@ test('blogul: un articol publicat are pagina lui și apare în lista de pe /blog
   const again = propagate(() => store.update(SYSTEM, 'produse', ids.test, {price: 95}, {publish: true})).paths;
   assert.ok(again.includes(path));
   assert.ok(result.id);
+});
+
+test('ambasadorii: butoanele din /ambassadors/ duc la formularul de înscriere de pe /devino-ambasador/', () => {
+  const {html} = setup();
+  const amb = html('/ambassadors/');
+  assert.match(amb, /href="\/devino-ambasador\/"[^>]*>Fii ambasador Purapa/);
+  assert.doesNotMatch(amb, /Contactează-ne/);
+  const join = html('/devino-ambasador/');
+  assert.match(join, /<form[^>]*data-ambasador/);
+  for (const name of ['name', 'email', 'phone', 'city', 'profile', 'channels', 'gdpr']) assert.match(join, new RegExp(`name="${name}"`), name);
+  assert.match(join, /Comision la fiecare achiziție/);
+  assert.match(join, /Ce urmează după înscriere/);
+  assert.doesNotMatch(join, /\{raspuns\}/);
 });

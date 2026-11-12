@@ -8,6 +8,36 @@ const src = (path, excerpt) => ({kind: 'site', url: `${SITE}${path}`, title: `pu
 const MANUAL = {kind: 'manual', url: 'manual:analiza-2026-10-26', title: 'Propunere din analiza site-ului', certainty: 'unverified'};
 const P = 'https://www.portalia.ro';
 
+// Pagina de înscriere în Purapa Ambassadors (/devino-ambasador/). Textele folosesc doar ce spune programul pe site:
+// comision pentru fiecare achiziție prin cod, conform condițiilor programului, fără obiective impuse și fără obligații.
+// Exportată, ca aceleași date să poată fi adăugate și într-o bază existentă (scripts/add-ambassador-join.mjs).
+export const AMBASSADOR_JOIN = {
+  page: {title: 'Devino ambasador Purapa', slug: 'devino-ambasador',
+    seo_title: 'Devino ambasador Purapa – recomandă apă curată',
+    seo_description: 'Înscrie-te în Purapa Ambassadors: recomanzi apă curată celor apropiați și primești comision pentru fiecare achiziție făcută prin codul tău.'},
+  form: {kind: 'ambasador', theme: 'deschis', kicker: 'Purapa Ambassadors', title: 'Devino *ambasador Purapa*',
+    text: '<p>Recomanzi apă curată oamenilor la care ții și primești comision pentru fiecare achiziție făcută prin codul tău. Fără obiective impuse, fără presiune: recomanzi doar când și cui vrei.</p>',
+    note: 'Îți răspundem în {raspuns}, cu toate detaliile programului.'},
+  perks: [
+    ['Comision la fiecare achiziție', 'Primești un comision pentru fiecare achiziție făcută prin codul tău, conform condițiilor programului.', 'gift'],
+    ['Fără obiective, fără presiune', 'Nu ai ținte de vânzări și nicio obligație. Recomanzi doar când și cui vrei.', 'shield'],
+    ['Online sau offline, cum îți vine natural', 'Nu ai nevoie de mii de urmăritori: o recomandare sinceră către prieteni, familie sau colegi e la fel de valoroasă.', 'users'],
+    ['Recomanzi ceva în care crezi', 'Apă filtrată direct de la robinet, mai puține sticle de plastic și un test care arată ce e în apa de acasă.', 'drop']
+  ],
+  next: [
+    ['Trimiți formularul', '<p>Durează două minute și nu te obligă la nimic.</p>'],
+    ['Te contactăm', '<p>Îți răspundem în {raspuns} și îți trimitem condițiile programului.</p>'],
+    ['Primești codul tău', '<p>Parcurgi introducerea în program și începi să recomanzi Purapa, offline sau online.</p>']
+  ],
+  faq: {kind: 'intrebari', kicker: 'Întrebări frecvente', title: 'Ce vor să știe *viitorii ambasadori*'},
+  faqs: [
+    ['Trebuie să vând un număr minim de produse?', '<p>Nu. Programul nu are obiective impuse și nu te obligă la nimic. Recomanzi doar când și cui vrei.</p>'],
+    ['Cum primesc comisionul?', '<p>Pentru fiecare achiziție făcută prin codul tău primești un comision, conform condițiilor programului. Condițiile complete ți le trimitem după înscriere.</p>'],
+    ['Am nevoie de mulți urmăritori pe rețelele sociale?', '<p>Nu. Programul e pentru studenți, tineri profesioniști, creatori de conținut și oameni activi în comunitatea lor. Poți recomanda Purapa offline, celor apropiați, sau online, cum preferi.</p>'],
+    ['Ce se întâmplă după ce trimit formularul?', '<p>Te contactăm în {raspuns} cu detaliile programului. Parcurgi o scurtă introducere, primești codul tău și poți începe să recomanzi.</p>']
+  ]
+};
+
 export function seed(store, {user = SYSTEM} = {}) {
   if (store.list('firma').length) throw new Error('Baza are deja date. Importul nu rulează peste editări (folosește o bază nouă).');
   const c = (key, data, source, publish = true) => store.create(user, key, data, {publish, source}).id;
@@ -285,11 +315,19 @@ export function seed(store, {user = SYSTEM} = {}) {
     benefit('Nu există obiective sau presiuni', 'Recomanzi doar când și cui vrei: fără ținte de vânzări și fără obligații.', 'shield', src('/ambassadors/', 'Un program creat pentru oameni care inspiră încredere')),
     benefit('Faci parte dintr-o mișcare pentru apă mai bună', 'Alături de oameni care cred în impactul apei curate asupra vieții de zi cu zi.', 'drop', src('/ambassadors/', 'Un program creat pentru oameni care inspiră încredere'))
   ];
+  // Înscrierea în program: pagina ei, cu formularul și răspunsurile la întrebările viitorilor ambasadori.
+  const J = AMBASSADOR_JOIN;
+  const joinSrc = src('/ambassadors/', 'Purapa Ambassadors');
+  const joinFaqs = J.faqs.map(([question, answer], i) => c('intrebari', {question, answer, position: 200 + i}, joinSrc));
+  ids['devino-ambasador'] = page(J.page, [
+    {...J.form, benefits: J.perks.map(([t, x, ic]) => benefit(t, x, ic, joinSrc)), steps: J.next.map(([t, x]) => step(t, x, joinSrc))},
+    {...J.faq, faqs: joinFaqs}
+  ], joinSrc);
   const amb = {};
   for (const [key, data] of Object.entries({
     hero: {kind: 'hero', kicker: 'Purapa Ambassadors', title: 'Alătură-te *comunității*',
       text: '<p>Un program dedicat celor care cred în impactul apei curate asupra vieții de zi cu zi și vor să ducă această schimbare mai departe.</p>',
-      cta_label: 'Devino ambasador', cta_link: `ref:pagini:${ids.contact}`,
+      cta_label: 'Devino ambasador', cta_link: `ref:pagini:${ids['devino-ambasador']}`,
       facts: '3 pași | ca să începi\ncomision | la fiecare achiziție\nzero | obiective impuse'},
     about: {kind: 'text', kicker: 'Despre program', title: 'Un mod simplu și natural de a contribui la *binele celor din jur*',
       text: '<p>Programul Purapa Ambassadors reunește oameni care aleg să împărtășească beneficiile apei filtrate celor dragi.</p>',
@@ -301,7 +339,7 @@ export function seed(store, {user = SYSTEM} = {}) {
       text: '<p>Potrivit pentru oricine își dorește să recomande cu naturalețe un produs valoros:</p><ul><li>studenți</li><li>tineri profesioniști</li><li>creatori de conținut</li><li>oameni activi în comunitatea lor</li></ul>',
       benefits: perks},
     cta: {kind: 'cta', kicker: 'Purapa Ambassadors', title: 'Te invităm să te alături *comunității*',
-      text: '<p>Trimite-ne un mesaj și îți spunem care sunt următorii pași.</p>', cta_label: 'Contactează-ne', cta_link: `ref:pagini:${ids.contact}`}
+      text: '<p>Completează formularul de înscriere și îți spunem care sunt următorii pași.</p>', cta_label: 'Fii ambasador Purapa', cta_link: `ref:pagini:${ids['devino-ambasador']}`}
   })) amb[key] = c('sectiuni', data, src('/ambassadors/'));
   store.update(user, 'sectiuni', amb.hero, {cta2_label: 'Cum funcționează', cta2_link: `ref:sectiuni:${amb.steps}`}, {source: src('/ambassadors/')});
   store.setLinks(user, 'pagini', ids.ambassadors, 'sections', Object.values(amb));
