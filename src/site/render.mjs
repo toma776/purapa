@@ -773,6 +773,20 @@ function postCard(ctx, a) {
       ${a.excerpt ? `<p>${ctx.text(a.excerpt)}</p>` : ''}<span class="more">Citește articolul${icon('arrow')}</span></div></a></article>`;
 }
 
+// Pe telefon, tabelele din articole devin fișe (un rând = o fișă). Fiecare celulă primește în data-label numele coloanei
+// din antet, ca CSS-ul să-l poată arăta deasupra valorii. Tabelele fără antet rămân cum sunt.
+const labelTables = html => html.replace(/<table>([\s\S]*?)<\/table>/g, (whole, inner) => {
+  const head = inner.match(/<thead>([\s\S]*?)<\/thead>/);
+  if (!head) return whole;
+  const labels = [...head[1].matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(m => m[1].replace(/<[^>]+>/g, '').replace(/"/g, '&quot;').trim());
+  const end = head.index + head[0].length;
+  const body = inner.slice(end).replace(/<tr>([\s\S]*?)<\/tr>/g, (row, cells) => {
+    let i = 0;
+    return `<tr>${cells.replace(/<td(?=[ >])/g, () => `<td data-label="${labels[i++] ?? ''}"`)}</tr>`;
+  });
+  return `<table class="stack">${inner.slice(0, end)}${body}</table>`;
+});
+
 // Pagina unui articol: titlul, data și autorul, imaginea, conținutul, întrebările frecvente și trimiterea spre testarea apei;
 // produsele și articolele recomandate stau într-o bandă în dreapta, care rămâne în ecran cât timp citești (pe ecrane înguste
 // coboară sub articol). Datele structurate (Article, FAQPage) ajută căutarea.
@@ -802,7 +816,7 @@ function renderArticle(ctx, store, path, found) {
       ${date || a.author ? `<p class="meta">${date ? `<time datetime="${esc(a.published_on)}">${date}</time>` : ''}${date && a.author ? ' · ' : ''}${a.author ? esc(a.author) : ''}</p>` : ''}
       ${a.excerpt ? `<p class="lead">${ctx.text(a.excerpt)}</p>` : ''}</header>
     ${cover ? `<figure class="post-cover">${image(ctx, a.image_id, {eager: true, sizes: '(max-width: 820px) 92vw, 760px'})}</figure>` : ''}
-    <div class="prose post-body">${ctx.rich(a.body)}</div>
+    <div class="prose post-body">${labelTables(ctx.rich(a.body))}</div>
     ${faqs.length ? `<section class="post-faq" aria-labelledby="post-faq"><h2 id="post-faq">Întrebări frecvente</h2><div class="accordion">${faqs.map(q =>
       `<details><summary>${ctx.text(q.question)}<span class="plus" aria-hidden="true"></span></summary><div class="answer">${ctx.rich(q.answer)}</div></details>`).join('')}</div></section>` : ''}
     ${testing ? `<aside class="post-cta"><span class="icon">${icon('shield')}</span><div><h2>Află ce ai în apă</h2>

@@ -1152,12 +1152,24 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .post-cta .icon { background: var(--white); }
 .post-cta h2 { margin: 0 0 .5rem; font-size: 1.375rem; }
 .post-cta p { margin: 0 0 1.25rem; }
-/* Tabelele din textul articolului: pe telefon se derulează lateral, nu lărgesc pagina. */
+/* Tabelele din textul articolului. Pe telefon, cele cu antet devin fișe: un rând pe fișă, iar deasupra fiecărei valori
+   apare numele coloanei. Așa nu mai e nevoie de derulare laterală. */
 .post-body table { width: 100%; margin: 1.5rem 0 2rem; border-collapse: collapse; font-size: .9375rem; }
 .post-body th, .post-body td { padding: .7rem .9rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
 .post-body thead th { background: var(--mist); color: var(--navy); font-weight: 700; border-bottom: 2px solid #c6d3ea; }
 .post-body tbody tr:hover { background: var(--mist); }
-@media (max-width: 700px) { .post-body table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; } .post-body th, .post-body td { min-width: 9rem; } }
+@media (max-width: 700px) {
+  .post-body table:not(.stack) { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .post-body table.stack, .post-body .stack tbody, .post-body .stack tr, .post-body .stack td { display: block; width: 100%; }
+  .post-body .stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .post-body .stack tr { margin-bottom: .75rem; padding: .35rem 1rem; border: 1px solid var(--line); border-radius: var(--r-md, 12px); background: var(--white); }
+  .post-body .stack tbody tr:hover { background: var(--white); }
+  .post-body .stack td { padding: .55rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+  .post-body .stack td:last-child { border-bottom: 0; }
+  .post-body .stack td::before { content: attr(data-label); display: block; margin-bottom: .15rem; color: #5b6578; font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .post-body .stack td[data-label=""]::before { display: none; }
+  .post-body .stack td:first-child { color: var(--navy); font-weight: 700; }
+}
 
 /* Înscrierea în Purapa Ambassadors: argumentele în stânga, formularul în dreapta (rămâne în vedere la derulare). */
 .amb { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); gap: clamp(2rem, 1rem + 4vw, 4.5rem); align-items: start; }
