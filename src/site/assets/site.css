@@ -261,7 +261,8 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
 .params-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; margin-bottom: clamp(2.25rem, 1.5rem + 2vw, 3.5rem); }
 .params-head .head { max-width: 40rem; }
 .params-stat { display: flex; align-items: center; gap: 1rem; margin: 0; flex: none; }
-.params-stat strong { font-size: clamp(3.5rem, 2.5rem + 3vw, 5.5rem); font-weight: 800; line-height: .9; letter-spacing: -.05em;
+/* Spațierea negativă strânge și marginea din dreapta a cifrei: fără padding, ultima cifră iese din casetă, e tăiată de gradient și atinge textul. */
+.params-stat strong { font-size: clamp(3.5rem, 2.5rem + 3vw, 5.5rem); font-weight: 800; line-height: .9; letter-spacing: -.05em; padding-right: .1em;
   background: linear-gradient(135deg, var(--navy), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .params-stat span { max-width: 9rem; font-size: .9375rem; font-weight: 600; color: var(--muted); line-height: 1.35; }
 /* Pe coloane, ca familiile de lungimi diferite să nu lase goluri între rânduri. */
