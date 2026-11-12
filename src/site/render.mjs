@@ -538,7 +538,7 @@ const SECTIONS = {
           <div class="amb-form-head"><h2>Înscrie-te în program</h2><p>Durează două minute și nu te obligă la nimic.</p></div>
           ${input('name', 'Nume complet', 'autocomplete="name" placeholder="ex: Andreea Popescu"')}
           <div class="amb-row">
-            ${input('email', 'Email', 'type="email" autocomplete="email" placeholder="adresa.ta@exemplu.ro"')}
+            ${input('email', 'Email', 'type="email" autocomplete="email" placeholder="nume@exemplu.ro"')}
             ${input('phone', 'Telefon', 'type="tel" autocomplete="tel" placeholder="07xx xxx xxx"')}
           </div>
           ${input('city', 'Orașul în care locuiești', 'autocomplete="address-level2" placeholder="ex: Cluj-Napoca"')}
