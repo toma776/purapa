@@ -1167,6 +1167,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
   .post-body .stack td { padding: .55rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
   .post-body .stack td:last-child { border-bottom: 0; }
   .post-body .stack td::before { content: attr(data-label); display: block; margin-bottom: .15rem; color: #5b6578; font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .post-body .stack td[data-label=""]::before { display: none; }
   .post-body .stack td:first-child { color: var(--navy); font-weight: 700; }
 }
 
