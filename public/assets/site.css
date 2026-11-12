@@ -327,7 +327,7 @@ em.accent { font-style: normal; color: var(--blue); background: linear-gradient(
 .contact-form h2 { margin: 0 0 1.75rem; font-size: clamp(1.875rem, 1.3rem + 2.2vw, 2.75rem); line-height: 1.1; letter-spacing: -.02em; }
 .form { display: grid; gap: 1rem; }
 .form label { display: grid; gap: .4rem; font-weight: 600; font-size: .9375rem; color: var(--navy); }
-.form input, .form textarea { font: inherit; font-weight: 400; padding: .85rem 1rem; border: 1.5px solid #c9d3e6; border-radius: var(--r-sm); background: var(--white); color: var(--ink); }
+.form input, .form textarea { width: 100%; min-width: 0; font: inherit; font-weight: 400; padding: .85rem 1rem; border: 1.5px solid #c9d3e6; border-radius: var(--r-sm); background: var(--white); color: var(--ink); }
 /* Exemplul din câmp e mai deschis și subțire, ca să nu pară un câmp deja completat (contrast 4,7:1 pe alb). */
 .form input::placeholder, .form textarea::placeholder { color: #6b7487; font-weight: 400; opacity: 1; }
 .form input:focus, .form textarea:focus { border-color: var(--blue); outline: 3px solid rgb(37 74 153 / .2); outline-offset: 0; }
@@ -959,7 +959,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .tr-legend:not(:first-child) { margin-top: .75rem; }
 .tr-legend h3 { margin: 0; font-size: 1.0625rem; letter-spacing: -.01em; }
 .tr-legend > span { color: var(--muted); font-size: .8125rem; }
-.tr-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; align-items: start; }
+.tr-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.15rem; align-items: start; }
 .tr .form label { align-content: start; }
 .tr .form label small { font-weight: 400; color: var(--muted); font-size: .8125rem; line-height: 1.4; }
 .tr .req { color: #c2410c; }
@@ -1158,7 +1158,7 @@ html:not(.fx-js) .fx-ripples i:nth-child(3), .fx-still .fx-ripples i:nth-child(3
 .amb-form label { align-content: start; }
 .amb-form label small, .amb-pills legend small { font-weight: 400; color: var(--muted); font-size: .8125rem; }
 .amb-form .req { color: #c2410c; }
-.amb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+.amb-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
 .amb-form textarea { min-height: 5.5rem; }
 .amb-pills { margin: 0; padding: 0; border: 0; min-width: 0; }
 .amb-pills legend { padding: 0; margin-bottom: .55rem; font-weight: 600; font-size: .9375rem; color: var(--navy); }
