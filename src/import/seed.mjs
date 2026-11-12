@@ -305,7 +305,7 @@ export function seed(store, {user = SYSTEM} = {}) {
   })) amb[key] = c('sectiuni', data, src('/ambassadors/'));
   store.update(user, 'sectiuni', amb.hero, {cta2_label: 'Cum funcționează', cta2_link: `ref:sectiuni:${amb.steps}`}, {source: src('/ambassadors/')});
   store.setLinks(user, 'pagini', ids.ambassadors, 'sections', Object.values(amb));
-  sec(ids.contact, [{kind: 'contact', title: 'Contact'}], src('/contact/'));
+  sec(ids.contact, [{kind: 'contact', title: 'Contact', note: 'Întreabă-ne despre *Purapa*'}], src('/contact/'));
 
   // Trimiterea testului rapid (aplicația de la /test-rapid/ de pe site-ul vechi): aceeași adresă, buton în meniu.
   const photoTips = [

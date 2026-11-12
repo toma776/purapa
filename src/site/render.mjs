@@ -613,6 +613,7 @@ const SECTIONS = {
       <li data-reveal><span>Email</span><a href="mailto:${ctx.text('{email}')}">${ctx.text('{email}')}</a><br>Răspundem în ${ctx.text('{raspuns}')}.</li>
       <li data-reveal><span>Sediu</span>${ctx.text('{adresa_completa}')}</li>
     </ul>
+    <div class="contact-form">${s.note ? `<h2 data-reveal style="--i:1">${title(ctx, s.note)}</h2>` : ''}
     <form method="post" class="form" data-reveal style="--i:2" ${ctx.staticSite
       // Site static (fără server care să primească mesajul): același formular, dar la trimitere mesajul completat se deschide
       // în aplicația de email a vizitatorului (site.js îl așază frumos; fără JavaScript, browserul face același lucru, mai brut).
@@ -625,7 +626,7 @@ const SECTIONS = {
       <label>Mesaj <textarea name="message" minlength="20" required></textarea></label>
       <div><button class="btn">Trimite mesajul${icon('arrow')}</button></div>
       ${ctx.staticSite ? '<p class="form-note" role="status" hidden>Mesajul tău s-a deschis în aplicația de email. Apasă „Trimite” acolo și îl primim.</p>' : ''}
-    </form></div>`)
+    </form></div></div>`)
 };
 
 function renderSection(ctx, s, i) {
